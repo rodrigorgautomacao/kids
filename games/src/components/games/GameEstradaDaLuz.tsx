@@ -1,8 +1,10 @@
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import Confetti from 'react-confetti';
-import { Cloud, Crown, RotateCcw, Smile, Sparkles, Star, Sun } from 'lucide-react';
+import { Crown, Flame, Smile, Sparkles, Star, Sun } from 'lucide-react';
 import GameShell from '../GameShell';
-import { completeGame } from '../../lib/progress';
+import LevelHUD from '../LevelHUD';
+import LevelDone from '../LevelDone';
+import { completeLevel, loadLevels, nextUnfinishedLevel } from '../../lib/progress';
 import { playCorrect, playPop, playWin, playWrong } from '../../lib/sound';
 
 interface GameProps {
@@ -18,7 +20,10 @@ interface Question {
 }
 
 const STEPS = 5;
+const TOTAL_TRECHOS = 3;
+const QUESTIONS_PER_TRECHO = 10;
 
+// 30 perguntas da lição: 3 trechos × 10
 const QUESTIONS: Question[] = [
   { q: 'Você encontra uma moeda no chão…', right: 'Devolvo ao dono', r: '🙂', wrong: 'Guardo escondido', w: '😜' },
   { q: 'O vaso quebrou sem querer…', right: 'Conto a verdade', r: '💛', wrong: 'Digo que não fui eu', w: '🙈' },
@@ -27,9 +32,29 @@ const QUESTIONS: Question[] = [
   { q: 'Quando você conta mentira…', right: 'O coração pesa', r: '💙', wrong: 'Fica leve e feliz', w: '🎈' },
   { q: 'Uma boa escolha brilha como…', right: 'Uma estrela', r: '⭐', wrong: 'Uma pedra', w: '🪨' },
   { q: 'Seu nome está guardado no…', right: 'Livro da Vida', r: '📖', wrong: 'Chão do quarto', w: '🪑' },
-  { q: 'Quando você erra, Deus…', right: 'Sempre pronta a perdoar', r: '🥹', wrong: 'Vai embora pra sempre', w: '😢' },
-  { q: 'O caminho da luz leva para…', right: 'Perto de Deus', r: '☀️', wrong: 'O vale escuro', w: '🌑' },
-  { q: 'A alegria fica maior quando…', right: 'A gente divide', r: '🎉', wrong: 'A gente fica sozinho', w: '🔒' },
+  { q: 'Quando você erra, Deus…', right: 'Sempre pronto a perdoar', r: '🥹', wrong: 'Vai embora pra sempre', w: '😢' },
+  { q: 'O caminho da luz leva para…', right: 'Perto de Deus', r: '☀️', wrong: 'O fogo do inferno', w: '🔥' },
+  { q: 'A alegria fica maior quando…', right: 'A gente divide', r: '🎉', wrong: 'Fica sozinho', w: '🔒' },
+  { q: 'O moço te deu troco a mais…', right: 'Devolvo o troco', r: '💵', wrong: 'Guardar e sair', w: '🏃' },
+  { q: 'Você acha uma carteira no parque…', right: 'Entrego a um adulto', r: '👮', wrong: 'Escondo para mim', w: '🥷' },
+  { q: 'Nota de 50 no chão do mercado…', right: 'Entrego no caixa', r: '💛', wrong: 'Pego rápido', w: '🫥' },
+  { q: 'O vendedor te deu um doce a mais…', right: 'Devolvo o doce', r: '🍭', wrong: 'Como e fico quieto', w: '🤫' },
+  { q: 'Contar a verdade deixa Deus…', right: 'Feliz!', r: '😄', wrong: 'Triste e longe', w: '😞' },
+  { q: 'Quem é digno de confiança?', right: 'Quem diz a verdade', r: '🫶', wrong: 'Quem engana', w: '🎭' },
+  { q: 'A mentirinha de todo dia…', right: 'Cresce e pesa', r: '🌱', wrong: 'Desaparece sozinha', w: '🪄' },
+  { q: 'O que é tesouro no céu?', right: 'As boas ações', r: '🏆', wrong: 'O dinheiro escondido', w: '💰' },
+  { q: 'Quem você deve amar?', right: 'Todos, até quem erra', r: '💕', wrong: 'Só quem é igual a você', w: '🚫' },
+  { q: 'Um colega novo chegou na escola…', right: 'Chamo para brincar', r: '🫂', wrong: 'Deixo ele de fora', w: '🙄' },
+  { q: 'O menorzinho quer jogar com vocês…', right: 'Deixo ele jogar', r: '🤗', wrong: 'Digo que não alcança', w: '😤' },
+  { q: 'A turma ri de um colega…', right: 'Defendo o colega', r: '🛡️', wrong: 'Rio junto', w: '🤭' },
+  { q: 'Perdoar quem te magoou…', right: 'É obedecer a Deus', r: '🕊️', wrong: 'É ser fraco', w: '💪' },
+  { q: 'Deus prometeu recompensa…', right: 'Eterna, junto dele', r: '👑', wrong: 'Só de brinquedo', w: '🎁' },
+  { q: 'O coração que pede perdão…', right: 'Fica leve de novo', r: '🕊️', wrong: 'Vira pedra', w: '🪨' },
+  { q: 'Quem faz o bem sem esperar nada…', right: 'Recebe a bênção de Deus', r: '🌈', wrong: 'Perde tempo', w: '⏳' },
+  { q: 'A maior lição de Jesus foi…', right: 'Amar uns aos outros', r: '❤️', wrong: 'Ganhar sempre', w: '🥇' },
+  { q: 'Seu amigo confiou um segredo…', right: 'Você guarda também', r: '🤐', wrong: 'Conta para a turma', w: '🗣️' },
+  { q: 'Você quebrou algo sem querer…', right: 'Assumo na hora', r: '🙋', wrong: 'Culpo o irmãozinho', w: '😈' },
+  { q: 'O final da Estrada da Luz é…', right: 'Estar com Deus para sempre', r: '🌟', wrong: 'Caminhar sem fim', w: '🌀' },
 ];
 
 function shuffle<T>(arr: T[]): T[] {
@@ -41,26 +66,26 @@ function shuffle<T>(arr: T[]): T[] {
   return a;
 }
 
+function pathOf(trecho: number): Question[] {
+  return QUESTIONS.slice((trecho - 1) * QUESTIONS_PER_TRECHO, trecho * QUESTIONS_PER_TRECHO);
+}
+
 export default function GameEstradaDaLuz({ onExit }: GameProps) {
-  const [queue, setQueue] = useState<Question[]>(() => shuffle(QUESTIONS));
+  const [trecho, setTrecho] = useState(() =>
+    nextUnfinishedLevel(loadLevels(), 'estrada-da-luz', TOTAL_TRECHOS),
+  );
+  const [queue, setQueue] = useState<Question[]>(() => shuffle(pathOf(1)));
   const [step, setStep] = useState(0);
   const [streak, setStreak] = useState(0);
   const [wrongCount, setWrongCount] = useState(0);
   const [won, setWon] = useState(false);
   const [msg, setMsg] = useState<{ text: string; good: boolean } | null>(null);
-  const recorded = useRef(false);
+  const recorded = useRef<Set<number>>(new Set());
 
-  useEffect(() => {
-    if (won && !recorded.current) {
-      recorded.current = true;
-      playWin();
-      completeGame('estrada-da-luz', winStars());
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [won]);
+  const isLast = trecho === TOTAL_TRECHOS;
 
-  function winStars(): number {
-    return Math.max(1, 3 - Math.min(2, wrongCount));
+  function starsFrom(errCount: number): number {
+    return errCount === 0 ? 3 : errCount <= 3 ? 2 : 1;
   }
 
   function answer(isRight: boolean) {
@@ -82,7 +107,7 @@ export default function GameEstradaDaLuz({ onExit }: GameProps) {
       });
       if (next === STEPS) {
         setStep(next);
-        setWon(true);
+        finishTrecho();
         return;
       }
       if (next === 2 || next === 3) playPop();
@@ -94,15 +119,36 @@ export default function GameEstradaDaLuz({ onExit }: GameProps) {
       setStep((s) => Math.max(0, s - 1));
       setMsg({
         good: false,
-        text: 'Opa… o vale escuro fica mais perto. Mas a luz continua te esperando! 💛',
+        text: 'Opa… o erro afasta você de Deus e o fogo do inferno fica mais perto! Mas a luz continua te esperando. 🙏',
       });
     }
 
-    // próxima pergunta (reembaralha quando a fila acaba)
-    setQueue((q) => {
-      const rest = q.slice(1);
-      return rest.length > 0 ? rest : shuffle(QUESTIONS);
+    // próxima pergunta (reembaralha o trecho quando a fila acaba)
+    setQueue((qu) => {
+      const rest = qu.slice(1);
+      return rest.length > 0 ? rest : shuffle(pathOf(trecho));
     });
+  }
+
+  function finishTrecho() {
+    const stars = starsFrom(wrongCount);
+    if (!recorded.current.has(trecho)) {
+      recorded.current.add(trecho);
+      completeLevel('estrada-da-luz', trecho, stars);
+      if (isLast) playWin();
+    }
+    setWon(true);
+  }
+
+  function nextTrecho() {
+    const t = trecho + 1;
+    setTrecho(t);
+    setQueue(shuffle(pathOf(t)));
+    setStep(0);
+    setStreak(0);
+    setWrongCount(0);
+    setWon(false);
+    setMsg(null);
   }
 
   const current = queue[0];
@@ -110,7 +156,7 @@ export default function GameEstradaDaLuz({ onExit }: GameProps) {
   return (
     <GameShell
       title="A Estrada da Luz"
-      subtitle="Responda a pergunta e caminhe até a luz!"
+      subtitle="3 trechos · Responda certo e caminhe até a luz!"
       onExit={onExit}
       bg="bg-gradient-to-b from-indigo-950 via-violet-800 to-amber-200"
       titleClass="text-yellow-300"
@@ -119,25 +165,49 @@ export default function GameEstradaDaLuz({ onExit }: GameProps) {
 
       <div aria-live="polite" className="sr-only">
         {won
-          ? 'Você chegou à Luz!'
+          ? 'Trecho concluído!'
           : msg
             ? msg.text
             : `${step} de ${STEPS} passos em direção à luz`}
       </div>
 
       <div
-        className="pointer-events-none fixed inset-0 bg-slate-950 transition-opacity duration-1000"
-        style={{ opacity: wrongCount > 0 ? Math.min(wrongCount * 0.06, 0.35) : 0 }}
+        className="pointer-events-none fixed inset-0 bg-gradient-to-r from-red-950 via-slate-950 to-slate-900 transition-opacity duration-1000"
+        style={{ opacity: wrongCount > 0 ? Math.min(wrongCount * 0.07, 0.4) : 0 }}
       />
 
       <div className="relative flex w-full flex-1 flex-col items-center justify-center gap-5 px-4 pb-8">
+        <LevelHUD level={trecho} totalLevels={TOTAL_TRECHOS} />
+
         {/* ------- trilha ------- */}
         <div className="relative h-60 w-full max-w-2xl">
-          {/* vale escuro (cresce a cada erro) */}
-          <div className="absolute bottom-2 left-0 flex flex-col items-start gap-1">
-            <Cloud className="h-10 w-10 text-slate-700/80 animate-float-slow" />
-            <span className="max-w-[130px] rounded-full bg-slate-800/70 px-3 py-1 text-xs font-bold text-slate-300 shadow">
-              vale escuro
+          {/* inferno (pega fogo a cada erro) */}
+          <div className="absolute bottom-2 left-0 z-10 flex flex-col items-start gap-1">
+            <div className="flex items-center gap-1">
+              <span className="relative flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-900 text-2xl shadow-[0_0_16px_rgba(239,68,68,0.6)]">
+                <Flame className="h-7 w-7 text-orange-500" />
+                {wrongCount >= 3 ? (
+                  <span className="absolute -top-1.5 -right-1.5 h-4 w-4 animate-ping rounded-full bg-red-500/90" />
+                ) : null}
+              </span>
+              {Array.from({ length: Math.min(wrongCount, 3) }).map((_, i) => (
+                <span
+                  key={i}
+                  className="animate-pop text-2xl drop-shadow-[0_0_8px_rgba(239,68,68,0.8)]"
+                  style={{ animationDelay: `${i * 130}ms` }}
+                >
+                  🔥
+                </span>
+              ))}
+            </div>
+            <span
+              className={`rounded-full px-3 py-1 text-xs font-black shadow ${
+                wrongCount > 0
+                  ? 'animate-pulse bg-red-600/90 text-white'
+                  : 'bg-slate-800/80 text-red-300'
+              }`}
+            >
+              inferno
             </span>
           </div>
 
@@ -199,13 +269,18 @@ export default function GameEstradaDaLuz({ onExit }: GameProps) {
         </div>
 
         {/* badges de gamificação */}
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center justify-center gap-3">
           <span className="rounded-full bg-white/10 px-4 py-1.5 text-base font-black text-yellow-200 shadow backdrop-blur-sm">
             Ponto {Math.min(step, STEPS)}/{STEPS}
           </span>
           {streak >= 2 && !won ? (
             <span className="animate-pop rounded-full bg-orange-500/80 px-4 py-1.5 text-sm font-black text-white shadow">
               🔥 {streak} seguidas!
+            </span>
+          ) : null}
+          {wrongCount >= 2 && !won ? (
+            <span className="animate-pulse rounded-full bg-red-600/90 px-4 py-1.5 text-sm font-black text-white shadow-[0_0_14px_rgba(220,38,38,0.7)]">
+              ⚠️ Muito perto do inferno!
             </span>
           ) : null}
         </div>
@@ -248,54 +323,32 @@ export default function GameEstradaDaLuz({ onExit }: GameProps) {
           </div>
         ) : null}
 
-        {/* ------- vitória: chegou à Luz ------- */}
+        {/* ------- trecho vencido ------- */}
         {won ? (
           <div className="animate-pop flex flex-col items-center gap-4">
-            <p className="rounded-3xl bg-white/95 px-8 py-5 text-center text-2xl font-black text-amber-500 shadow-[0_0_30px_rgba(253,224,71,0.8)] sm:text-3xl">
+            <p className="rounded-3xl bg-white/95 px-8 py-4 text-center text-2xl font-black text-amber-500 shadow-[0_0_30px_rgba(253,224,71,0.8)] sm:text-3xl">
               🏆 Você chegou à Luz! 🏆
               <span className="mt-1 block text-base font-extrabold text-indigo-700">
-                Cada passo certo te trouxe pra perto de Deus. E se você errou no caminho?
-                <br />
-                A luz sempre te espera de volta! 💛
+                Se você errou no caminho? A luz sempre te espera de volta! 💛
               </span>
             </p>
-
-            <span className="flex items-center gap-1 rounded-full bg-amber-100 px-4 py-1.5 shadow">
-              <span className="text-sm font-extrabold text-amber-700">Estrelas do capítulo</span>
-              {[1, 2, 3].map((i) => (
-                <Star
-                  key={i}
-                  className={`h-5 w-5 ${
-                    i <= winStars() ? 'fill-amber-400 text-amber-400' : 'text-amber-200'
-                  }`}
-                />
-              ))}
-            </span>
-
-            <button
-              type="button"
-              onClick={() => {
-                setQueue(shuffle(QUESTIONS));
-                setStep(0);
-                setStreak(0);
-                setWrongCount(0);
-                setWon(false);
-                setMsg(null);
-                recorded.current = false;
-              }}
-              className="flex items-center gap-3 rounded-full bg-yellow-400 px-10 py-5 text-2xl font-extrabold text-amber-950 shadow-[0_8px_0_rgba(202,138,4,0.9)] transition-transform hover:scale-105 active:translate-y-1 active:shadow-none sm:text-3xl"
-            >
-              <RotateCcw className="h-8 w-8" /> Jogar Novamente
-            </button>
-            <button
-              type="button"
-              onClick={onExit}
-              className="flex items-center gap-2 rounded-full bg-white/70 px-6 py-2 text-sm font-bold text-indigo-900 shadow active:scale-95"
-            >
-              <Sparkles className="h-4 w-4" /> Outros jogos
-            </button>
+            <LevelDone
+              stars={starsFrom(wrongCount)}
+              onNext={isLast ? undefined : nextTrecho}
+              onExit={onExit}
+              headline={isLast ? undefined : `Trecho ${trecho} de ${TOTAL_TRECHOS} concluído!`}
+              lesson={
+                isLast
+                  ? 'Você chegou ao fim da Estrada da Luz! Quem faz o certo tem a recompensa eterna pertinho de Deus! 👑'
+                  : undefined
+              }
+            />
           </div>
         ) : null}
+
+        <span className="flex items-center gap-1 text-xs font-bold text-white/50">
+          <Sparkles className="h-4 w-4 text-yellow-300" /> cada passo certo é a luz de Deus no caminho
+        </span>
       </div>
     </GameShell>
   );

@@ -2,11 +2,14 @@ import { useState } from 'react';
 import { Crown, Lock, Star, Volume2, VolumeX } from 'lucide-react';
 import { games } from '../data/games';
 import {
+  chapterLevelsDone,
+  chapterStars,
+  isChapterUnlocked,
   isFreeMode,
-  isUnlocked,
-  loadProgress,
-  MAX_STARS_PER_GAME,
+  loadLevels,
+  MAX_LEVELS_PER_GAME,
   setFreeMode,
+  totalLevelsDone,
   totalStars,
 } from '../lib/progress';
 import { isMuted, setMuted } from '../lib/sound';
@@ -16,8 +19,8 @@ interface HubProps {
 }
 
 /**
- * Tela principal da saga "A Grande Jornada": capítulos em sequência,
- * estrelas por capítulo, barra de progresso, modo livre e som.
+ * Tela principal da saga "A Grande Jornada": capítulos com 10 níveis cada,
+ * estrelas por capítulo, barra de progresso e modo livre/som.
  * A ordem dos jogos em src/data/games.ts é a ordem dos capítulos.
  */
 export default function Hub({ onSelectGame }: HubProps) {
@@ -25,10 +28,16 @@ export default function Hub({ onSelectGame }: HubProps) {
   const [muted, setSound] = useState(isMuted());
   const [hint, setHint] = useState<string | null>(null);
 
-  const progress = loadProgress();
-  const earned = totalStars(progress);
-  const maxStars = games.length * MAX_STARS_PER_GAME;
-  const journeyDone = earned >= maxStars;
+  const progress = loadLevels();
+const totalGameLevels = (g: { id: string; totalLevels?: number }) =>
+  g.totalLevels ?? MAX_LEVELS_PER_GAME;
+  const doneLevels = totalLevelsDone(
+    progress,
+    games.map((g) => g.id),
+    totalGameLevels,
+  );
+  const maxLevels = games.reduce((acc, g) => acc + totalGameLevels(g), 0);
+  const journeyDone = doneLevels >= maxLevels;
 
   function toggleFree() {
     const next = !freeMode;
@@ -43,12 +52,8 @@ export default function Hub({ onSelectGame }: HubProps) {
     setMuted(next);
   }
 
-  function open(gameId: string) {
-    onSelectGame(gameId);
-  }
-
   function lockedHint(index: number) {
-    setHint(`Complete o capítulo ${index} para abrir este! 🔒`);
+    setHint(`Complete pelo menos 1 nível do capítulo ${index} para abrir este! 🔒`);
   }
 
   return (
@@ -69,7 +74,9 @@ export default function Hub({ onSelectGame }: HubProps) {
             Jogos da Lição
           </h1>
           <p className="mt-3 text-lg text-white/80">
-            Faz o certo em cada capítulo e caminha até a Luz de Deus! ☀️
+            {journeyDone
+              ? 'Você venceu todos os níveis da jornada! 🏆'
+              : 'Cada capítulo tem 10 níveis. Vença todos e chegue à Luz de Deus! ☀️'}
           </p>
         </header>
 
@@ -79,16 +86,21 @@ export default function Hub({ onSelectGame }: HubProps) {
             <span className="flex items-center gap-1.5">
               {journeyDone ? (
                 <>
-                  <Crown className="h-5 w-5 text-yellow-300" /> Você chegou à Luz de Deus! 🏆
+                  <Crown className="h-5 w-5 text-yellow-300" /> Jornada completa!
                 </>
               ) : (
                 <>
                   <Star className="h-5 w-5 fill-yellow-300 text-yellow-300" />{' '}
-                  {earned}/{maxStars} estrelas
+                  {doneLevels}/{maxLevels} níveis
                 </>
               )}
             </span>
-            <span>{journeyDone ? '100%' : `${Math.round((earned / maxStars) * 100)}%`}</span>
+            <span>
+              {journeyDone
+                ? '100%'
+                : `${Math.round((doneLevels / maxLevels) * 100)}%`}{' '}
+              · {totalStars(progress)} ⭐
+            </span>
           </div>
           <div className="h-4 overflow-hidden rounded-full bg-black/30">
             <div
@@ -97,7 +109,9 @@ export default function Hub({ onSelectGame }: HubProps) {
                   ? 'bg-gradient-to-r from-yellow-300 to-amber-400 shadow-[0_0_16px_rgba(253,224,71,0.9)]'
                   : 'bg-gradient-to-r from-sky-400 to-cyan-300'
               }`}
-              style={{ width: `${Math.max((earned / maxStars) * 100, journeyDone ? 100 : 2)}%` }}
+              style={{
+                width: `${Math.max((doneLevels / maxLevels) * 100, journeyDone ? 100 : 2)}%`,
+              }}
             />
           </div>
         </div>
@@ -109,9 +123,7 @@ export default function Hub({ onSelectGame }: HubProps) {
             onClick={toggleFree}
             aria-pressed={freeMode}
             className={`rounded-full px-5 py-2 text-sm font-extrabold shadow transition-transform active:scale-95 ${
-              freeMode
-                ? 'bg-yellow-300 text-amber-900'
-                : 'bg-white/10 text-white/85'
+              freeMode ? 'bg-yellow-300 text-amber-900' : 'bg-white/10 text-white/85'
             }`}
           >
             {freeMode ? '✨ Modo livre: ON' : '🔒 Modo sequencial'}
@@ -140,8 +152,11 @@ export default function Hub({ onSelectGame }: HubProps) {
         {/* ------- capítulos da jornada ------- */}
         <div className="mt-2 flex w-full max-w-3xl flex-col gap-4">
           {games.map((game, index) => {
-            const unlocked = isUnlocked(index, games);
-            const st = progress[game.id]?.stars ?? 0;
+            const unlocked = isChapterUnlocked(index, games, progress);
+            const totalLevels = totalGameLevels(game);
+            const levelsDone = chapterLevelsDone(progress, game.id);
+            const stars = chapterStars(progress, game.id);
+            const complete = levelsDone >= totalLevels;
             const isLastChapter = index === games.length - 1;
             const Icon = game.icon;
 
@@ -149,10 +164,8 @@ export default function Hub({ onSelectGame }: HubProps) {
               <button
                 key={game.id}
                 type="button"
-                onClick={() => (unlocked ? open(game.id) : lockedHint(index))}
-                aria-label={
-                  unlocked ? `Jogar ${game.title}` : `${game.title} (bloqueado)`
-                }
+                onClick={() => (unlocked ? onSelectGame(game.id) : lockedHint(index))}
+                aria-label={unlocked ? `Jogar ${game.title}` : `${game.title} (bloqueado)`}
                 className={`group relative flex w-full items-center gap-4 rounded-3xl border-4 p-5 text-left shadow-[0_10px_0_rgba(0,0,0,0.45)] transition-transform duration-150 active:scale-[0.98] ${
                   unlocked
                     ? `${game.color} border-white/40 hover:scale-[1.02]`
@@ -165,11 +178,7 @@ export default function Hub({ onSelectGame }: HubProps) {
                     unlocked ? 'bg-black/25 text-white' : 'bg-black/30 text-slate-400'
                   }`}
                 >
-                  {unlocked ? (
-                    String(index + 1).padStart(2, '0')
-                  ) : (
-                    <Lock className="h-5 w-5" />
-                  )}
+                  {unlocked ? String(index + 1).padStart(2, '0') : <Lock className="h-5 w-5" />}
                 </span>
 
                 {/* ícone do jogo */}
@@ -179,57 +188,76 @@ export default function Hub({ onSelectGame }: HubProps) {
                   }`}
                 >
                   <Icon
-                    className={`h-8 w-8 ${
-                      unlocked ? 'text-white drop-shadow' : 'text-slate-500'
-                    }`}
+                    className={`h-8 w-8 ${unlocked ? 'text-white drop-shadow' : 'text-slate-500'}`}
                   />
                 </span>
 
-                {/* título + sinopse */}
-                <span className="flex min-w-0 flex-1 flex-col gap-1">
+                {/* título + sinopse + progresso */}
+                <span className="flex min-w-0 flex-1 flex-col gap-1.5">
                   <span className="truncate text-lg leading-tight font-extrabold text-white drop-shadow-md">
                     {game.title}
                   </span>
                   <span className="line-clamp-2 text-xs font-medium text-white/85">
                     {game.sinopse}
                   </span>
-                  {isLastChapter && unlocked ? (
+
+                  {unlocked ? (
+                    <span className="flex flex-col gap-1">
+                      <span className="flex items-center justify-between gap-2 text-xs font-black text-white">
+                        <span>
+                          {levelsDone}/{totalLevels} níveis
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <Star className="h-3.5 w-3.5 fill-yellow-300 text-yellow-300" />
+                          {stars}/{totalLevels * 3}
+                        </span>
+                      </span>
+                      <span className="h-2.5 overflow-hidden rounded-full bg-black/25">
+                        <span
+                          className={`block h-full rounded-full transition-all duration-500 ${
+                            complete
+                              ? 'bg-yellow-300'
+                              : 'bg-white/70'
+                          }`}
+                          style={{ width: `${(levelsDone / totalLevels) * 100}%` }}
+                        />
+                      </span>
+                    </span>
+                  ) : null}
+
+                  {isLastChapter && unlocked && complete ? (
                     <span className="mt-0.5 flex items-center gap-1 text-xs font-black text-yellow-200">
-                      <Crown className="h-4 w-4" /> Capítulo final da jornada
+                      <Crown className="h-4 w-4" /> Jornada encerrada com vitória!
                     </span>
                   ) : null}
                 </span>
 
-                {/* estrelas + jogar */}
-                <span className="flex shrink-0 flex-col items-center gap-1.5">
-                  <span className="flex items-center gap-0.5">
-                    {[1, 2, 3].map((i) => (
-                      <Star
-                        key={i}
-                        className={`h-4 w-4 ${
-                          i <= st
-                            ? 'fill-yellow-300 text-yellow-300 drop-shadow'
-                            : 'text-white/30'
-                        }`}
-                      />
-                    ))}
-                  </span>
-                  <span
-                    className={`rounded-full px-4 py-1.5 text-xs font-extrabold transition-transform group-active:scale-90 ${
-                      unlocked ? 'bg-black/30 text-white' : 'bg-black/40 text-slate-300'
-                    }`}
-                  >
-                    {unlocked ? '▶ JOGAR' : '🔒 Bloqueado'}
-                  </span>
+                {/* botão */}
+                <span
+                  className={`flex shrink-0 flex-col items-center gap-1.5 rounded-full px-4 py-2 text-xs font-extrabold transition-transform group-active:scale-90 ${
+                    unlocked
+                      ? complete
+                        ? 'bg-yellow-300 text-amber-900'
+                        : 'bg-black/30 text-white'
+                      : 'bg-black/40 text-slate-300'
+                  }`}
+                >
+                  {!unlocked ? (
+                    '🔒 Bloqueado'
+                  ) : complete ? (
+                    '🏆 Vencido'
+                  ) : levelsDone > 0 ? (
+                    '▶ CONTINUAR'
+                  ) : (
+                    '▶ COMEÇAR'
+                  )}
                 </span>
               </button>
             );
           })}
         </div>
 
-        <p className="animate-bounce text-lg font-bold text-cyan-200">
-          ▼ toca para começar ▼
-        </p>
+        <p className="animate-bounce text-lg font-bold text-cyan-200">▼ toca para começar ▼</p>
       </main>
     </div>
   );

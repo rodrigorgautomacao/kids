@@ -24,6 +24,8 @@ export interface GameDefinition {
   subtitle: string;
   /** Sinopse do capítulo: a lição do jogo (fazer o certo → recompensa em Deus) */
   sinopse: string;
+  /** Quantos níveis o capítulo tem (padrão: MAX_LEVELS_PER_GAME = 10) */
+  totalLevels?: number;
   icon: ComponentType<{ className?: string }>;
   /** Classes Tailwind (literais) do cartucho no Hub da saga */
   color: string;
@@ -104,9 +106,10 @@ export const games: GameDefinition[] = [
     title: 'A Estrada da Luz',
     subtitle: 'Faça o certo e caminhe até Deus',
     sinopse:
-      'O capítulo final! Cada pergunta certa te caminha até a Luz. Quem faz o certo tem a recompensa eterna pertinho de Deus.',
+      'O capítulo final! Cada resposta certa te caminha até a Luz. Errar acende o fogo do inferno — mas Deus sempre espera você voltar!',
     icon: Crown,
     color: 'bg-gradient-to-b from-indigo-700 via-blue-600 to-sky-500',
+    totalLevels: 3,
     component: GameEstradaDaLuz,
   },
 ];

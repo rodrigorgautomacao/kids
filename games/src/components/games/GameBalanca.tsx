@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import {
   DndContext,
   PointerSensor,
@@ -10,296 +10,288 @@ import {
 } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
 import Confetti from 'react-confetti';
-import { Frown, Heart, PartyPopper, Plus, RotateCcw, Sparkles, Star } from 'lucide-react';
+import { Heart, Square } from 'lucide-react';
 import GameShell from '../GameShell';
-import { completeGame } from '../../lib/progress';
+import LevelHUD from '../LevelHUD';
+import LevelDone from '../LevelDone';
+import { completeLevel, loadLevels, nextUnfinishedLevel } from '../../lib/progress';
+import { playCorrect, playWin, playWrong } from '../../lib/sound';
 
 interface GameProps {
   onExit: () => void;
 }
 
-type ItemKind = 'sad' | 'heart';
-
-interface TrayItem {
-  id: string;
-  kind: ItemKind;
+interface Situation {
+  id: number;
+  text: string;
+  emoji: string;
+  good: boolean;
 }
 
-// Blocos cinzentos "tristes" + o coração brilhante com cruz
-const TRAY_ITEMS: TrayItem[] = [
-  { id: 'triste-1', kind: 'sad' },
-  { id: 'triste-2', kind: 'sad' },
-  { id: 'coracao-1', kind: 'heart' },
+const SITUATIONS: Situation[] = [
+  { id: 1, text: 'Devolver a moeda que achou', emoji: '🪙', good: true },
+  { id: 2, text: 'Mentir para não levar bronca', emoji: '🤥', good: false },
+  { id: 3, text: 'Dividir o lanche com o amigo', emoji: '🍞', good: true },
+  { id: 4, text: 'Rir de quem errou na prova', emoji: '😆', good: false },
+  { id: 5, text: 'Falar a verdade para a professora', emoji: '💬', good: true },
+  { id: 6, text: 'Pegar o brinquedo do irmão escondido', emoji: '🧸', good: false },
+  { id: 7, text: 'Encorajar quem está triste', emoji: '🫂', good: true },
+  { id: 8, text: 'Colar na prova', emoji: '📄', good: false },
+  { id: 9, text: 'Convidar o colega sozinho para brincar', emoji: '⚽', good: true },
+  { id: 10, text: 'Furar fila no lanche', emoji: '🍕', good: false },
+  { id: 11, text: 'Ajudar a arrumar a sala', emoji: '🧹', good: true },
+  { id: 12, text: 'Atender o celular escondido na aula', emoji: '📱', good: false },
+  { id: 13, text: 'Ser gentil com quem precisa', emoji: '👴', good: true },
+  { id: 14, text: 'Xingar quem é diferente', emoji: '🗯️', good: false },
+  { id: 15, text: 'Pedir desculpas ao machucar sem querer', emoji: '🙏', good: true },
+  { id: 16, text: 'Jogar lixo no chão', emoji: '🗑️', good: false },
+  { id: 17, text: 'Ouvir com atenção quem fala com você', emoji: '👂', good: true },
+  { id: 18, text: 'Fazer barulho na hora da oração', emoji: '🙊', good: false },
+  { id: 19, text: 'Compartilhar os doces com a turma', emoji: '🍬', good: true },
+  { id: 20, text: 'Esconder o erro para não ser visto', emoji: '🕳️', good: false },
+  { id: 21, text: 'Respeitar a vez dos outros', emoji: '⏳', good: true },
+  { id: 22, text: 'Quebrar a promessa que fez', emoji: '💔', good: false },
+  { id: 23, text: 'Estudar para a prova', emoji: '📚', good: true },
+  { id: 24, text: 'Deixar o amigo de fora do jogo', emoji: '🚫', good: false },
+  { id: 25, text: 'Cuidar com carinho do animalzinho', emoji: '🐶', good: true },
+  { id: 26, text: 'Bater em quem te empurrou', emoji: '👊', good: false },
+  { id: 27, text: 'Agradecer pela comida', emoji: '🙌', good: true },
+  { id: 28, text: 'Contar o segredo que prometeu guardar', emoji: '🤫', good: false },
+  { id: 29, text: 'Dar lugar para quem usa cadeira de rodas', emoji: '♿', good: true },
+  { id: 30, text: 'Reclamar de tudo o tempo todo', emoji: '😠', good: false },
 ];
 
-/* ------------------------------------------------------------------ */
-/*  Balança (zona de drop)                                             */
-/* ------------------------------------------------------------------ */
+const CARDS_PER_LEVEL = 3;
+const TOTAL_LEVELS = SITUATIONS.length / CARDS_PER_LEVEL;
 
-interface ScaleAreaProps {
-  tilt: number;
-  shaking: boolean;
-  blocksGone: boolean;
-  heartPlaced: boolean;
+/* ------------------------------ zona de drop ------------------------------ */
+
+interface DropProps {
+  id: string;
+  label: string;
+  kind: 'certa' | 'errada';
 }
 
-function ScaleArea({ tilt, shaking, blocksGone, heartPlaced }: ScaleAreaProps) {
-  const { setNodeRef, isOver } = useDroppable({ id: 'scale-zone' });
-
+function DropZone({ id, label, kind }: DropProps) {
+  const { setNodeRef, isOver } = useDroppable({ id });
+  const isCerta = kind === 'certa';
   return (
     <div
       ref={setNodeRef}
-      aria-label="Balança das escolhas"
-      className={`relative mx-auto w-full max-w-xl rounded-3xl transition-shadow duration-300 ${
-        isOver ? 'z-20 ring-8 ring-pink-300/70' : ''
-      } ${shaking ? 'animate-shake' : ''}`}
-      style={{ height: 360 }}
+      aria-label={`Zona ${label}`}
+      className={`flex h-24 flex-1 flex-col items-center justify-center gap-1 rounded-3xl border-4 transition-all duration-150 ${
+        isCerta
+          ? 'border-rose-300 bg-gradient-to-b from-rose-100 to-rose-200'
+          : 'border-slate-300 bg-gradient-to-b from-slate-100 to-slate-200'
+      } ${isOver ? (isCerta ? 'scale-105 ring-8 ring-rose-300/60' : 'scale-105 ring-8 ring-slate-400/50') : ''}`}
     >
-      {/* base + coluna estáticas */}
-      <div className="absolute bottom-2 left-1/2 h-5 w-52 -translate-x-1/2 rounded-full bg-amber-900 shadow-lg" />
-      <div className="absolute bottom-6 left-1/2 h-28 w-14 -translate-x-1/2 rounded-t-md rounded-b-xl bg-gradient-to-t from-amber-800 to-amber-600" />
-      <div className="absolute bottom-[102px] left-1/2 h-0 w-0 -translate-x-1/2 border-b-[34px] border-l-[26px] border-r-[26px] border-b-amber-800 border-l-transparent border-r-transparent" />
-
-      {/* conjunto que gira (braço + pratos) no pino central */}
-      <div className="absolute top-[86px] left-1/2 -translate-x-1/2">
-        <div
-          className="transition-transform duration-1000 ease-in-out"
-          style={{
-            transform: `rotate(${tilt}deg)`,
-            transformOrigin: '50% 8%',
-          }}
-        >
-          {/* braço da balança */}
-          <div className="relative h-5 w-[min(68vw,400px)] rounded-full bg-gradient-to-b from-amber-400 to-amber-700 shadow-md">
-            <div className="absolute top-1/2 left-1/2 h-3.5 w-3.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-amber-950" />
-          </div>
-
-          {/* prato esquerdo — blocos tristes (pesados) */}
-          <div className="absolute top-full left-0 flex -translate-x-[120%] flex-col items-center">
-            <div className="h-12 w-1.5 bg-amber-800/70" />
-            <div
-              className={`flex h-14 w-32 items-center justify-center gap-1.5 rounded-2xl border-b-4 border-amber-950 bg-gradient-to-b from-amber-600 to-amber-800 shadow-inner transition-all duration-700 ${
-                blocksGone ? 'scale-50 opacity-0' : ''
-              }`}
-            >
-              {[0, 1].map((i) => (
-                <span
-                  key={i}
-                  className="flex h-9 w-9 items-center justify-center rounded-lg border-2 border-slate-500 bg-slate-400 shadow"
-                >
-                  <Frown className="h-5 w-5 text-white" strokeWidth={2.5} />
-                </span>
-              ))}
-            </div>
-          </div>
-
-          {/* prato direito — recebe o coração */}
-          <div className="absolute top-full right-0 flex translate-x-[120%] flex-col items-center">
-            <div className="h-12 w-1.5 bg-amber-800/70" />
-            <div
-              className={`flex h-14 w-32 items-center justify-center rounded-2xl border-b-4 border-amber-950 bg-gradient-to-b from-amber-600 to-amber-800 shadow-inner ${
-                heartPlaced ? 'animate-pop' : ''
-              }`}
-            >
-              {heartPlaced ? (
-                <span className="relative flex items-center justify-center">
-                  <Sparkles className="absolute -top-3 left-6 h-5 w-5 text-yellow-200 animate-pulse" />
-                  <Heart className="h-10 w-10 fill-white text-pink-300 drop-shadow-lg" />
-                </span>
-              ) : null}
-            </div>
-          </div>
-        </div>
-      </div>
+      <span className="text-3xl">{isCerta ? '💖' : '🪨'}</span>
+      <span
+        className={`rounded-full px-4 py-1 text-sm font-black ${
+          isCerta ? 'bg-rose-500 text-white' : 'bg-slate-500 text-white'
+        }`}
+      >
+        A {label}
+      </span>
     </div>
   );
 }
 
-/* ------------------------------------------------------------------ */
-/*  Elementos arrastáveis                                              */
-/* ------------------------------------------------------------------ */
+/* ------------------------------- carta -------------------------------- */
 
-interface DraggableThingProps {
-  item: TrayItem;
+interface CardProps {
+  s: Situation;
   disabled: boolean;
+  shaking: boolean;
 }
 
-function DraggableThing({ item, disabled }: DraggableThingProps) {
+function DraggableCard({ s, disabled, shaking }: CardProps) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
-    id: item.id,
-    data: { kind: item.kind },
+    id: String(s.id),
+    data: { good: s.good },
     disabled,
   });
-
   const style = {
     transform: CSS.Translate.toString(transform),
     touchAction: 'none' as const,
   };
-
-  if (item.kind === 'sad') {
-    // a animação "flutuar" fica num wrapper, o transform do drag no elemento interno
-    return (
-      <div className="animate-float-slow">
-        <div
-          ref={setNodeRef}
-          {...listeners}
-          {...attributes}
-          style={style}
-          aria-label="Bloco cinzento triste"
-          className={`flex h-24 w-24 flex-col items-center justify-center gap-1 rounded-2xl border-4 border-slate-500 bg-gradient-to-b from-slate-300 to-slate-500 shadow-xl ${
-            isDragging ? 'rotate-3 scale-105 opacity-80' : ''
-          }`}
-        >
-          <Frown className="h-10 w-10 text-white" strokeWidth={2.5} />
-          <span className="text-[10px] font-extrabold tracking-widest text-white/85 uppercase">
-            Triste
-          </span>
-        </div>
-      </div>
-    );
-  }
-
+  const wrong = s.good === false;
   return (
-    <div className="animate-float">
+    <div
+      className={`${shaking ? 'animate-shake' : 'animate-float-slow'}`}
+      style={{ animationDelay: `${(s.id % 3) * 0.4}s` }}
+    >
       <div
         ref={setNodeRef}
         {...listeners}
         {...attributes}
         style={style}
-        aria-label="Coração brilhante com cruz"
-        className={`relative flex h-24 w-24 items-center justify-center rounded-full border-4 border-pink-200 bg-gradient-to-b from-pink-400 to-rose-600 shadow-[0_0_26px_rgba(244,114,182,0.95)] ${
-          isDragging ? 'scale-110' : ''
-        }`}
+        aria-label={`carta: ${s.text}`}
+        className={`flex h-28 w-24 flex-col items-center justify-center gap-1 rounded-2xl border-4 px-1 text-center shadow-xl ${
+          wrong
+            ? 'border-slate-400 bg-gradient-to-b from-slate-200 to-slate-400'
+            : 'border-rose-200 bg-gradient-to-b from-rose-200 to-rose-400'
+        } ${isDragging ? 'scale-110 opacity-85' : ''}`}
       >
-        <Sparkles className="absolute -left-2 -top-2 h-6 w-6 text-yellow-300 animate-pulse" />
-        <Heart className="h-12 w-12 fill-white text-rose-100 drop-shadow" />
-        {/* cruz/mais sobre o coração */}
-        <span className="absolute -top-2 -right-2 flex h-9 w-9 items-center justify-center rounded-full border-2 border-rose-200 bg-white shadow-lg">
-          <Plus className="h-5 w-5 text-rose-500" strokeWidth={3.5} />
+        <span className="text-4xl">{s.emoji}</span>
+        <span className="text-[10px] leading-tight font-extrabold text-white drop-shadow">
+          {s.text}
         </span>
       </div>
     </div>
   );
 }
 
-/* ------------------------------------------------------------------ */
-/*  Jogo                                                               */
-/* ------------------------------------------------------------------ */
+/* -------------------------------- jogo -------------------------------- */
 
 export default function GameBalanca({ onExit }: GameProps) {
-  const [won, setWon] = useState(false);
-  const [shaking, setShaking] = useState(false);
-  const [sadHint, setSadHint] = useState(false);
-  const recorded = useRef(false);
-
-  useEffect(() => {
-    if (won && !recorded.current) {
-      recorded.current = true;
-      completeGame('balanca', 3);
-    }
-  }, [won]);
+  const [level, setLevel] = useState(() => nextUnfinishedLevel(loadLevels(), 'balanca'));
+  const [errors, setErrors] = useState(0);
+  const [done, setDone] = useState<Set<number>>(new Set());
+  const [shakingId, setShakingId] = useState<number | null>(null);
+  const [finished, setFinished] = useState(false);
+  const recorded = useRef<Set<number>>(new Set());
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
   );
 
-  const tilt = won ? 0 : -16;
+  const start = (level - 1) * CARDS_PER_LEVEL;
+  const cards = SITUATIONS.slice(start, start + CARDS_PER_LEVEL);
+  const isLast = level === TOTAL_LEVELS;
+
+  function starsFrom(errCount: number): number {
+    return errCount === 0 ? 3 : errCount <= 2 ? 2 : 1;
+  }
 
   function handleDragEnd(event: DragEndEvent) {
+    if (finished) return;
     const { active, over } = event;
-    if (!over || over.id !== 'scale-zone') return;
+    if (!over) return;
+    const id = Number(active.id);
+    const card = SITUATIONS.find((c) => c.id === id);
+    if (!card || done.has(id)) return;
 
-    const kind = active.data.current?.kind as ItemKind | undefined;
+    const droppedOnCerta = over.id === 'certa';
+    const correct = droppedOnCerta === card.good;
 
-    if (kind === 'heart') {
-      setWon(true);
-      return;
-    }
-
-    if (kind === 'sad') {
-      // bloco triste na balança: nada acontece de bom — só um "abano" e uma dica
-      setShaking(true);
-      setSadHint(true);
-      window.setTimeout(() => setShaking(false), 600);
+    if (correct) {
+      playCorrect();
+      const next = new Set(done);
+      next.add(id);
+      setDone(next);
+      if (next.size === CARDS_PER_LEVEL) {
+        finishLevel();
+      }
+    } else {
+      playWrong();
+      setErrors((e) => e + 1);
+      setShakingId(id);
+      window.setTimeout(() => setShakingId(null), 550);
     }
   }
 
-  function reset() {
-    setWon(false);
-    setShaking(false);
-    setSadHint(false);
+  function finishLevel() {
+    const stars = starsFrom(errors);
+    if (!recorded.current.has(level)) {
+      recorded.current.add(level);
+      completeLevel('balanca', level, stars);
+      if (isLast) playWin();
+    }
+    setFinished(true);
+  }
+
+  function nextLevel() {
+    setLevel((l) => l + 1);
+    setErrors(0);
+    setDone(new Set());
+    setShakingId(null);
+    setFinished(false);
   }
 
   return (
     <GameShell
       title="A Balança das Escolhas"
-      subtitle="Arrasta o coração para dentro da balança!"
+      subtitle="10 níveis · Arraste cada situação para o lado que ela merece!"
       onExit={onExit}
       bg="bg-gradient-to-b from-amber-100 via-orange-100 to-amber-200"
       titleClass="text-amber-700"
     >
-      {won ? <Confetti recycle={false} numberOfPieces={380} gravity={0.12} /> : null}
+      {finished ? <Confetti recycle={false} numberOfPieces={220} gravity={0.16} /> : null}
 
       <div aria-live="polite" className="sr-only">
-        {won ? 'Parabéns! A balança equilibrou!' : ''}
+        {finished
+          ? 'Nível concluído!'
+          : `${done.size} de ${CARDS_PER_LEVEL} cartas no lugar certo`}
       </div>
 
       <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
-        <div className="relative flex w-full flex-1 flex-col items-center justify-center gap-6 px-4 pb-8">
-          <ScaleArea tilt={tilt} shaking={shaking} blocksGone={won} heartPlaced={won} />
+        <div className="relative flex w-full flex-1 flex-col items-center gap-5 px-4 pb-8">
+          <LevelHUD level={level} totalLevels={TOTAL_LEVELS} />
 
-          {!won && sadHint ? (
-            <p className="animate-pop rounded-full bg-rose-100 px-5 py-2 text-center text-sm font-extrabold text-rose-600 shadow">
-              😢 Os blocos tristes não servem… procura o ✨ coração ✨ e solta aqui!
-            </p>
-          ) : null}
-
-          {/* tabuleiro de elementos arrastáveis */}
-          <div
-            className={`flex items-end justify-center gap-8 pt-4 transition-all duration-700 ${
-              won ? 'pointer-events-none scale-90 opacity-0' : ''
+          {/* placar de erros */}
+          <span
+            className={`rounded-full px-5 py-1.5 text-sm font-black shadow ${
+              errors === 0 ? 'bg-emerald-400 text-emerald-950' : 'bg-rose-500 text-white'
             }`}
           >
-            {TRAY_ITEMS.map((item) => (
-              <DraggableThing key={item.id} item={item} disabled={won} />
-            ))}
+            {errors === 0
+              ? '⚖️ Zero erros — capricha!'
+              : `💥 ${errors} erro${errors > 1 ? 's' : ''} até aqui`}
+          </span>
+
+          {/* zonas de destino */}
+          <div className="flex w-full max-w-lg items-center gap-3">
+            <DropZone id="errada" label="ERRADA" kind="errada" />
+            <span className="text-2xl font-black text-amber-600">×</span>
+            <DropZone id="certa" label="CERTA" kind="certa" />
           </div>
 
-          {/* vitória */}
-          {won ? (
-            <div className="animate-pop -mt-4 flex flex-col items-center gap-4">
-              <span className="flex items-center gap-1 rounded-full bg-amber-100 px-4 py-1.5 shadow">
-                <span className="text-sm font-extrabold text-amber-700">Capítulo concluído!</span>
-                {[1, 2, 3].map((i) => (
-                  <Star key={i} className="h-5 w-5 fill-amber-400 text-amber-400" />
-                ))}
-              </span>
-              <p className="rounded-3xl bg-white/90 px-8 py-4 text-center text-2xl font-black text-emerald-600 shadow-xl sm:text-3xl">
-                Muito bem! 🎉{' '}
-                <span className="block text-base font-bold text-emerald-500">
-                  A balança equilibrou: a boa escolha vale mais que qualquer tesouro!
-                </span>
-              </p>
-              <button
-                type="button"
-                onClick={reset}
-                className="flex items-center gap-3 rounded-full bg-emerald-500 px-10 py-5 text-2xl font-extrabold text-white shadow-[0_8px_0_rgba(5,150,105,0.9)] transition-transform hover:scale-105 active:translate-y-1 active:shadow-none sm:text-3xl"
-              >
-                <RotateCcw className="h-8 w-8" /> Jogar Novamente
-              </button>
-              <button
-                type="button"
-                onClick={onExit}
-                className="flex items-center gap-2 rounded-full bg-white/70 px-6 py-2 text-sm font-bold text-slate-600 shadow active:scale-95"
-              >
-                <PartyPopper className="h-4 w-4" /> Outros jogos
-              </button>
+          {/* instrução */}
+          <p className="text-sm font-bold text-amber-700/80">
+            💡 Leia a situação e solte no lado certo!
+          </p>
+
+          {/* cartas */}
+          <div
+            className={`flex items-start justify-center gap-5 transition-all duration-500 ${
+              finished ? 'scale-90 opacity-0' : ''
+            }`}
+          >
+            {cards.map((s) => {
+              const isDone = done.has(s.id);
+              if (isDone) return <span key={s.id} className="flex h-28 w-24 items-center justify-center text-5xl" aria-hidden>✅</span>;
+              return (
+                <DraggableCard
+                  key={s.id}
+                  s={s}
+                  disabled={finished}
+                  shaking={shakingId === s.id}
+                />
+              );
+            })}
+          </div>
+
+          {/* conclusão */}
+          {finished ? (
+            <div className="-mt-2 flex flex-col items-center">
+              <LevelDone
+                stars={starsFrom(errors)}
+                onNext={isLast ? undefined : nextLevel}
+                onExit={onExit}
+                lesson={
+                  isLast
+                    ? 'A balança de Deus pesa o coração: cada boa escolha é um tesouro! ⚖️'
+                    : undefined
+                }
+              />
             </div>
-          ) : (
-            <p className="text-center text-sm font-bold text-amber-700/70">
-              Solta o coração em cima da balança ✨
-            </p>
-          )}
+          ) : null}
+
+          <span className="flex items-center gap-1 text-xs font-bold text-amber-700/60">
+            <Heart className="h-4 w-4 text-rose-400" /> carta para o coração ·
+            <Square className="h-3 w-3 text-slate-500" /> carta para a pedra
+          </span>
         </div>
       </DndContext>
     </GameShell>

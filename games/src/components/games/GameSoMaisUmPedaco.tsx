@@ -1,219 +1,211 @@
-import { useEffect, useState } from 'react';
+import { useRef, useState } from 'react';
 import Confetti from 'react-confetti';
-import { Candy, Gift, Smile, Sparkles } from 'lucide-react';
+import { Candy } from 'lucide-react';
 import GameShell from '../GameShell';
-import ForgivenessCard from '../ForgivenessCard';
+import LevelHUD from '../LevelHUD';
+import LevelDone from '../LevelDone';
+import { completeLevel, loadLevels, nextUnfinishedLevel } from '../../lib/progress';
+import { playCorrect, playWin, playWrong } from '../../lib/sound';
 
 interface GameProps {
   onExit: () => void;
 }
 
-type GamePhase = 'choice' | 'immediate' | 'consequence' | 'forgiveness';
+interface Question {
+  prompt: string;
+  candies?: string;
+  options: string[];
+  answer: string;
+}
 
-const IMMEDIATE_MS = 2800;
-const CONSEQUENCE_MS = 4200;
-const CANDIES = 5;
+const TOTAL_LEVELS = 10;
+const QUESTIONS_PER_LEVEL = 3;
+
+function ri(min: number, max: number): number {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function shuffle<T>(arr: T[]): T[] {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function divisionQuestion(
+  level: number,
+): Question {
+  const withRemainder = level >= 6 && level <= 9;
+  const d = level === 1 ? 2 : level === 2 ? ri(2, 3) : level === 3 ? ri(4, 5) : ri(2, 6);
+  const factor =
+    level <= 3 ? ri(2, 4) : level <= 7 ? ri(3, 6) : level <= 9 ? ri(4, 7) : ri(5, 8);
+  const q = factor;
+  const extra = withRemainder ? ri(1, d - 1) : 0;
+  const n = q * d + extra;
+
+  const peopleWord = level === 8 || level === 10 ? 'grupos' : 'amigos';
+  const answer =
+    extra > 0 ? `${q} e sobram ${extra}` : withRemainder ? `${q} e sobram ${extra}` : String(q);
+
+  const prompt =
+    level === 8 || level === 10
+      ? `${n} brigadeiros para dividir igual com ${d} ${peopleWord}: quantos cada e quanto sobra?`
+      : `${n} 🍬 divididos igualmente entre ${d} ${peopleWord}: quantos cada${
+          withRemainder ? ' e quanto sobra?' : '?'
+        }`;
+
+  // opções próximas da resposta (quantidade e sobra)
+  const opts = new Set<string>([answer]);
+  while (opts.size < 4) {
+    const dq = ri(1, 2);
+    const dr = withRemainder ? ri(0, d - 1) : 0;
+    const opt = dr > 0 ? `${q + dq} e sobram ${dr}` : String(q + dq);
+    opts.add(opt);
+  }
+
+  return {
+    prompt,
+    candies: n <= 14 ? '🍬'.repeat(n) : undefined,
+    options: shuffle([...opts]),
+    answer,
+  };
+}
 
 export default function GameSoMaisUmPedaco({ onExit }: GameProps) {
-  const [phase, setPhase] = useState<GamePhase>('choice');
-  const [hogged, setHogged] = useState<boolean | null>(null); // true = pegou tudo
+  const [level, setLevel] = useState(() =>
+    nextUnfinishedLevel(loadLevels(), 'so-mais-um-pedaco', TOTAL_LEVELS),
+  );
+  const [q, setQ] = useState<Question>(() => divisionQuestion(1));
+  const [qIndex, setQIndex] = useState(0);
+  const [errors, setErrors] = useState(0);
+  const [shake, setShake] = useState(false);
+  const [finished, setFinished] = useState(false);
+  const recorded = useRef<Set<number>>(new Set());
 
-  useEffect(() => {
-    if (phase === 'immediate') {
-      const t = window.setTimeout(() => setPhase('consequence'), IMMEDIATE_MS);
-      return () => window.clearTimeout(t);
-    }
-    if (phase === 'consequence') {
-      const t = window.setTimeout(() => setPhase('forgiveness'), CONSEQUENCE_MS);
-      return () => window.clearTimeout(t);
-    }
-  }, [phase]);
+  const isLast = level === TOTAL_LEVELS;
 
-  function choose(opt: 'hog' | 'share') {
-    setHogged(opt === 'hog');
-    setPhase('immediate');
+  function starsFrom(errCount: number): number {
+    return errCount === 0 ? 3 : errCount <= 2 ? 2 : 1;
   }
 
-  function reset() {
-    setHogged(null);
-    setPhase('choice');
+  function pick(option: string) {
+    if (finished) return;
+    if (option === q.answer) {
+      playCorrect();
+      const nextQ = qIndex + 1;
+      if (nextQ >= QUESTIONS_PER_LEVEL) {
+        finishLevel();
+        return;
+      }
+      setQIndex(nextQ);
+      setQ(divisionQuestion(level));
+    } else {
+      playWrong();
+      setErrors((e) => e + 1);
+      setShake(true);
+      window.setTimeout(() => setShake(false), 500);
+    }
   }
 
-  const friendsGone = hogged === true && phase !== 'choice' && phase !== 'immediate';
-  const friendsTogether = hogged === false && phase !== 'choice';
+  function finishLevel() {
+    const stars = starsFrom(errors);
+    if (!recorded.current.has(level)) {
+      recorded.current.add(level);
+      completeLevel('so-mais-um-pedaco', level, stars);
+      if (isLast) playWin();
+    }
+    setFinished(true);
+  }
+
+  function nextLevel() {
+    const l = level + 1;
+    setLevel(l);
+    setQIndex(0);
+    setErrors(0);
+    setFinished(false);
+    setQ(divisionQuestion(l));
+  }
 
   return (
     <GameShell
       title="Só Mais um Pedaço"
-      subtitle="A bandeja tem doces para todo mundo?"
+      subtitle="10 níveis · Divida os doces certinhos para todo mundo!"
       onExit={onExit}
       bg="bg-gradient-to-b from-pink-100 via-rose-50 to-amber-100"
       titleClass="text-rose-600"
     >
-      {phase === 'immediate' && hogged === true ? (
-        <Confetti recycle={false} numberOfPieces={220} gravity={0.18} />
-      ) : null}
+      {finished ? <Confetti recycle={false} numberOfPieces={220} gravity={0.16} /> : null}
 
       <div aria-live="polite" className="sr-only">
-        {phase === 'immediate' && hogged === true
-          ? 'Você ficou com todos os doces'
-          : phase === 'immediate' && hogged === false
-            ? 'Você entregou metade'
-            : phase === 'consequence' && hogged === true
-              ? 'Ficar com tudo deixou você sozinho'
-              : phase === 'consequence' && hogged === false
-                ? 'Vocês dividiram e foram mais felizes'
-                : ''}
+        {finished
+          ? 'Nível concluído!'
+          : `Pergunta ${qIndex + 1} de ${QUESTIONS_PER_LEVEL}`}
       </div>
 
-      <div className="relative flex w-full flex-1 flex-col items-center justify-center gap-6 px-4 pb-8">
-        {/* ------- cena: bandeja de doces ------- */}
-        <div className="relative flex h-44 w-full max-w-md items-end justify-center">
-          <div className="absolute bottom-0 h-6 w-3/4 rounded-full bg-rose-900/10" />
+      <div className="relative flex w-full flex-1 flex-col items-center gap-5 px-4 pb-8">
+        <LevelHUD level={level} totalLevels={TOTAL_LEVELS} />
 
-          {/* bandeja */}
-          <div className="absolute bottom-4 left-1/2 flex h-12 w-44 -translate-x-1/2 items-center justify-center rounded-2xl border-b-4 border-amber-300 bg-gradient-to-b from-white to-amber-100 shadow-xl">
-            {Array.from({ length: CANDIES }).map((_, i) => (
-              <Candy
-                key={i}
-                className={`mx-0.5 h-6 w-6 text-rose-400 transition-all duration-700 ${
-                  hogged === true && phase !== 'choice'
-                    ? 'scale-125'
-                    : 'scale-100'
-                }`}
-              />
-            ))}
-          </div>
-
-          {/* amigos */}
-          {[0, 1, 2].map((i) => {
-            const gone = friendsGone;
-            return (
-              <div
-                key={i}
-                className={`absolute bottom-16 flex flex-col items-center transition-all duration-1000 ${
-                  i === 0 ? 'left-[4%]' : i === 1 ? 'right-[4%]' : 'left-1/2 -translate-x-1/2 top-0'
-                } ${
-                  gone
-                    ? `translate-y-6 scale-0 opacity-0`
-                    : 'scale-100 opacity-100'
-                } ${friendsTogether ? 'animate-bounce' : ''}`}
-                style={gone ? { transitionDelay: `${(i + 1) * 350}ms` } : undefined}
-              >
-                <span
-                  className={`flex h-12 w-12 items-center justify-center rounded-full shadow ${
-                    friendsTogether ? 'bg-emerald-100' : 'bg-rose-100'
-                  }`}
-                >
-                  <Smile
-                    className={`h-7 w-7 ${
-                      friendsTogether
-                        ? 'text-emerald-500'
-                        : gone
-                          ? 'text-slate-300'
-                          : 'text-rose-400'
-                    }`}
-                  />
-                </span>
-                <span className="sr-only">amigo</span>
-              </div>
-            );
-          })}
-
-          {/* você segurando tudo (imediato do "pegar tudo") */}
-          {phase === 'immediate' && hogged === true ? (
-            <div className="absolute -top-1 left-1/2 z-10 -translate-x-1/2 animate-pop">
-              <span className="flex items-center gap-1 rounded-full bg-rose-400 px-4 py-1.5 text-lg font-black text-white shadow-[0_0_18px_rgba(251,113,133,0.9)]">
-                <Candy className="h-5 w-5" /> {CANDIES + 1} doces!
-              </span>
-            </div>
-          ) : null}
-
-          {phase === 'immediate' && hogged === false ? (
-            <div className="absolute -top-1 left-1/2 z-10 -translate-x-1/2 animate-pop">
-              <span className="flex items-center gap-1 rounded-full bg-white/90 px-4 py-1.5 text-base font-bold text-emerald-600 shadow-lg">
-                <Gift className="h-5 w-5" /> Metade entregue
-              </span>
-            </div>
+        {/* pergunta */}
+        <div
+          className={`flex w-full max-w-lg flex-col items-center gap-3 rounded-3xl bg-white/90 px-6 py-5 text-center shadow-xl ${shake ? 'animate-shake' : ''}`}
+        >
+          <span className="text-sm font-black tracking-widest text-rose-500/80 uppercase">
+            Pergunta {qIndex + 1}/{QUESTIONS_PER_LEVEL}
+          </span>
+          <p className="text-xl font-black text-slate-800 sm:text-2xl">{q.prompt}</p>
+          {q.candies ? (
+            <p className="flex max-w-full flex-wrap justify-center gap-1 text-2xl leading-relaxed">
+              {q.candies}
+            </p>
           ) : null}
         </div>
 
-        {/* ------- mensagem ------- */}
-        <p className="max-w-md rounded-3xl bg-white/80 px-6 py-3 text-center text-lg font-bold text-slate-700 shadow-md">
-          {phase === 'choice' && 'A bandeja de doces chegou. Seus amigos olham…'}
-          {phase === 'immediate' && hogged === true && 'Tudo seu, agora! Que brilho de vitória…'}
-          {phase === 'immediate' && hogged === false && 'Você entregou metade. Um gesto simples.'}
-          {phase === 'consequence' && hogged === true && (
-            <>
-              Ficar com tudo deixou você sozinho…{' '}
-              <span className="block pt-1 text-base font-semibold text-slate-500">
-                Os amigos saíram um a um.
-              </span>
-            </>
-          )}
-          {phase === 'consequence' && hogged === false && (
-            <>
-              Vocês dividiram e foram mais felizes!{' '}
-              <span className="block pt-1 text-base font-semibold text-emerald-600">
-                A alegria ficou do tamanho da turma.
-              </span>
-            </>
-          )}
-          {phase === 'forgiveness' &&
-            'Dividir dobra a alegria e enche o céu de estrelas! ✨'}
-        </p>
+        {/* opções */}
+        <div className="grid w-full max-w-lg grid-cols-2 gap-3">
+          {q.options.map((opt) => (
+            <button
+              key={opt}
+              type="button"
+              onClick={() => pick(opt)}
+              disabled={finished}
+              className="flex h-20 items-center justify-center rounded-2xl border-2 border-rose-300 bg-white px-3 text-xl font-black text-rose-600 shadow-md transition-transform hover:scale-105 active:scale-95 sm:text-2xl"
+            >
+              {opt}
+            </button>
+          ))}
+        </div>
 
-        {/* ------- escolha ------- */}
-        {phase === 'choice' ? (
-          <div className="flex w-full max-w-md flex-col items-center gap-4">
-            <button
-              type="button"
-              onClick={() => choose('hog')}
-              className="flex w-full items-center justify-center gap-3 rounded-3xl border-4 border-pink-300 bg-gradient-to-b from-pink-400 to-rose-500 px-8 py-5 text-2xl font-extrabold text-white shadow-[0_0_22px_rgba(244,114,182,0.95)] transition-transform hover:scale-105 active:scale-95 animate-pulse"
-            >
-              <Candy className="h-8 w-8" />
-              <Sparkles className="h-5 w-5 text-pink-200" />
-              Pegar tudo pra mim
-              <Sparkles className="h-5 w-5 text-pink-200" />
-            </button>
-            <button
-              type="button"
-              onClick={() => choose('share')}
-              className="w-full items-center justify-center rounded-3xl border-2 border-slate-200 bg-white/90 px-8 py-5 text-xl font-bold text-rose-500 shadow-md transition-transform hover:scale-105 active:scale-95"
-            >
-              Dividir
-            </button>
+        {/* placar de erros */}
+        <span
+          className={`rounded-full px-5 py-1.5 text-sm font-black shadow ${
+            errors === 0
+              ? 'bg-emerald-400 text-emerald-950'
+              : 'bg-rose-500 text-white'
+          }`}
+        >
+          {errors === 0 ? '✨ Divisão perfeita!' : `💥 ${errors} erro${errors > 1 ? 's' : ''} neste nível`}
+        </span>
+
+        <span className="flex items-center gap-1 text-xs font-bold text-rose-600/60">
+          <Candy className="h-4 w-4 text-rose-400" /> dividir igual agrada a Deus e dobra a alegria
+        </span>
+
+        {/* conclusão */}
+        {finished ? (
+          <div className="-mt-2 flex flex-col items-center">
+            <LevelDone
+              stars={starsFrom(errors)}
+              onNext={isLast ? undefined : nextLevel}
+              onExit={onExit}
+              lesson={
+                isLast
+                  ? 'Quem divide com justiça enche o céu de estrelas e o coração de alegria! 🍬'
+                  : undefined
+              }
+            />
           </div>
-        ) : null}
-
-        {/* ------- avanço opcional ------- */}
-        {phase === 'immediate' ? (
-          <button
-            type="button"
-            onClick={() => setPhase('consequence')}
-            className="rounded-full bg-white/60 px-5 py-2 text-sm font-bold text-slate-500 shadow transition-transform active:scale-95"
-          >
-            Depois…
-          </button>
-        ) : null}
-        {phase === 'consequence' ? (
-          <button
-            type="button"
-            onClick={() => setPhase('forgiveness')}
-            className="rounded-full bg-white/60 px-5 py-2 text-sm font-bold text-slate-500 shadow transition-transform active:scale-95"
-          >
-            Depois…
-          </button>
-        ) : null}
-
-        {/* ------- perdão e recomeço ------- */}
-        {phase === 'forgiveness' ? (
-          <ForgivenessCard
-            onForgive={reset}
-            onExit={onExit}
-            gameId="so-mais-um-pedaco"
-            stars={hogged === true ? 1 : 3}
-          />
         ) : null}
       </div>
     </GameShell>
