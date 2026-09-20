@@ -11,50 +11,57 @@ interface GameProps {
   onExit: () => void;
 }
 
+interface Choice {
+  t: string;
+  e: string; // emoji
+}
+
 interface Question {
   q: string;
-  right: string;
-  r: string; // emoji da opção certa
-  wrong: string;
-  w: string; // emoji da opção errada
+  right: Choice; // resposta certa
+  wrongs: Choice[]; // distratores (4)
+}
+
+interface PreparedQuestion extends Question {
+  options: Choice[]; // as 5 opções embaralhadas
 }
 
 const STEPS = 5;
 const TOTAL_TRECHOS = 3;
 const QUESTIONS_PER_TRECHO = 10;
 
-// 30 perguntas da lição: 3 trechos × 10
+// 30 perguntas da lição: 3 trechos × 10 (cada uma com 5 opções)
 const QUESTIONS: Question[] = [
-  { q: 'Você encontra uma moeda no chão…', right: 'Devolvo ao dono', r: '🙂', wrong: 'Guardo escondido', w: '😜' },
-  { q: 'O vaso quebrou sem querer…', right: 'Conto a verdade', r: '💛', wrong: 'Digo que não fui eu', w: '🙈' },
-  { q: 'Tem 3 doces e 3 amigos…', right: 'Divido um pra cada', r: '🍬', wrong: 'Pego tudo pra mim', w: '🫣' },
-  { q: 'A turma quer deixar um amigo de fora…', right: 'Fico com o amigo', r: '🤝', wrong: 'Vou junto e deixo ele', w: '🏃' },
-  { q: 'Quando você conta mentira…', right: 'O coração pesa', r: '💙', wrong: 'Fica leve e feliz', w: '🎈' },
-  { q: 'Uma boa escolha brilha como…', right: 'Uma estrela', r: '⭐', wrong: 'Uma pedra', w: '🪨' },
-  { q: 'Seu nome está guardado no…', right: 'Livro da Vida', r: '📖', wrong: 'Chão do quarto', w: '🪑' },
-  { q: 'Quando você erra, Deus…', right: 'Sempre pronto a perdoar', r: '🥹', wrong: 'Vai embora pra sempre', w: '😢' },
-  { q: 'O caminho da luz leva para…', right: 'Perto de Deus', r: '☀️', wrong: 'O fogo do inferno', w: '🔥' },
-  { q: 'A alegria fica maior quando…', right: 'A gente divide', r: '🎉', wrong: 'Fica sozinho', w: '🔒' },
-  { q: 'O moço te deu troco a mais…', right: 'Devolvo o troco', r: '💵', wrong: 'Guardar e sair', w: '🏃' },
-  { q: 'Você acha uma carteira no parque…', right: 'Entrego a um adulto', r: '👮', wrong: 'Escondo para mim', w: '🥷' },
-  { q: 'Nota de 50 no chão do mercado…', right: 'Entrego no caixa', r: '💛', wrong: 'Pego rápido', w: '🫥' },
-  { q: 'O vendedor te deu um doce a mais…', right: 'Devolvo o doce', r: '🍭', wrong: 'Como e fico quieto', w: '🤫' },
-  { q: 'Contar a verdade deixa Deus…', right: 'Feliz!', r: '😄', wrong: 'Triste e longe', w: '😞' },
-  { q: 'Quem é digno de confiança?', right: 'Quem diz a verdade', r: '🫶', wrong: 'Quem engana', w: '🎭' },
-  { q: 'A mentirinha de todo dia…', right: 'Cresce e pesa', r: '🌱', wrong: 'Desaparece sozinha', w: '🪄' },
-  { q: 'O que é tesouro no céu?', right: 'As boas ações', r: '🏆', wrong: 'O dinheiro escondido', w: '💰' },
-  { q: 'Quem você deve amar?', right: 'Todos, até quem erra', r: '💕', wrong: 'Só quem é igual a você', w: '🚫' },
-  { q: 'Um colega novo chegou na escola…', right: 'Chamo para brincar', r: '🫂', wrong: 'Deixo ele de fora', w: '🙄' },
-  { q: 'O menorzinho quer jogar com vocês…', right: 'Deixo ele jogar', r: '🤗', wrong: 'Digo que não alcança', w: '😤' },
-  { q: 'A turma ri de um colega…', right: 'Defendo o colega', r: '🛡️', wrong: 'Rio junto', w: '🤭' },
-  { q: 'Perdoar quem te magoou…', right: 'É obedecer a Deus', r: '🕊️', wrong: 'É ser fraco', w: '💪' },
-  { q: 'Deus prometeu recompensa…', right: 'Eterna, junto dele', r: '👑', wrong: 'Só de brinquedo', w: '🎁' },
-  { q: 'O coração que pede perdão…', right: 'Fica leve de novo', r: '🕊️', wrong: 'Vira pedra', w: '🪨' },
-  { q: 'Quem faz o bem sem esperar nada…', right: 'Recebe a bênção de Deus', r: '🌈', wrong: 'Perde tempo', w: '⏳' },
-  { q: 'A maior lição de Jesus foi…', right: 'Amar uns aos outros', r: '❤️', wrong: 'Ganhar sempre', w: '🥇' },
-  { q: 'Seu amigo confiou um segredo…', right: 'Você guarda também', r: '🤐', wrong: 'Conta para a turma', w: '🗣️' },
-  { q: 'Você quebrou algo sem querer…', right: 'Assumo na hora', r: '🙋', wrong: 'Culpo o irmãozinho', w: '😈' },
-  { q: 'O final da Estrada da Luz é…', right: 'Estar com Deus para sempre', r: '🌟', wrong: 'Caminhar sem fim', w: '🌀' },
+  { q: 'Você encontra uma moeda no chão…', right: { t: 'Devolvo ao dono', e: '🙂' }, wrongs: [{ t: 'Guardo escondido', e: '😜' }, { t: 'Jogo no lixo', e: '🗑️' }, { t: 'Piso por cima', e: '👟' }, { t: 'Dou para o primeiro que vejo', e: '🎲' }] },
+  { q: 'O vaso quebrou sem querer…', right: { t: 'Conto a verdade', e: '💛' }, wrongs: [{ t: 'Digo que não fui eu', e: '🙈' }, { t: 'Escondo os cacos', e: '🕳️' }, { t: 'Culpo o gato', e: '🐱' }, { t: 'Saio correndo', e: '🏃' }] },
+  { q: 'Tem 3 doces e 3 amigos…', right: { t: 'Divido um pra cada', e: '🍬' }, wrongs: [{ t: 'Pego tudo pra mim', e: '🫣' }, { t: 'Divido só com um amigo', e: '🤏' }, { t: 'Escondo os doces', e: '🎁' }, { t: 'Corro e abro tudo', e: '⚡' }] },
+  { q: 'A turma quer deixar um amigo de fora…', right: { t: 'Fico com o amigo', e: '🤝' }, wrongs: [{ t: 'Vou junto e deixo ele', e: '🏃' }, { t: 'Rio dele junto com a turma', e: '🤭' }, { t: 'Finjo que não vi', e: '🙈' }, { t: 'Fico quieto e não ajudo', e: '🤐' }] },
+  { q: 'Quando você conta mentira…', right: { t: 'O coração pesa', e: '💙' }, wrongs: [{ t: 'Fica leve e feliz', e: '🎈' }, { t: 'Ninguém nunca fica sabendo', e: '🕵️' }, { t: 'É só uma brincadeira', e: '🪀' }, { t: 'Deus nem percebe', e: '🌫️' }] },
+  { q: 'Uma boa escolha brilha como…', right: { t: 'Uma estrela', e: '⭐' }, wrongs: [{ t: 'Uma pedra', e: '🪨' }, { t: 'Uma nuvem cinza', e: '☁️' }, { t: 'Uma meia velha', e: '🧦' }, { t: 'Um brinquedo quebrado', e: '🧸' }] },
+  { q: 'Seu nome está guardado no…', right: { t: 'Livro da Vida', e: '📖' }, wrongs: [{ t: 'Chão do quarto', e: '🪑' }, { t: 'Caderno do colega', e: '📓' }, { t: 'Lixo da escola', e: '🗑️' }, { t: 'Bolo do aniversário', e: '🎂' }] },
+  { q: 'Quando você erra, Deus…', right: { t: 'Sempre pronto a perdoar', e: '🥹' }, wrongs: [{ t: 'Vai embora pra sempre', e: '😢' }, { t: 'Para de te amar', e: '💔' }, { t: 'Esquece de você', e: '🫥' }, { t: 'Grita com você', e: '📢' }] },
+  { q: 'O caminho da luz leva para…', right: { t: 'Perto de Deus', e: '☀️' }, wrongs: [{ t: 'O fogo do inferno', e: '🔥' }, { t: 'Uma caverna escura', e: '🕳️' }, { t: 'Uma casa abandonada', e: '🏚️' }, { t: 'O fim do mundo', e: '🌍' }] },
+  { q: 'A alegria fica maior quando…', right: { t: 'A gente divide', e: '🎉' }, wrongs: [{ t: 'Fica sozinho', e: '🔒' }, { t: 'Esconde o brinquedo', e: '🎠' }, { t: 'Guarda tudo no armário', e: '🚪' }, { t: 'Não chama ninguém', e: '🙅' }] },
+  { q: 'O moço te deu troco a mais…', right: { t: 'Devolvo o troco', e: '💵' }, wrongs: [{ t: 'Guardo e saio', e: '🏃' }, { t: 'Compro balas com ele', e: '🍭' }, { t: 'Faço de conta que não vi', e: '😶' }, { t: 'Divido com os amigos', e: '👥' }] },
+  { q: 'Você acha uma carteira no parque…', right: { t: 'Entrego a um adulto', e: '👮' }, wrongs: [{ t: 'Escondo para mim', e: '🥷' }, { t: 'Abro para olhar', e: '🔍' }, { t: 'Deixo no mesmo lugar', e: '🪑' }, { t: 'Jogo longe', e: '⚽' }] },
+  { q: 'Nota de 50 no chão do mercado…', right: { t: 'Entrego no caixa', e: '💛' }, wrongs: [{ t: 'Pego bem rápido', e: '🫥' }, { t: 'Escondo no bolso', e: '🥋' }, { t: 'Compro doces', e: '🍬' }, { t: 'Conto para todo mundo', e: '📣' }] },
+  { q: 'O vendedor te deu um doce a mais…', right: { t: 'Devolvo o doce', e: '🍭' }, wrongs: [{ t: 'Como e fico quieto', e: '🤫' }, { t: 'Guardo para depois', e: '🎁' }, { t: 'Reparto escondido', e: '🤐' }, { t: 'Digo que veio assim', e: '🙄' }] },
+  { q: 'Contar a verdade deixa Deus…', right: { t: 'Feliz!', e: '😄' }, wrongs: [{ t: 'Triste e longe', e: '😞' }, { t: 'Bravo com você', e: '😤' }, { t: 'Indiferente', e: '😐' }, { t: 'Confuso', e: '😵' }] },
+  { q: 'Quem é digno de confiança?', right: { t: 'Quem diz a verdade', e: '🫶' }, wrongs: [{ t: 'Quem engana', e: '🎭' }, { t: 'Quem esconde tudo', e: '🫥' }, { t: 'Quem culpa os outros', e: '👉' }, { t: 'Quem inventa histórias', e: '🪄' }] },
+  { q: 'A mentirinha de todo dia…', right: { t: 'Cresce e pesa', e: '🌱' }, wrongs: [{ t: 'Desaparece sozinha', e: '🪄' }, { t: 'Faz bem para todos', e: '😇' }, { t: 'É só uma conversa', e: '🗨️' }, { t: 'Ajuda nas brincadeiras', e: '🎠' }] },
+  { q: 'O que é tesouro no céu?', right: { t: 'As boas ações', e: '🏆' }, wrongs: [{ t: 'O dinheiro escondido', e: '💰' }, { t: 'Os brinquedos novos', e: '🎮' }, { t: 'As fotos famosas', e: '📸' }, { t: 'O que é guardado a sete chaves', e: '🗄️' }] },
+  { q: 'Quem você deve amar?', right: { t: 'Todos, até quem erra', e: '💕' }, wrongs: [{ t: 'Só quem é igual a você', e: '🚫' }, { t: 'Só quem te dá presente', e: '🎁' }, { t: 'Só quem é bonzinho', e: '😇' }, { t: 'Só quem mora perto', e: '🏠' }] },
+  { q: 'Um colega novo chegou na escola…', right: { t: 'Chamo para brincar', e: '🫂' }, wrongs: [{ t: 'Deixo ele de fora', e: '🙄' }, { t: 'Fico olhando de longe', e: '👀' }, { t: 'Finjo que não vi', e: '🙈' }, { t: 'Vou brincar em outro lugar', e: '🏃' }] },
+  { q: 'O menorzinho quer jogar com vocês…', right: { t: 'Deixo ele jogar', e: '🤗' }, wrongs: [{ t: 'Digo que não alcança', e: '😤' }, { t: 'Mando pedir outro dia', e: '📅' }, { t: 'Escondo a bola', e: '⚽' }, { t: 'Digo que a vez é minha', e: '🙋' }] },
+  { q: 'A turma ri de um colega…', right: { t: 'Defendo o colega', e: '🛡️' }, wrongs: [{ t: 'Rio junto', e: '🤭' }, { t: 'Fico olhando calado', e: '🤐' }, { t: 'Tiro foto da cena', e: '📸' }, { t: 'Mudo de lugar', e: '🪑' }] },
+  { q: 'Perdoar quem te magoou…', right: { t: 'É obedecer a Deus', e: '🕊️' }, wrongs: [{ t: 'É ser fraco', e: '💪' }, { t: 'É perder tempo', e: '⏳' }, { t: 'É dar o braço a torcer', e: '🙅' }, { t: 'É aceitar qualquer coisa', e: '🤷' }] },
+  { q: 'Deus prometeu recompensa…', right: { t: 'Eterna, junto dele', e: '👑' }, wrongs: [{ t: 'Só de brinquedo', e: '🎁' }, { t: 'Só de doces', e: '🍬' }, { t: 'Só de medalhas', e: '🏅' }, { t: 'Nunca vai chegar', e: '🌀' }] },
+  { q: 'O coração que pede perdão…', right: { t: 'Fica leve de novo', e: '🕊️' }, wrongs: [{ t: 'Vira pedra', e: '🪨' }, { t: 'Fica mais pesado', e: '⚓' }, { t: 'Esconde a vergonha', e: '😳' }, { t: 'Afasta-se de Deus', e: '🌫️' }] },
+  { q: 'Quem faz o bem sem esperar nada…', right: { t: 'Recebe a bênção de Deus', e: '🌈' }, wrongs: [{ t: 'Perde tempo', e: '⏳' }, { t: 'Fica sem nada', e: '🍽️' }, { t: 'É enganado pelos outros', e: '🎭' }, { t: 'Ninguém percebe', e: '🫥' }] },
+  { q: 'A maior lição de Jesus foi…', right: { t: 'Amar uns aos outros', e: '❤️' }, wrongs: [{ t: 'Ganhar sempre', e: '🥇' }, { t: 'Guardar tesouros', e: '💰' }, { t: 'Ter muitos amigos', e: '👥' }, { t: 'Gritar mais alto', e: '📢' }] },
+  { q: 'Seu amigo confiou um segredo…', right: { t: 'Você guarda também', e: '🤐' }, wrongs: [{ t: 'Conta para a turma', e: '🗣️' }, { t: 'Escreve no mural', e: '📝' }, { t: 'Posta no grupo', e: '📱' }, { t: 'Ri com os outros', e: '🤭' }] },
+  { q: 'Você quebrou algo sem querer…', right: { t: 'Assumo na hora', e: '🙋' }, wrongs: [{ t: 'Culpo o irmãozinho', e: '😈' }, { t: 'Escondo os pedaços', e: '🕳️' }, { t: 'Saio andando', e: '🚶' }, { t: 'Digo que já estava quebrado', e: '🪚' }] },
+  { q: 'O final da Estrada da Luz é…', right: { t: 'Estar com Deus para sempre', e: '🌟' }, wrongs: [{ t: 'Caminhar sem fim', e: '🌀' }, { t: 'Voltar para o começo', e: '↩️' }, { t: 'Parar no escuro', e: '🌑' }, { t: 'Acordar de um sonho', e: '💤' }] },
 ];
 
 function shuffle<T>(arr: T[]): T[] {
@@ -66,15 +73,22 @@ function shuffle<T>(arr: T[]): T[] {
   return a;
 }
 
-function pathOf(trecho: number): Question[] {
-  return QUESTIONS.slice((trecho - 1) * QUESTIONS_PER_TRECHO, trecho * QUESTIONS_PER_TRECHO);
+/** Monta a pergunta com as 5 opções já embaralhadas (a certa muda de posição). */
+function prepare(q: Question): PreparedQuestion {
+  return { ...q, options: shuffle([q.right, ...q.wrongs]) };
+}
+
+function pathOf(trecho: number): PreparedQuestion[] {
+  return QUESTIONS.slice((trecho - 1) * QUESTIONS_PER_TRECHO, trecho * QUESTIONS_PER_TRECHO).map(
+    prepare,
+  );
 }
 
 export default function GameEstradaDaLuz({ onExit }: GameProps) {
   const [trecho, setTrecho] = useState(() =>
     nextUnfinishedLevel(loadLevels(), 'estrada-da-luz', TOTAL_TRECHOS),
   );
-  const [queue, setQueue] = useState<Question[]>(() => shuffle(pathOf(1)));
+  const [queue, setQueue] = useState<PreparedQuestion[]>(() => shuffle(pathOf(1)));
   const [step, setStep] = useState(0);
   const [streak, setStreak] = useState(0);
   const [wrongCount, setWrongCount] = useState(0);
@@ -88,8 +102,10 @@ export default function GameEstradaDaLuz({ onExit }: GameProps) {
     return errCount === 0 ? 3 : errCount <= 3 ? 2 : 1;
   }
 
-  function answer(isRight: boolean) {
+  function answer(chosen: Choice) {
     if (won || queue.length === 0) return;
+
+    const isRight = chosen === current.right;
 
     if (isRight) {
       playCorrect();
@@ -300,25 +316,23 @@ export default function GameEstradaDaLuz({ onExit }: GameProps) {
 
         {/* ------- pergunta + respostas ------- */}
         {!won && current ? (
-          <div className="flex w-full max-w-lg flex-col items-center gap-4">
+          <div className="flex w-full max-w-2xl flex-col items-center gap-4">
             <p className="rounded-3xl bg-white/95 px-6 py-4 text-center text-xl font-black text-indigo-900 shadow-xl">
               {current.q}
             </p>
             <div className="grid w-full grid-cols-2 gap-3">
-              <button
-                type="button"
-                onClick={() => answer(true)}
-                className="flex min-h-20 flex-col items-center justify-center gap-1 rounded-3xl border-2 border-emerald-300 bg-emerald-50 px-4 py-3 text-lg font-extrabold text-emerald-700 shadow-md transition-transform hover:scale-105 active:scale-95"
-              >
-                <span className="text-3xl">{current.r}</span> {current.right}
-              </button>
-              <button
-                type="button"
-                onClick={() => answer(false)}
-                className="flex min-h-20 flex-col items-center justify-center gap-1 rounded-3xl border-2 border-slate-200 bg-white px-4 py-3 text-lg font-bold text-slate-600 shadow-md transition-transform hover:scale-105 active:scale-95"
-              >
-                <span className="text-3xl">{current.w}</span> {current.wrong}
-              </button>
+              {current.options.map((opt, i) => (
+                <button
+                  key={opt.t}
+                  type="button"
+                  onClick={() => answer(opt)}
+                  className={`flex min-h-20 flex-col items-center justify-center gap-1 rounded-3xl border-2 border-slate-200 bg-white px-4 py-3 text-lg font-bold text-slate-600 shadow-md transition-transform hover:scale-105 active:scale-95 ${
+                    i === current.options.length - 1 ? 'col-span-2' : ''
+                  }`}
+                >
+                  <span className="text-3xl">{opt.e}</span> {opt.t}
+                </button>
+              ))}
             </div>
           </div>
         ) : null}
