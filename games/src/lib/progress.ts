@@ -17,6 +17,7 @@ export const MAX_LEVELS_PER_GAME = 10;
 
 const KEY = 'kids-saga-progress-v2';
 const FREE_KEY = 'kids-saga-free-v1';
+const SCORE_KEY = 'kids-saga-scores-v1';
 
 /* ------------------------------- leitura ------------------------------- */
 
@@ -78,6 +79,43 @@ export function isFreeMode(): boolean {
     return localStorage.getItem(FREE_KEY) === '1';
   } catch {
     return false;
+  }
+}
+
+/* ------------------------------ recordes ------------------------------ */
+
+/** Melhor pontuação já registrada de um jogo (0 = nunca pontuou) */
+export function bestScore(gameId: string): number {
+  try {
+    const raw = localStorage.getItem(SCORE_KEY);
+    if (!raw) return 0;
+    const parsed = JSON.parse(raw) as Record<string, number>;
+    return parsed && typeof parsed === 'object' ? (parsed[gameId] ?? 0) : 0;
+  } catch {
+    return 0;
+  }
+}
+
+/** Registra a pontuação; mantém o maior valor já alcançado. */
+export function submitScore(gameId: string, score: number): number {
+  try {
+    const prev = bestScore(gameId);
+    const next = Math.max(prev, score);
+    localStorage.setItem(SCORE_KEY, JSON.stringify({ ...loadScores(), [gameId]: next }));
+    return next;
+  } catch {
+    return score;
+  }
+}
+
+function loadScores(): Record<string, number> {
+  try {
+    const raw = localStorage.getItem(SCORE_KEY);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw) as Record<string, number>;
+    return parsed && typeof parsed === 'object' ? parsed : {};
+  } catch {
+    return {};
   }
 }
 

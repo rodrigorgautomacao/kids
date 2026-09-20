@@ -4,7 +4,7 @@ import { BookHeart, BookOpen, Sparkles, Star } from 'lucide-react';
 import GameShell from '../GameShell';
 import LevelHUD from '../LevelHUD';
 import LevelDone from '../LevelDone';
-import { completeLevel, loadLevels, nextUnfinishedLevel } from '../../lib/progress';
+import { completeLevel, loadLevels, nextUnfinishedLevel, bestScore, submitScore } from '../../lib/progress';
 import { playCorrect, playPop, playWin, playWrong } from '../../lib/sound';
 
 interface GameProps {
@@ -29,6 +29,10 @@ interface PreparedQuestion extends Question {
 const STEPS = 5;
 const TOTAL_TRECHOS = 3;
 const QUESTIONS_PER_TRECHO = 10;
+const MAX_VIDAS = 3;
+const PTS_CORRETO = 100;
+const PTS_BONUS_SEQUENCIA = 25;
+const PTS_ERRO = 50;
 
 // 30 perguntas da lição: 3 trechos × 10 (cada uma com 5 opções parecidas)
 const QUESTIONS: Question[] = [
@@ -95,6 +99,10 @@ export default function GameHeroisDaBiblia({ onExit }: GameProps) {
   const [step, setStep] = useState(0);
   const [streak, setStreak] = useState(0);
   const [wrongCount, setWrongCount] = useState(0);
+  const [vidas, setVidas] = useState(MAX_VIDAS);
+  const [score, setScore] = useState(0);
+  const [record, setRecord] = useState(() => bestScore('herois-da-biblia'));
+  const [gameOver, setGameOver] = useState(false);
   const [won, setWon] = useState(false);
   const [msg, setMsg] = useState<{ text: string; good: boolean } | null>(null);
   const recorded = useRef<Set<number>>(new Set());
@@ -102,11 +110,11 @@ export default function GameHeroisDaBiblia({ onExit }: GameProps) {
   const isLast = trecho === TOTAL_TRECHOS;
 
   function starsFrom(errCount: number): number {
-    return errCount === 0 ? 3 : errCount <= 3 ? 2 : 1;
+    return errCount === 0 ? 3 : errCount === 1 ? 2 : 1;
   }
 
   function answer(chosen: Choice) {
-    if (won || queue.length === 0) return;
+    if (won || gameOver || queue.length === 0) return;
 
     const isRight = chosen === current.right;
 
@@ -114,19 +122,21 @@ export default function GameHeroisDaBiblia({ onExit }: GameProps) {
       playCorrect();
       const next = Math.min(STEPS, step + 1);
       const nextStreak = streak + 1;
+      const gained = PTS_CORRETO + Math.min(Math.max(nextStreak - 1, 0), 4) * PTS_BONUS_SEQUENCIA;
       setStreak(nextStreak);
+      setScore((s) => s + gained);
       setMsg({
         good: true,
         text:
           nextStreak >= 4
-            ? 'Você conhece a Bíblia demais! 🌟'
+            ? `Você conhece a Bíblia demais! 🌟 +${gained} pts`
             : nextStreak >= 2
-              ? `Resposta certa ×${nextStreak}!`
-              : 'Muito bem, continue assim! 📖',
+              ? `Resposta certa ×${nextStreak}! +${gained} pts`
+              : `Muito bem, continue assim! +${gained} pts`,
       });
       if (next === STEPS) {
         setStep(next);
-        finishTrecho();
+        finishTrecho(score + gained);
         return;
       }
       if (next === 2 || next === 3) playPop();
@@ -135,10 +145,20 @@ export default function GameHeroisDaBiblia({ onExit }: GameProps) {
       playWrong();
       setWrongCount((c) => c + 1);
       setStreak(0);
+      const finalScore = Math.max(0, score - PTS_ERRO);
+      setScore(finalScore);
+      const remaining = vidas - 1;
+      setVidas(remaining);
+      if (remaining <= 0) {
+        setRecord(submitScore('herois-da-biblia', finalScore));
+        setGameOver(true);
+        setMsg(null);
+        return;
+      }
       setStep((s) => Math.max(0, s - 1));
       setMsg({
         good: false,
-        text: 'Quase! As histórias são parecidas mesmo… leia com calma e tente de novo. 💪',
+        text: `Quase! Você perdeu 1 vida e ${PTS_ERRO} pts… se acalme e tente de novo. 💪`,
       });
     }
 
@@ -149,14 +169,25 @@ export default function GameHeroisDaBiblia({ onExit }: GameProps) {
     });
   }
 
-  function finishTrecho() {
+  function finishTrecho(finalScore: number) {
     const stars = starsFrom(wrongCount);
     if (!recorded.current.has(trecho)) {
       recorded.current.add(trecho);
       completeLevel('herois-da-biblia', trecho, stars);
+      setRecord(submitScore('herois-da-biblia', finalScore));
       if (isLast) playWin();
     }
     setWon(true);
+  }
+
+  function retryTrecho() {
+    setQueue(shuffle(pathOf(trecho)));
+    setStep(0);
+    setStreak(0);
+    setWrongCount(0);
+    setVidas(MAX_VIDAS);
+    setGameOver(false);
+    setMsg(null);
   }
 
   function nextTrecho() {
@@ -166,6 +197,7 @@ export default function GameHeroisDaBiblia({ onExit }: GameProps) {
     setStep(0);
     setStreak(0);
     setWrongCount(0);
+    setVidas(MAX_VIDAS);
     setWon(false);
     setMsg(null);
   }
@@ -175,7 +207,7 @@ export default function GameHeroisDaBiblia({ onExit }: GameProps) {
   return (
     <GameShell
       title="Heróis da Bíblia"
-      subtitle="3 trechos · Conheça as histórias e descubra em qual livro estão!"
+      subtitle="3 trechos · 3 vidas por trecho — não deixe as vidas acabarem!"
       onExit={onExit}
       bg="bg-gradient-to-b from-emerald-950 via-emerald-800 to-amber-200"
       titleClass="text-amber-300"
@@ -185,9 +217,11 @@ export default function GameHeroisDaBiblia({ onExit }: GameProps) {
       <div aria-live="polite" className="sr-only">
         {won
           ? 'Trecho concluído!'
-          : msg
-            ? msg.text
-            : `${step} de ${STEPS} passos em direção ao conhecimento`}
+          : gameOver
+            ? 'Fim de jogo! Suas vidas acabaram.'
+            : msg
+              ? msg.text
+              : `${step} de ${STEPS} passos em direção ao conhecimento`}
       </div>
 
       <div className="relative flex w-full flex-1 flex-col items-center justify-center gap-5 px-4 pb-8">
@@ -265,6 +299,19 @@ export default function GameHeroisDaBiblia({ onExit }: GameProps) {
 
         {/* badges de gamificação */}
         <div className="flex flex-wrap items-center justify-center gap-3">
+          <span
+            className="flex items-center gap-1 rounded-full bg-white/10 px-4 py-1.5 text-base font-black text-amber-200 shadow backdrop-blur-sm"
+            aria-label={`${vidas} de ${MAX_VIDAS} vidas`}
+          >
+            {Array.from({ length: MAX_VIDAS }).map((_, i) => (
+              <span key={i} className={i < vidas ? '' : 'opacity-25 grayscale'} aria-hidden>
+                ❤️
+              </span>
+            ))}
+          </span>
+          <span className="rounded-full bg-white/10 px-4 py-1.5 text-base font-black text-yellow-200 shadow backdrop-blur-sm">
+            ⭐ {score} pts
+          </span>
           <span className="rounded-full bg-white/10 px-4 py-1.5 text-base font-black text-amber-200 shadow backdrop-blur-sm">
             Ponto {Math.min(step, STEPS)}/{STEPS}
           </span>
@@ -273,9 +320,9 @@ export default function GameHeroisDaBiblia({ onExit }: GameProps) {
               🔥 {streak} seguidas!
             </span>
           ) : null}
-          {wrongCount >= 2 && !won ? (
+          {vidas === 1 && !won && !gameOver ? (
             <span className="animate-pulse rounded-full bg-red-600/90 px-4 py-1.5 text-sm font-black text-white shadow-[0_0_14px_rgba(220,38,38,0.7)]">
-              ⚠️ Cuidado: leia a referência com atenção!
+              ⚠️ Última vida! Tenha cuidado!
             </span>
           ) : null}
         </div>
@@ -294,7 +341,7 @@ export default function GameHeroisDaBiblia({ onExit }: GameProps) {
         ) : null}
 
         {/* ------- pergunta + respostas ------- */}
-        {!won && current ? (
+        {!won && !gameOver && current ? (
           <div className="flex w-full max-w-2xl flex-col items-center gap-4">
             <p className="rounded-3xl bg-white/95 px-6 py-4 text-center text-xl font-black text-emerald-900 shadow-xl">
               {current.q}
@@ -316,6 +363,39 @@ export default function GameHeroisDaBiblia({ onExit }: GameProps) {
           </div>
         ) : null}
 
+        {/* ------- fim de jogo ------- */}
+        {gameOver ? (
+          <div className="animate-pop flex flex-col items-center gap-5">
+            <p className="rounded-3xl bg-red-950/90 px-8 py-4 text-center text-2xl font-black text-red-200 shadow-[0_0_30px_rgba(239,68,68,0.6)] sm:text-3xl">
+              😢 Fim de jogo!
+              <span className="mt-1 block text-base font-extrabold text-red-100/85">
+                Suas 3 vidas acabaram neste trecho…
+              </span>
+              <span className="mt-3 block text-xl font-black text-amber-300">
+                ⭐ {score} pts
+                {record > 0 ? <span className="ml-2 text-sm text-white/70">Recorde: {record} pts</span> : null}
+              </span>
+            </p>
+            <p className="max-w-md text-center text-base font-bold text-white/85">
+              Não desista! Os heróis da Bíblia também caíram e se levantaram. 🙌
+            </p>
+            <button
+              type="button"
+              onClick={retryTrecho}
+              className="flex items-center gap-3 rounded-full bg-yellow-400 px-10 py-5 text-2xl font-extrabold text-amber-950 shadow-[0_8px_0_rgba(202,138,4,0.9)] transition-transform hover:scale-105 active:translate-y-1 active:shadow-none sm:text-3xl"
+            >
+              🔄 Tentar de novo
+            </button>
+            <button
+              type="button"
+              onClick={onExit}
+              className="rounded-full bg-white/70 px-6 py-2 text-sm font-bold text-slate-700 shadow transition-transform active:scale-95"
+            >
+              Outros jogos
+            </button>
+          </div>
+        ) : null}
+
         {/* ------- trecho vencido ------- */}
         {won ? (
           <div className="animate-pop flex flex-col items-center gap-4">
@@ -323,6 +403,10 @@ export default function GameHeroisDaBiblia({ onExit }: GameProps) {
               🏆 Você venceu o trecho! 🏆
               <span className="mt-1 block text-base font-extrabold text-emerald-700">
                 Cada história da Bíblia é uma luz para o nosso caminho! 💛
+              </span>
+              <span className="mt-3 block text-xl font-black text-emerald-600">
+                ⭐ {score} pts
+                {record > 0 ? <span className="ml-2 text-sm text-slate-500">Recorde: {record} pts</span> : null}
               </span>
             </p>
             <LevelDone
