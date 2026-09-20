@@ -1,6 +1,7 @@
 import type { ComponentType } from 'react';
-import { Crown } from 'lucide-react';
+import { BookHeart, Crown } from 'lucide-react';
 import GameEstradaDaLuz from '../components/games/GameEstradaDaLuz';
+import GameHeroisDaBiblia from '../components/games/GameHeroisDaBiblia';
 
 export interface GameDefinition {
   id: string;
@@ -32,5 +33,16 @@ export const games: GameDefinition[] = [
     color: 'bg-gradient-to-b from-indigo-700 via-blue-600 to-sky-500',
     totalLevels: 3,
     component: GameEstradaDaLuz,
+  },
+  {
+    id: 'herois-da-biblia',
+    title: 'Heróis da Bíblia',
+    subtitle: 'Personagens, histórias e livros da Bíblia',
+    sinopse:
+      'Conheça Noé, Abraão, Moisés, Davi, Eliseu e muitos outros heróis — e descubra em qual livro da Bíblia cada história está!',
+    icon: BookHeart,
+    color: 'bg-gradient-to-b from-emerald-700 via-teal-600 to-amber-500',
+    totalLevels: 3,
+    component: GameHeroisDaBiblia,
   },
 ];
