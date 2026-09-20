@@ -19,8 +19,8 @@ interface HubProps {
 }
 
 /**
- * Tela principal da saga "A Grande Jornada": capítulos com 10 níveis cada,
- * estrelas por capítulo, barra de progresso e modo livre/som.
+ * Tela principal da saga "A Estrada da Luz": cada resposta certa aproxima
+ * o jogador de Deus; errar recua e acende o fogo do inferno.
  * A ordem dos jogos em src/data/games.ts é a ordem dos capítulos.
  */
 export default function Hub({ onSelectGame }: HubProps) {
@@ -29,8 +29,8 @@ export default function Hub({ onSelectGame }: HubProps) {
   const [hint, setHint] = useState<string | null>(null);
 
   const progress = loadLevels();
-const totalGameLevels = (g: { id: string; totalLevels?: number }) =>
-  g.totalLevels ?? MAX_LEVELS_PER_GAME;
+  const totalGameLevels = (g: { id: string; totalLevels?: number }) =>
+    g.totalLevels ?? MAX_LEVELS_PER_GAME;
   const doneLevels = totalLevelsDone(
     progress,
     games.map((g) => g.id),
@@ -76,7 +76,7 @@ const totalGameLevels = (g: { id: string; totalLevels?: number }) =>
           <p className="mt-3 text-lg text-white/80">
             {journeyDone
               ? 'Você venceu todos os níveis da jornada! 🏆'
-              : 'Cada capítulo tem 10 níveis. Vença todos e chegue à Luz de Deus! ☀️'}
+              : 'Responda certo e caminhe cada vez mais perto de Deus! ☀️'}
           </p>
         </header>
 
