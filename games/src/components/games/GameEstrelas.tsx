@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Confetti from 'react-confetti';
 import { PartyPopper, RotateCcw, Star } from 'lucide-react';
 import GameShell from '../GameShell';
+import { completeGame } from '../../lib/progress';
 
 interface GameProps {
   onExit: () => void;
@@ -29,6 +30,14 @@ const TOTAL = STAR_SPOTS.length;
 export default function GameEstrelas({ onExit }: GameProps) {
   const [lit, setLit] = useState<number[]>([]);
   const won = lit.length === TOTAL;
+  const recorded = useRef(false);
+
+  useEffect(() => {
+    if (won && !recorded.current) {
+      recorded.current = true;
+      completeGame('conte-as-estrelas', 3);
+    }
+  }, [won]);
 
   function lightStar(id: number) {
     if (won || lit.includes(id)) return;
@@ -96,10 +105,16 @@ export default function GameEstrelas({ onExit }: GameProps) {
         {/* estado final */}
         {won ? (
           <div className="animate-pop z-20 flex flex-col items-center gap-4">
+            <span className="flex items-center gap-1 rounded-full bg-yellow-300/20 px-4 py-1.5 backdrop-blur-sm">
+              <span className="text-sm font-extrabold text-yellow-100">Capítulo concluído!</span>
+              {[1, 2, 3].map((i) => (
+                <Star key={i} className="h-5 w-5 fill-yellow-300 text-yellow-300" />
+              ))}
+            </span>
             <p className="rounded-3xl bg-white/10 px-6 py-4 text-center text-2xl font-black text-yellow-200 shadow-xl backdrop-blur-sm sm:text-3xl">
               Você acendeu todas as estrelas! ⭐⭐⭐⭐⭐
               <span className="mt-1 block text-base font-bold text-white/80">
-                Cada estrela é uma boa escolha que brilha!
+                As estrelas brilham para sempre: cada boa escolha brilha.
               </span>
             </p>
             <button

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   DndContext,
   PointerSensor,
@@ -10,8 +10,9 @@ import {
 } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
 import Confetti from 'react-confetti';
-import { Frown, Heart, PartyPopper, Plus, RotateCcw, Sparkles } from 'lucide-react';
+import { Frown, Heart, PartyPopper, Plus, RotateCcw, Sparkles, Star } from 'lucide-react';
 import GameShell from '../GameShell';
+import { completeGame } from '../../lib/progress';
 
 interface GameProps {
   onExit: () => void;
@@ -189,6 +190,14 @@ export default function GameBalanca({ onExit }: GameProps) {
   const [won, setWon] = useState(false);
   const [shaking, setShaking] = useState(false);
   const [sadHint, setSadHint] = useState(false);
+  const recorded = useRef(false);
+
+  useEffect(() => {
+    if (won && !recorded.current) {
+      recorded.current = true;
+      completeGame('balanca', 3);
+    }
+  }, [won]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
@@ -259,10 +268,16 @@ export default function GameBalanca({ onExit }: GameProps) {
           {/* vitória */}
           {won ? (
             <div className="animate-pop -mt-4 flex flex-col items-center gap-4">
+              <span className="flex items-center gap-1 rounded-full bg-amber-100 px-4 py-1.5 shadow">
+                <span className="text-sm font-extrabold text-amber-700">Capítulo concluído!</span>
+                {[1, 2, 3].map((i) => (
+                  <Star key={i} className="h-5 w-5 fill-amber-400 text-amber-400" />
+                ))}
+              </span>
               <p className="rounded-3xl bg-white/90 px-8 py-4 text-center text-2xl font-black text-emerald-600 shadow-xl sm:text-3xl">
                 Muito bem! 🎉{' '}
                 <span className="block text-base font-bold text-emerald-500">
-                  A balança equilibrou!
+                  A balança equilibrou: a boa escolha vale mais que qualquer tesouro!
                 </span>
               </p>
               <button

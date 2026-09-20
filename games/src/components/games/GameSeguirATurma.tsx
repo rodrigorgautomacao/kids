@@ -189,7 +189,8 @@ export default function GameSeguirATurma({ onExit }: GameProps) {
               </span>
             </>
           )}
-          {phase === 'forgiveness' && 'Cada amigo importa.'}
+          {phase === 'forgiveness' &&
+            'Cada amigo importa — e quem inclui agrada a Deus! ✨'}
         </p>
 
         {/* ------- escolha ------- */}
@@ -237,7 +238,12 @@ export default function GameSeguirATurma({ onExit }: GameProps) {
 
         {/* ------- perdão e recomeço ------- */}
         {phase === 'forgiveness' ? (
-          <ForgivenessCard onForgive={reset} onExit={onExit} />
+          <ForgivenessCard
+            onForgive={reset}
+            onExit={onExit}
+            gameId="seguir-a-turma"
+            stars={followed === true ? 1 : 3}
+          />
         ) : null}
       </div>
     </GameShell>

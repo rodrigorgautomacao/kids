@@ -173,7 +173,8 @@ export default function GameMentirinhaQueCresce({ onExit }: GameProps) {
               </span>
             </>
           )}
-          {phase === 'forgiveness' && 'Todo dia é uma chance de recomeçar.'}
+          {phase === 'forgiveness' &&
+            'Todo dia é uma chance de recomeçar. A verdade acende luz no céu! ✨'}
         </p>
 
         {/* abraço (consequência da verdade) */}
@@ -236,7 +237,12 @@ export default function GameMentirinhaQueCresce({ onExit }: GameProps) {
 
         {/* ------- perdão e recomeço ------- */}
         {phase === 'forgiveness' ? (
-          <ForgivenessCard onForgive={reset} onExit={onExit} />
+          <ForgivenessCard
+            onForgive={reset}
+            onExit={onExit}
+            gameId="mentirinha-que-cresce"
+            stars={lied === true ? 1 : 3}
+          />
         ) : null}
       </div>
     </GameShell>

@@ -159,7 +159,8 @@ export default function GameSoMaisUmPedaco({ onExit }: GameProps) {
               </span>
             </>
           )}
-          {phase === 'forgiveness' && 'Dividir dobra a alegria.'}
+          {phase === 'forgiveness' &&
+            'Dividir dobra a alegria e enche o céu de estrelas! ✨'}
         </p>
 
         {/* ------- escolha ------- */}
@@ -207,7 +208,12 @@ export default function GameSoMaisUmPedaco({ onExit }: GameProps) {
 
         {/* ------- perdão e recomeço ------- */}
         {phase === 'forgiveness' ? (
-          <ForgivenessCard onForgive={reset} onExit={onExit} />
+          <ForgivenessCard
+            onForgive={reset}
+            onExit={onExit}
+            gameId="so-mais-um-pedaco"
+            stars={hogged === true ? 1 : 3}
+          />
         ) : null}
       </div>
     </GameShell>

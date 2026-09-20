@@ -173,7 +173,8 @@ export default function GameMoedaNoChao({ onExit }: GameProps) {
               </span>
             </>
           )}
-          {phase === 'forgiveness' && 'Cada escolha nova é uma nova chance.'}
+          {phase === 'forgiveness' &&
+            'Cada escolha nova é uma nova chance. Deus guarda a recompensa de quem faz o certo! ✨'}
         </p>
 
         {/* amigos chegando (consequência da escolha certa) */}
@@ -238,7 +239,12 @@ export default function GameMoedaNoChao({ onExit }: GameProps) {
 
         {/* ------- perdão e recomeço ------- */}
         {phase === 'forgiveness' ? (
-          <ForgivenessCard onForgive={reset} onExit={onExit} />
+          <ForgivenessCard
+            onForgive={reset}
+            onExit={onExit}
+            gameId="moeda-no-chao"
+            stars={kept === true ? 1 : 3}
+          />
         ) : null}
       </div>
     </GameShell>

@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Confetti from 'react-confetti';
 import { BookOpen, PartyPopper, RotateCcw, Star, Sparkles } from 'lucide-react';
 import GameShell from '../GameShell';
+import { completeGame } from '../../lib/progress';
 
 interface GameProps {
   onExit: () => void;
@@ -28,6 +29,14 @@ const FLOATING_LETTERS: FloatingLetter[] = [
 export default function GameLivroDaVida({ onExit }: GameProps) {
   const [collected, setCollected] = useState<string[]>([]);
   const won = collected.length === WORD.length;
+  const recorded = useRef(false);
+
+  useEffect(() => {
+    if (won && !recorded.current) {
+      recorded.current = true;
+      completeGame('livro-da-vida', 3);
+    }
+  }, [won]);
 
   function collect(letter: string) {
     if (won || collected.includes(letter)) return;
@@ -131,8 +140,17 @@ export default function GameLivroDaVida({ onExit }: GameProps) {
         {/* estado final */}
         {won ? (
           <div className="animate-pop z-20 flex flex-col items-center gap-4">
+            <span className="flex items-center gap-1 rounded-full bg-yellow-300/20 px-4 py-1.5 backdrop-blur-sm">
+              <span className="text-sm font-extrabold text-yellow-100">Capítulo concluído!</span>
+              {[1, 2, 3].map((i) => (
+                <Star key={i} className="h-5 w-5 fill-yellow-300 text-yellow-300" />
+              ))}
+            </span>
             <p className="rounded-3xl bg-white/10 px-6 py-4 text-center text-xl font-black text-yellow-200 shadow-xl backdrop-blur-sm sm:text-2xl">
               ✨ Seu nome está no Livro da Vida! ✨
+              <span className="mt-1 block text-sm font-bold text-white/80">
+                Deus guarda para sempre quem ama e faz o certo!
+              </span>
             </p>
             <button
               type="button"
