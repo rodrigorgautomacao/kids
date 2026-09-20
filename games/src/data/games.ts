@@ -1,6 +1,7 @@
-import { ComponentType } from 'react';
-import { Scale, BookOpen } from 'lucide-react';
+import type { ComponentType } from 'react';
+import { BookOpen, Scale, Star } from 'lucide-react';
 import GameBalanca from '../components/games/GameBalanca';
+import GameEstrelas from '../components/games/GameEstrelas';
 import GameLivroDaVida from '../components/games/GameLivroDaVida';
 
 export interface GameDefinition {
@@ -8,7 +9,8 @@ export interface GameDefinition {
   title: string;
   subtitle: string;
   icon: ComponentType<{ className?: string }>;
-  color: string; // classes Tailwind de fundo do "cartucho" no Hub
+  /** Classes Tailwind (literais) do cartucho do Hub */
+  color: string;
   component: ComponentType<{ onExit: () => void }>;
 }
 
@@ -22,7 +24,7 @@ export const games: GameDefinition[] = [
     title: 'A Balança das Escolhas',
     subtitle: 'Deus sempre faz o que é certo',
     icon: Scale,
-    color: 'bg-amber-400',
+    color: 'bg-gradient-to-b from-amber-300 to-amber-500',
     component: GameBalanca,
   },
   {
@@ -30,7 +32,15 @@ export const games: GameDefinition[] = [
     title: 'O Livro da Vida',
     subtitle: 'Seu nome guardado para sempre',
     icon: BookOpen,
-    color: 'bg-sky-400',
+    color: 'bg-gradient-to-b from-sky-300 to-sky-500',
     component: GameLivroDaVida,
+  },
+  {
+    id: 'conte-as-estrelas',
+    title: 'Conte as Estrelas',
+    subtitle: 'Cada escolha boa brilha no céu',
+    icon: Star,
+    color: 'bg-gradient-to-b from-fuchsia-400 to-fuchsia-600',
+    component: GameEstrelas,
   },
 ];

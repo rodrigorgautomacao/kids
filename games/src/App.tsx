@@ -9,7 +9,8 @@ export default function App() {
 
   if (activeGame) {
     const GameComponent = activeGame.component;
-    return <GameComponent onExit={() => setActiveGameId(null)} />;
+    // key força a remontagem do jogo a cada entrada → estado sempre limpo
+    return <GameComponent key={activeGame.id} onExit={() => setActiveGameId(null)} />;
   }
 
   return <Hub onSelectGame={setActiveGameId} />;
