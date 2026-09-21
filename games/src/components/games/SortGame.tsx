@@ -3,18 +3,16 @@ import Confetti from 'react-confetti';
 import GameShell from '../GameShell';
 import LevelHUD from '../LevelHUD';
 import LevelDone from '../LevelDone';
+import LevelMap from '../LevelMap';
 import { StarItem } from '../art';
-import { bestScore, submitScore } from '../../lib/progress';
+import { bestScore } from '../../lib/progress';
 import { usePrefersReducedMotion } from '../../lib/motion';
 import { confettiGravity, confettiPieces } from '../../lib/confetti';
 import { sfx, voice } from '../../lib/audio';
 import { burst, flyNumber, shake } from '../../lib/fx';
-import { starsForWrong } from '../../lib/minigame';
+import { levelMapItems, useLevelState, type GameLevel } from '../../lib/levels';
 
-// ── Separe por Testamento (AT × NT) ──────────────────────────────────────
-// Cada rodada traz histórias/personagens para colocar no cesto certo:
-// Antigo Testamento ou Novo Testamento. Ensina a organização da Bíblia.
-// Um item por vez, com dois cestos grandes; errar não pune.
+// ── Separe por Testamento (níveis) ───────────────────────────────────────
 
 export interface SortItem {
   id: string;
@@ -43,7 +41,7 @@ interface SortGameProps {
   bg: string;
   titleClass: string;
   question: string;
-  rounds: SortRound[];
+  levels: GameLevel<SortRound>[];
   onExit: () => void;
 }
 
@@ -56,23 +54,19 @@ export default function SortGame({
   bg,
   titleClass,
   question,
-  rounds,
+  levels,
   onExit,
 }: SortGameProps) {
   const reducedMotion = usePrefersReducedMotion();
-  const [idx, setIdx] = useState(0);
+  const ls = useLevelState(gameId, levels);
+  const round = ls.round;
   const [itemIdx, setItemIdx] = useState(0);
-  const [wrongTotal, setWrongTotal] = useState(0);
   const [score, setScore] = useState(0);
-  const [finished, setFinished] = useState(false);
-  const [stars, setStars] = useState(3);
   const [placed, setPlaced] = useState<Record<string, SortItem[]>>({});
   const [msg, setMsg] = useState<string | null>(null);
-  const wrongRef = useRef(0);
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
   const stageRef = useRef<HTMLDivElement>(null);
   const record = bestScore(gameId);
-  const round = rounds[idx];
   const item = round?.items[itemIdx];
 
   function later(fn: () => void, ms: number) {
@@ -80,13 +74,13 @@ export default function SortGame({
   }
 
   useEffect(() => {
-    if (idx >= rounds.length) return;
+    if (!round) return;
     setItemIdx(0);
     setPlaced({});
     setMsg(null);
-    const t = window.setTimeout(() => voice.speak(rounds[idx].items[0]?.label ?? ''), 350);
+    const t = window.setTimeout(() => voice.speak(round.items[0]?.label ?? ''), 350);
     return () => window.clearTimeout(t);
-  }, [idx]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [ls.levelIdx, ls.roundIdx, ls.phase]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(
     () => () => {
@@ -97,7 +91,7 @@ export default function SortGame({
   );
 
   function place(bucketId: string, ev: { currentTarget: HTMLElement }) {
-    if (!item || finished) return;
+    if (!item || ls.phase !== 'playing') return;
     if (bucketId === item.bucket) {
       const el = ev.currentTarget;
       const box = stageRef.current?.getBoundingClientRect();
@@ -114,15 +108,9 @@ export default function SortGame({
       const nextItem = itemIdx + 1;
       if (nextItem >= round.items.length) {
         later(() => {
-          if (idx + 1 >= rounds.length) {
-            setStars(starsForWrong(wrongRef.current));
-            setFinished(true);
-            submitScore(gameId, score + PTS_ITEM);
-            voice.speak('Muito bem! Você separou tudo certinho!');
-          } else {
-            setIdx((i) => i + 1);
-          }
-        }, 1000);
+          ls.completeRound();
+          setMsg(null);
+        }, 900);
       } else {
         setItemIdx(nextItem);
         later(() => voice.speak(round.items[nextItem].label), 700);
@@ -130,46 +118,45 @@ export default function SortGame({
     } else {
       sfx.wrong();
       shake(ev.currentTarget);
-      wrongRef.current += 1;
-      setWrongTotal((w) => w + 1);
+      ls.addWrong();
       setMsg('Quase! Pensa: essa história é antes ou depois de Jesus? ✊');
       voice.speak('Quase! Tenta o outro cesto!');
     }
   }
 
-  function handleReplay() {
-    timers.current.forEach((t) => window.clearTimeout(t));
-    timers.current = [];
-    setIdx(0);
-    setItemIdx(0);
-    setScore(0);
-    setWrongTotal(0);
-    wrongRef.current = 0;
-    setPlaced({});
-    setFinished(false);
-    setMsg(null);
-  }
-
-  if (finished) {
+  if (ls.phase === 'done') {
     return (
       <div className="safe-area-pad relative flex min-h-screen-safe w-full flex-col items-center justify-center gap-5 bg-gradient-to-b from-indigo-100 via-sky-50 to-cyan-100 px-6">
         {!reducedMotion ? (
           <Confetti recycle={false} numberOfPieces={confettiPieces()} gravity={confettiGravity()} />
         ) : null}
         <LevelDone
-          stars={stars}
+          stars={ls.stars}
+          wrong={ls.wrong}
+          onNext={ls.hasNextLevel ? ls.goNextLevel : undefined}
           onExit={onExit}
-          wrong={wrongTotal}
-          headline={stars === 3 ? 'Incrível! ⭐⭐⭐' : stars === 2 ? 'Muito bem! ⭐⭐' : 'Bom esforço! ⭐'}
+          onOpenMap={() => ls.setMapOpen(true)}
         />
         <p className="-mt-1 text-sm font-black text-indigo-700">Pontuação: {score} ⭐</p>
         <button
           type="button"
-          onClick={handleReplay}
+          onClick={() => {
+            setScore(0);
+            ls.replayLevel();
+          }}
           className="ui-press rounded-full bg-indigo-400 px-8 py-3 text-lg font-black text-indigo-950 shadow-[0_6px_0_rgba(99,102,241,0.9)]"
         >
           Jogar de novo 🔁
         </button>
+        {ls.mapOpen ? (
+          <LevelMap
+            title="Níveis"
+            subtitle="Escolha um nível para jogar"
+            items={levelMapItems(gameId, levels, (i) => `Nível ${i + 1}`)}
+            onPick={(id) => ls.goToLevel(levels.findIndex((l) => l.id === id))}
+            onClose={() => ls.setMapOpen(false)}
+          />
+        ) : null}
       </div>
     );
   }
@@ -180,7 +167,7 @@ export default function SortGame({
     <GameShell title={title} subtitle={subtitle} onExit={onExit} bg={bg} titleClass={titleClass}>
       <div className="relative flex w-full flex-col items-center gap-4 px-4">
         <div className="flex w-full items-center justify-between gap-3">
-          <LevelHUD level={idx + 1} totalLevels={rounds.length} step={itemIdx} steps={round.items.length} />
+          <LevelHUD level={ls.levelIdx + 1} totalLevels={levels.length} step={itemIdx} steps={round.items.length} />
           <div className="flex items-center gap-2">
             {score > 0 ? (
               <span className="ui-press flex items-center gap-1.5 rounded-full bg-amber-100 px-4 py-2 text-sm font-black text-amber-900 shadow">
@@ -192,6 +179,16 @@ export default function SortGame({
                 🏆 {Math.max(record, score)}
               </span>
             ) : null}
+            <button
+              type="button"
+              onClick={() => {
+                sfx.pop();
+                ls.setMapOpen(true);
+              }}
+              className="ui-press rounded-full bg-white/85 px-3 py-2 text-sm font-black text-indigo-700 shadow"
+            >
+              🗺️
+            </button>
           </div>
         </div>
 
@@ -229,6 +226,16 @@ export default function SortGame({
           <p className="animate-pop rounded-3xl bg-indigo-100 px-6 py-3 text-center text-base font-extrabold text-indigo-800 shadow-lg">
             💡 {msg}
           </p>
+        ) : null}
+
+        {ls.mapOpen ? (
+          <LevelMap
+            title="Níveis"
+            subtitle="Escolha um nível para jogar"
+            items={levelMapItems(gameId, levels, (i) => `Nível ${i + 1}`)}
+            onPick={(id) => ls.goToLevel(levels.findIndex((l) => l.id === id))}
+            onClose={() => ls.setMapOpen(false)}
+          />
         ) : null}
       </div>
     </GameShell>

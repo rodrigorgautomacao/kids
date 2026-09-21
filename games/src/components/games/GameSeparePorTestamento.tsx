@@ -1,4 +1,5 @@
 import SortGame, { type SortRound } from './SortGame';
+import { chunkLevels } from '../../lib/levels';
 
 // ── Separe por Testamento (7–9 anos) ─────────────────────────────────────
 // Versão desafio: mais itens por rodada, incluindo eventos e personagens
@@ -49,6 +50,32 @@ const ROUNDS: SortRound[] = [
       { id: 'damasco', emoji: '✨', label: 'Paulo vê a luz', bucket: 'nt' },
     ],
   },
+  {
+    id: 'r4',
+    ref: 'Gênesis 6; Josué 6; Juízes 16; Lucas 19; João 4; Lucas 15 (NAA)',
+    buckets: BUCKETS,
+    items: [
+      { id: 'noe', emoji: '🚢', label: 'Noé e a arca', bucket: 'at' },
+      { id: 'jerico2', emoji: '📯', label: 'As muralhas de Jericó', bucket: 'at' },
+      { id: 'sansao', emoji: '💪', label: 'Sansão', bucket: 'at' },
+      { id: 'zaqueu', emoji: '🌳', label: 'Zaqueu', bucket: 'nt' },
+      { id: 'samaritana', emoji: '🏺', label: 'A mulher samaritana', bucket: 'nt' },
+      { id: 'prodigo', emoji: '🐖', label: 'O filho pródigo', bucket: 'nt' },
+    ],
+  },
+  {
+    id: 'r5',
+    ref: 'Ester 2; Rute 1; Jó 1; Lucas 15; João 10; João 11 (NAA)',
+    buckets: BUCKETS,
+    items: [
+      { id: 'ester', emoji: '👑', label: 'A rainha Ester', bucket: 'at' },
+      { id: 'rute', emoji: '🌾', label: 'Rute e Noemi', bucket: 'at' },
+      { id: 'jo', emoji: '🌪️', label: 'A história de Jó', bucket: 'at' },
+      { id: 'ovelha', emoji: '🔍', label: 'A ovelha perdida', bucket: 'nt' },
+      { id: 'pastor', emoji: '🐑', label: 'O bom pastor', bucket: 'nt' },
+      { id: 'lazaro', emoji: '🌅', label: 'A ressurreição de Lázaro', bucket: 'nt' },
+    ],
+  },
 ];
 
 export default function GameSeparePorTestamento({ onExit }: { onExit: () => void }) {
@@ -60,7 +87,7 @@ export default function GameSeparePorTestamento({ onExit }: { onExit: () => void
       bg="bg-gradient-to-b from-blue-100 via-indigo-50 to-violet-100"
       titleClass="text-blue-600"
       question="Onde essa história entra?"
-      rounds={ROUNDS}
+      levels={chunkLevels(ROUNDS, 1)}
       onExit={onExit}
     />
   );

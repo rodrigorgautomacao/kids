@@ -4,25 +4,19 @@ import { Volume2 } from 'lucide-react';
 import GameShell from '../GameShell';
 import LevelHUD from '../LevelHUD';
 import LevelDone from '../LevelDone';
+import LevelMap from '../LevelMap';
 import { Motif, StarItem } from '../art';
-import { bestScore, submitScore } from '../../lib/progress';
+import { bestScore } from '../../lib/progress';
 import { usePrefersReducedMotion } from '../../lib/motion';
 import { confettiGravity, confettiPieces } from '../../lib/confetti';
 import { sfx, voice } from '../../lib/audio';
 import { burst, flyNumber, ring, shake } from '../../lib/fx';
-import { shuffle, starsForWrong } from '../../lib/minigame';
+import { shuffle } from '../../lib/minigame';
+import { levelMapItems, useLevelState, type GameLevel } from '../../lib/levels';
 import { isSmallKidsMode } from '../../lib/prefs';
 
-// ── Motor de "escolha uma opção" com variantes visuais ───────────────────
-// Cobre jogos que compartilham o mesmo gesto (1 toque numa opção) mas mudam
-// de cara e de conteúdo:
-//   'grid'   → pergunta + opções (ex.: qual não pertence?)
-//   'target' → mostra um alvo grande e acha o igual
-//   'shadow' → mostra uma silhueta (Motif escurecido) e acha quem é
-//   'bool'   → verdadeiro ou falso (✅ / ❌)
-//   'quote'  → quem falou? (opções = personagens)
-//   'verse'  → completa o versículo (opções = palavras)
-// Erro nunca pune: a opção errada treme e a criança tenta de novo.
+// ── Motor de "escolha uma opção" com variantes visuais e níveis ──────────
+//   'grid' | 'target' | 'shadow' | 'bool' | 'quote' | 'verse'
 
 export interface ChoiceOption {
   id: string;
@@ -33,15 +27,12 @@ export interface ChoiceOption {
 
 export interface ChoiceRound {
   prompt: string;
-  /** Texto de apoio (ex.: o versículo com lacuna, a citação). */
   detail?: string;
-  /** Alvo mostrado em destaque (variant 'target'/'shadow'). */
   target?: { emoji?: string; motif?: string; label?: string };
   options: ChoiceOption[];
   correct: string;
   ref: string;
   msg: string;
-  /** Texto narrado; por padrão usa prompt + detail. */
   speak?: string;
 }
 
@@ -54,7 +45,7 @@ interface ChoiceGameProps {
   bg: string;
   titleClass: string;
   variant: ChoiceVariant;
-  rounds: ChoiceRound[];
+  levels: GameLevel<ChoiceRound>[];
   onExit: () => void;
 }
 
@@ -67,58 +58,54 @@ export default function ChoiceGame({
   bg,
   titleClass,
   variant,
-  rounds,
+  levels,
   onExit,
 }: ChoiceGameProps) {
   const smallKids = isSmallKidsMode();
   const reducedMotion = usePrefersReducedMotion();
-  const [idx, setIdx] = useState(0);
+  const ls = useLevelState(gameId, levels);
+  const round = ls.round;
   const [order, setOrder] = useState<ChoiceOption[]>([]);
-  const [score, setScore] = useState(0);
-  const [wrongTotal, setWrongTotal] = useState(0);
-  const [finished, setFinished] = useState(false);
-  const [stars, setStars] = useState(3);
   const [picked, setPicked] = useState<string | null>(null);
   const [won, setWon] = useState(false);
+  const [score, setScore] = useState(0);
   const [msg, setMsg] = useState<{ text: string; good: boolean; ref?: string } | null>(null);
-  const wrongRef = useRef(0);
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
   const stageRef = useRef<HTMLDivElement>(null);
   const record = bestScore(gameId);
-  const round = rounds[idx];
 
   function later(fn: () => void, ms: number) {
     timers.current.push(window.setTimeout(fn, ms));
   }
 
   useEffect(() => {
-    if (idx >= rounds.length) return;
-    setOrder(shuffle(rounds[idx].options));
+    if (!round) return;
+    setOrder(shuffle(round.options));
     setPicked(null);
+    setWon(false);
     setMsg(null);
-  }, [idx]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [ls.levelIdx, ls.roundIdx, ls.phase]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const narrate = () => {
     if (!round) return;
-    const base = round.speak ?? [round.prompt, round.detail].filter(Boolean).join(' … ');
-    voice.speak(base);
+    voice.speak(round.speak ?? [round.prompt, round.detail].filter(Boolean).join(' … '));
   };
 
   useEffect(() => {
-    if (finished || !round) return;
+    if (ls.phase !== 'playing' || !round) return;
     const t = window.setTimeout(narrate, 400);
     return () => window.clearTimeout(t);
-  }, [idx, finished]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [ls.levelIdx, ls.roundIdx, ls.phase]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    if (finished || !smallKids || !round) return;
+    if (ls.phase !== 'playing' || !smallKids || !round) return;
     const labels = round.options.map((o) => o.label ?? o.id);
     const t = window.setTimeout(
       () => voice.speakQueue(labels),
       Math.min(4000, Math.max(2400, (round.speak ?? round.prompt).length * 32)),
     );
     return () => window.clearTimeout(t);
-  }, [idx, finished, smallKids]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [ls.levelIdx, ls.roundIdx, ls.phase, smallKids]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(
     () => () => {
@@ -129,7 +116,7 @@ export default function ChoiceGame({
   );
 
   function handlePick(opt: ChoiceOption, ev: { currentTarget: HTMLElement }) {
-    if (picked || won || finished) return;
+    if (picked || won || ls.phase !== 'playing' || !round) return;
     const el = ev.currentTarget;
     const box = stageRef.current?.getBoundingClientRect();
     const r = el.getBoundingClientRect();
@@ -146,21 +133,13 @@ export default function ChoiceGame({
       flyNumber(stageRef.current, x, y, `+${PTS_ACERTO}`);
       setMsg({ text: round.msg, good: true, ref: round.ref });
       voice.speak(round.msg);
-
       later(() => {
-        if (idx + 1 >= rounds.length) {
-          setStars(starsForWrong(wrongRef.current));
-          setFinished(true);
-          submitScore(gameId, score + PTS_ACERTO);
-        } else {
-          setIdx((i) => i + 1);
-          setWon(false);
-        }
-      }, 2600);
+        ls.completeRound();
+        setWon(false);
+      }, 2400);
     } else {
       sfx.wrong();
-      wrongRef.current += 1;
-      setWrongTotal((w) => w + 1);
+      ls.addWrong();
       shake(el);
       setMsg({ text: 'Quase! Tenta de novo! ✊', good: false });
       voice.speak('Quase! Tenta de novo!');
@@ -168,38 +147,39 @@ export default function ChoiceGame({
     }
   }
 
-  function handleReplay() {
-    timers.current.forEach((t) => window.clearTimeout(t));
-    timers.current = [];
-    setIdx(0);
-    setScore(0);
-    setWrongTotal(0);
-    wrongRef.current = 0;
-    setFinished(false);
-    setWon(false);
-    setMsg(null);
-  }
-
-  if (finished) {
+  if (ls.phase === 'done') {
     return (
       <div className="safe-area-pad relative flex min-h-screen-safe w-full flex-col items-center justify-center gap-5 bg-gradient-to-b from-amber-100 via-rose-50 to-sky-100 px-6">
         {!reducedMotion ? (
           <Confetti recycle={false} numberOfPieces={confettiPieces()} gravity={confettiGravity()} />
         ) : null}
         <LevelDone
-          stars={stars}
+          stars={ls.stars}
+          wrong={ls.wrong}
+          onNext={ls.hasNextLevel ? ls.goNextLevel : undefined}
           onExit={onExit}
-          wrong={wrongTotal}
-          headline={stars === 3 ? 'Incrível! ⭐⭐⭐' : stars === 2 ? 'Muito bem! ⭐⭐' : 'Bom esforço! ⭐'}
+          onOpenMap={() => ls.setMapOpen(true)}
         />
         <p className="-mt-1 text-sm font-black text-amber-700">Pontuação: {score} ⭐</p>
         <button
           type="button"
-          onClick={handleReplay}
+          onClick={() => {
+            setScore(0);
+            ls.replayLevel();
+          }}
           className="ui-press rounded-full bg-amber-400 px-8 py-3 text-lg font-black text-amber-950 shadow-[0_6px_0_rgba(202,138,4,0.9)]"
         >
           Jogar de novo 🔁
         </button>
+        {ls.mapOpen ? (
+          <LevelMap
+            title="Níveis"
+            subtitle="Escolha um nível para jogar"
+            items={levelMapItems(gameId, levels, (i) => `Nível ${i + 1}`)}
+            onPick={(id) => ls.goToLevel(levels.findIndex((l) => l.id === id))}
+            onClose={() => ls.setMapOpen(false)}
+          />
+        ) : null}
       </div>
     );
   }
@@ -235,7 +215,12 @@ export default function ChoiceGame({
     <GameShell title={title} subtitle={subtitle} onExit={onExit} bg={bg} titleClass={titleClass}>
       <div className="relative flex w-full flex-col items-center gap-4 px-4">
         <div className="flex w-full items-center justify-between gap-3">
-          <LevelHUD level={1} totalLevels={1} step={idx + 1} steps={rounds.length} />
+          <LevelHUD
+            level={ls.levelIdx + 1}
+            totalLevels={levels.length}
+            step={ls.roundIdx + 1}
+            steps={ls.level.rounds.length}
+          />
           <div className="flex items-center gap-2">
             {score > 0 ? (
               <span className="ui-press flex items-center gap-1.5 rounded-full bg-amber-100 px-4 py-2 text-sm font-black text-amber-900 shadow">
@@ -247,14 +232,23 @@ export default function ChoiceGame({
                 🏆 {Math.max(record, score)}
               </span>
             ) : null}
+            <button
+              type="button"
+              onClick={() => {
+                sfx.pop();
+                ls.setMapOpen(true);
+              }}
+              className="ui-press rounded-full bg-white/85 px-3 py-2 text-sm font-black text-indigo-700 shadow"
+            >
+              🗺️
+            </button>
           </div>
         </div>
 
-        {/* Cartão da pergunta/alvo */}
         <div className="relative w-full rounded-3xl bg-white/95 px-6 py-4 text-center shadow-xl">
           {variant === 'shadow' && round.target?.motif ? (
             <div className="mx-auto mb-2 w-fit rounded-2xl bg-slate-900 p-3">
-              <div className="brightness-0 invert-0" style={{ filter: 'brightness(0)' }}>
+              <div style={{ filter: 'brightness(0)' }}>
                 <Motif id={round.target.motif} size={110} />
               </div>
             </div>
@@ -304,7 +298,6 @@ export default function ChoiceGame({
           </button>
         </div>
 
-        {/* Opções */}
         <div
           ref={stageRef}
           className={`relative grid w-full gap-3 ${
@@ -337,6 +330,16 @@ export default function ChoiceGame({
             {msg.text}
             {msg.ref ? <span className="mt-1 block text-xs opacity-80">📖 {msg.ref}</span> : null}
           </p>
+        ) : null}
+
+        {ls.mapOpen ? (
+          <LevelMap
+            title="Níveis"
+            subtitle="Escolha um nível para jogar"
+            items={levelMapItems(gameId, levels, (i) => `Nível ${i + 1}`)}
+            onPick={(id) => ls.goToLevel(levels.findIndex((l) => l.id === id))}
+            onClose={() => ls.setMapOpen(false)}
+          />
         ) : null}
       </div>
     </GameShell>

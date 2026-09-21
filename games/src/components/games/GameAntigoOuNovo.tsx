@@ -1,4 +1,5 @@
 import SortGame, { type SortRound } from './SortGame';
+import { chunkLevels } from '../../lib/levels';
 
 // ── Antigo ou Novo? (5–6 anos) ───────────────────────────────────────────
 // Coloca cada história no cesto certo: Antigo Testamento ou Novo Testamento.
@@ -45,6 +46,30 @@ const ROUNDS: SortRound[] = [
       { id: 'pentecostes', emoji: '🔥', label: 'O dia de Pentecostes', bucket: 'nt' },
     ],
   },
+  {
+    id: 'r4',
+    ref: 'Gênesis 37; Êxodo 7; Juízes 16; João 10; Lucas 15 (NAA)',
+    buckets: BUCKETS,
+    items: [
+      { id: 'jose', emoji: '🧥', label: 'José e a túnica', bucket: 'at' },
+      { id: 'pragas', emoji: '🐸', label: 'As dez pragas', bucket: 'at' },
+      { id: 'sansao', emoji: '💪', label: 'Sansão', bucket: 'at' },
+      { id: 'pastor', emoji: '🐑', label: 'O bom pastor', bucket: 'nt' },
+      { id: 'ovelha', emoji: '🔍', label: 'A ovelha perdida', bucket: 'nt' },
+    ],
+  },
+  {
+    id: 'r5',
+    ref: 'Gênesis 11; Ester 2; Rute 1; Lucas 15; Marcos 4 (NAA)',
+    buckets: BUCKETS,
+    items: [
+      { id: 'babel', emoji: '🗼', label: 'A torre de Babel', bucket: 'at' },
+      { id: 'ester', emoji: '👑', label: 'A rainha Ester', bucket: 'at' },
+      { id: 'rute', emoji: '🌾', label: 'Rute e Noemi', bucket: 'at' },
+      { id: 'prodigo', emoji: '🐖', label: 'O filho pródigo', bucket: 'nt' },
+      { id: 'semeador', emoji: '🌱', label: 'O semeador', bucket: 'nt' },
+    ],
+  },
 ];
 
 export default function GameAntigoOuNovo({ onExit }: { onExit: () => void }) {
@@ -56,7 +81,7 @@ export default function GameAntigoOuNovo({ onExit }: { onExit: () => void }) {
       bg="bg-gradient-to-b from-indigo-100 via-sky-50 to-cyan-100"
       titleClass="text-indigo-600"
       question="Essa história é antes ou depois de Jesus?"
-      rounds={ROUNDS}
+      levels={chunkLevels(ROUNDS, 1)}
       onExit={onExit}
     />
   );

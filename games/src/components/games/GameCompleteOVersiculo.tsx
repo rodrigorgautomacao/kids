@@ -1,4 +1,5 @@
 import ChoiceGame, { type ChoiceRound } from './ChoiceGame';
+import { chunkLevels } from '../../lib/levels';
 
 // ── Complete o Versículo (7–9 anos) ──────────────────────────────────────
 // Desafio de leitura: a criança escolhe a palavra que completa o versículo.
@@ -22,7 +23,7 @@ export default function GameCompleteOVersiculo({ onExit }: { onExit: () => void 
       bg="bg-gradient-to-b from-violet-100 via-indigo-50 to-blue-100"
       titleClass="text-violet-600"
       variant="verse"
-      rounds={ROUNDS}
+      levels={chunkLevels(ROUNDS, 1)}
       onExit={onExit}
     />
   );

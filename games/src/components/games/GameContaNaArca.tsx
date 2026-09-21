@@ -1,4 +1,5 @@
 import CountGame, { type CountRound } from './CountGame';
+import { chunkLevels } from '../../lib/levels';
 
 // ── Conta na Arca (3–4 anos) — Antigo Testamento ─────────────────────────
 // Contagem simples com os animais e sinais da história de Noé.
@@ -19,7 +20,7 @@ export default function GameContaNaArca({ onExit }: { onExit: () => void }) {
       subtitle="Conte e toque no número certo!"
       bg="bg-gradient-to-b from-lime-100 via-emerald-50 to-teal-100"
       titleClass="text-teal-600"
-      rounds={ROUNDS}
+      levels={chunkLevels(ROUNDS, 1)}
       onExit={onExit}
     />
   );

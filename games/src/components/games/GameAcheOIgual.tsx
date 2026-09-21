@@ -1,4 +1,5 @@
 import ChoiceGame, { type ChoiceRound } from './ChoiceGame';
+import { chunkLevels } from '../../lib/levels';
 
 // ── Ache o Igual (3–4 anos) ──────────────────────────────────────────────
 // Discriminação visual: a criança acha a figura igual ao alvo.
@@ -20,7 +21,7 @@ export default function GameAcheOIgual({ onExit }: { onExit: () => void }) {
       bg="bg-gradient-to-b from-pink-100 via-rose-50 to-amber-100"
       titleClass="text-rose-600"
       variant="target"
-      rounds={ROUNDS}
+      levels={chunkLevels(ROUNDS, 1)}
       onExit={onExit}
     />
   );

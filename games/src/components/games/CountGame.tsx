@@ -4,18 +4,18 @@ import { Volume2 } from 'lucide-react';
 import GameShell from '../GameShell';
 import LevelHUD from '../LevelHUD';
 import LevelDone from '../LevelDone';
+import LevelMap from '../LevelMap';
 import { StarItem } from '../art';
-import { bestScore, submitScore } from '../../lib/progress';
+import { bestScore } from '../../lib/progress';
 import { usePrefersReducedMotion } from '../../lib/motion';
 import { confettiGravity, confettiPieces } from '../../lib/confetti';
 import { sfx, voice } from '../../lib/audio';
 import { burst, flyNumber, ring, shake } from '../../lib/fx';
-import { shuffle, starsForWrong } from '../../lib/minigame';
+import { shuffle } from '../../lib/minigame';
+import { levelMapItems, useLevelState, type GameLevel } from '../../lib/levels';
 
-// ── Conte com a Bíblia ───────────────────────────────────────────────────
-// A criança conta os elementos da cena (ou resolve um probleminha simples da
-// história) e toca no número certo. Trabalha contagem e soma curta sem
-// transformar em prova: errar não pune.
+// ── Conte com a Bíblia (níveis) ──────────────────────────────────────────
+// Contagem e soma/subtração com os elementos da história.
 
 export interface CountRound {
   id: string;
@@ -33,7 +33,7 @@ interface CountGameProps {
   subtitle: string;
   bg: string;
   titleClass: string;
-  rounds: CountRound[];
+  levels: GameLevel<CountRound>[];
   onExit: () => void;
 }
 
@@ -45,41 +45,38 @@ export default function CountGame({
   subtitle,
   bg,
   titleClass,
-  rounds,
+  levels,
   onExit,
 }: CountGameProps) {
   const reducedMotion = usePrefersReducedMotion();
-  const [idx, setIdx] = useState(0);
+  const ls = useLevelState(gameId, levels);
+  const round = ls.round;
   const [order, setOrder] = useState<number[]>([]);
-  const [score, setScore] = useState(0);
-  const [wrongTotal, setWrongTotal] = useState(0);
-  const [finished, setFinished] = useState(false);
-  const [stars, setStars] = useState(3);
   const [picked, setPicked] = useState<number | null>(null);
   const [won, setWon] = useState(false);
+  const [score, setScore] = useState(0);
   const [msg, setMsg] = useState<{ text: string; good: boolean; ref?: string } | null>(null);
-  const wrongRef = useRef(0);
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
   const stageRef = useRef<HTMLDivElement>(null);
   const record = bestScore(gameId);
-  const round = rounds[idx];
 
   function later(fn: () => void, ms: number) {
     timers.current.push(window.setTimeout(fn, ms));
   }
 
   useEffect(() => {
-    if (idx >= rounds.length) return;
-    setOrder(shuffle(rounds[idx].options));
+    if (!round) return;
+    setOrder(shuffle(round.options));
     setPicked(null);
+    setWon(false);
     setMsg(null);
-  }, [idx]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [ls.levelIdx, ls.roundIdx, ls.phase]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    if (finished || !round) return;
+    if (ls.phase !== 'playing' || !round) return;
     const t = window.setTimeout(() => voice.speak(round.question), 400);
     return () => window.clearTimeout(t);
-  }, [idx, finished]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [ls.levelIdx, ls.roundIdx, ls.phase]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(
     () => () => {
@@ -90,7 +87,7 @@ export default function CountGame({
   );
 
   function handlePick(num: number, ev: { currentTarget: HTMLElement }) {
-    if (picked !== null || won || finished) return;
+    if (picked !== null || won || ls.phase !== 'playing' || !round) return;
     const el = ev.currentTarget;
     const box = stageRef.current?.getBoundingClientRect();
     const r = el.getBoundingClientRect();
@@ -107,21 +104,13 @@ export default function CountGame({
       flyNumber(stageRef.current, x, y, `+${PTS_ACERTO}`);
       setMsg({ text: round.msg, good: true, ref: round.ref });
       voice.speak(round.msg);
-
       later(() => {
-        if (idx + 1 >= rounds.length) {
-          setStars(starsForWrong(wrongRef.current));
-          setFinished(true);
-          submitScore(gameId, score + PTS_ACERTO);
-        } else {
-          setIdx((i) => i + 1);
-          setWon(false);
-        }
-      }, 2600);
+        ls.completeRound();
+        setWon(false);
+      }, 2400);
     } else {
       sfx.wrong();
-      wrongRef.current += 1;
-      setWrongTotal((w) => w + 1);
+      ls.addWrong();
       shake(el);
       setMsg({ text: 'Quase! Conta de novo com calma. ✊', good: false });
       voice.speak('Quase! Conta de novo!');
@@ -129,38 +118,39 @@ export default function CountGame({
     }
   }
 
-  function handleReplay() {
-    timers.current.forEach((t) => window.clearTimeout(t));
-    timers.current = [];
-    setIdx(0);
-    setScore(0);
-    setWrongTotal(0);
-    wrongRef.current = 0;
-    setFinished(false);
-    setWon(false);
-    setMsg(null);
-  }
-
-  if (finished) {
+  if (ls.phase === 'done') {
     return (
       <div className="safe-area-pad relative flex min-h-screen-safe w-full flex-col items-center justify-center gap-5 bg-gradient-to-b from-lime-100 via-emerald-50 to-teal-100 px-6">
         {!reducedMotion ? (
           <Confetti recycle={false} numberOfPieces={confettiPieces()} gravity={confettiGravity()} />
         ) : null}
         <LevelDone
-          stars={stars}
+          stars={ls.stars}
+          wrong={ls.wrong}
+          onNext={ls.hasNextLevel ? ls.goNextLevel : undefined}
           onExit={onExit}
-          wrong={wrongTotal}
-          headline={stars === 3 ? 'Incrível! ⭐⭐⭐' : stars === 2 ? 'Muito bem! ⭐⭐' : 'Bom esforço! ⭐'}
+          onOpenMap={() => ls.setMapOpen(true)}
         />
         <p className="-mt-1 text-sm font-black text-teal-700">Pontuação: {score} ⭐</p>
         <button
           type="button"
-          onClick={handleReplay}
+          onClick={() => {
+            setScore(0);
+            ls.replayLevel();
+          }}
           className="ui-press rounded-full bg-teal-400 px-8 py-3 text-lg font-black text-teal-950 shadow-[0_6px_0_rgba(13,148,136,0.9)]"
         >
           Jogar de novo 🔁
         </button>
+        {ls.mapOpen ? (
+          <LevelMap
+            title="Níveis"
+            subtitle="Escolha um nível para jogar"
+            items={levelMapItems(gameId, levels, (i) => `Nível ${i + 1}`)}
+            onPick={(id) => ls.goToLevel(levels.findIndex((l) => l.id === id))}
+            onClose={() => ls.setMapOpen(false)}
+          />
+        ) : null}
       </div>
     );
   }
@@ -171,7 +161,7 @@ export default function CountGame({
     <GameShell title={title} subtitle={subtitle} onExit={onExit} bg={bg} titleClass={titleClass}>
       <div className="relative flex w-full flex-col items-center gap-4 px-4">
         <div className="flex w-full items-center justify-between gap-3">
-          <LevelHUD level={1} totalLevels={1} step={idx + 1} steps={rounds.length} />
+          <LevelHUD level={ls.levelIdx + 1} totalLevels={levels.length} step={ls.roundIdx + 1} steps={ls.level.rounds.length} />
           <div className="flex items-center gap-2">
             {score > 0 ? (
               <span className="ui-press flex items-center gap-1.5 rounded-full bg-amber-100 px-4 py-2 text-sm font-black text-amber-900 shadow">
@@ -183,6 +173,16 @@ export default function CountGame({
                 🏆 {Math.max(record, score)}
               </span>
             ) : null}
+            <button
+              type="button"
+              onClick={() => {
+                sfx.pop();
+                ls.setMapOpen(true);
+              }}
+              className="ui-press rounded-full bg-white/85 px-3 py-2 text-sm font-black text-teal-700 shadow"
+            >
+              🗺️
+            </button>
           </div>
         </div>
 
@@ -238,6 +238,16 @@ export default function CountGame({
             {msg.text}
             {msg.ref ? <span className="mt-1 block text-xs opacity-80">📖 {msg.ref}</span> : null}
           </p>
+        ) : null}
+
+        {ls.mapOpen ? (
+          <LevelMap
+            title="Níveis"
+            subtitle="Escolha um nível para jogar"
+            items={levelMapItems(gameId, levels, (i) => `Nível ${i + 1}`)}
+            onPick={(id) => ls.goToLevel(levels.findIndex((l) => l.id === id))}
+            onClose={() => ls.setMapOpen(false)}
+          />
         ) : null}
       </div>
     </GameShell>

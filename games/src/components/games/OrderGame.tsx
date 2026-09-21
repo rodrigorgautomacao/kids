@@ -3,22 +3,18 @@ import Confetti from 'react-confetti';
 import GameShell from '../GameShell';
 import LevelHUD from '../LevelHUD';
 import LevelDone from '../LevelDone';
+import LevelMap from '../LevelMap';
 import { StarItem } from '../art';
-import { bestScore, submitScore } from '../../lib/progress';
+import { bestScore } from '../../lib/progress';
 import { usePrefersReducedMotion } from '../../lib/motion';
 import { confettiGravity, confettiPieces } from '../../lib/confetti';
 import { sfx, voice } from '../../lib/audio';
 import { burst, flyNumber, shake } from '../../lib/fx';
-import { shuffle, starsForWrong } from '../../lib/minigame';
+import { shuffle } from '../../lib/minigame';
+import { levelMapItems, useLevelState, type GameLevel } from '../../lib/levels';
 import { isSmallKidsMode } from '../../lib/prefs';
 
-// ── Motor de "coloque na ordem" (5–6 e 7–9) ──────────────────────────────
-// Compartilhado por "A História em Ordem" e "Linha do Tempo".
-//
-// Mecânica: os passos aparecem embaralhados e a criança toca no que vem
-// PRIMEIRO, depois no próximo… Cada acerto ganha um número de ordem. Errar não
-// pune: a peça treme e a dica diz qual é o próximo passo. 1 toque por decisão
-// (nada de arrastar, que é difícil em tela pequena).
+// ── Motor "coloque na ordem" (níveis) ────────────────────────────────────
 
 export interface OrderStep {
   id: string;
@@ -30,7 +26,7 @@ export interface OrderRound {
   id: string;
   ref: string;
   title: string;
-  steps: OrderStep[]; // na ordem correta
+  steps: OrderStep[];
 }
 
 interface OrderGameProps {
@@ -39,9 +35,8 @@ interface OrderGameProps {
   subtitle: string;
   bg: string;
   titleClass: string;
-  /** Instrução fixa mostrada acima das peças. */
   intro: string;
-  rounds: OrderRound[];
+  levels: GameLevel<OrderRound>[];
   onExit: () => void;
 }
 
@@ -54,28 +49,42 @@ export default function OrderGame({
   bg,
   titleClass,
   intro,
-  rounds,
+  levels,
   onExit,
 }: OrderGameProps) {
   const smallKids = isSmallKidsMode();
   const reducedMotion = usePrefersReducedMotion();
-  const [idx, setIdx] = useState(0);
-  const [order, setOrder] = useState<OrderStep[]>(() => shuffle(rounds[0].steps));
+  const ls = useLevelState(gameId, levels);
+  const round = ls.round;
+  const [order, setOrder] = useState<OrderStep[]>([]);
   const [placed, setPlaced] = useState<string[]>([]);
-  const [wrongTotal, setWrongTotal] = useState(0);
   const [score, setScore] = useState(0);
-  const [finished, setFinished] = useState(false);
-  const [stars, setStars] = useState(3);
   const [msg, setMsg] = useState<string | null>(null);
-  const wrongRef = useRef(0);
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
   const stageRef = useRef<HTMLDivElement>(null);
   const record = bestScore(gameId);
-  const round = rounds[idx];
 
   function later(fn: () => void, ms: number) {
     timers.current.push(window.setTimeout(fn, ms));
   }
+
+  useEffect(() => {
+    if (!round) return;
+    setOrder(shuffle(round.steps));
+    setPlaced([]);
+    setMsg(null);
+    const t = window.setTimeout(() => voice.speak(round.title), 350);
+    return () => window.clearTimeout(t);
+  }, [ls.levelIdx, ls.roundIdx, ls.phase]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (ls.phase !== 'playing' || !smallKids || !round) return;
+    const t = window.setTimeout(
+      () => voice.speakQueue(round.steps.map((s) => s.label)),
+      Math.min(3500, Math.max(2200, round.title.length * 32)),
+    );
+    return () => window.clearTimeout(t);
+  }, [ls.levelIdx, ls.roundIdx, ls.phase, smallKids]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(
     () => () => {
@@ -85,28 +94,8 @@ export default function OrderGame({
     [],
   );
 
-  // Nova rodada: embaralha as peças e narra o pedido.
-  useEffect(() => {
-    if (finished) return;
-    setOrder(shuffle(rounds[idx].steps));
-    setPlaced([]);
-    setMsg(null);
-    const t = window.setTimeout(() => voice.speak(rounds[idx].title), 350);
-    return () => window.clearTimeout(t);
-  }, [idx, finished]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Modo pequeninos: narra os passos depois do pedido.
-  useEffect(() => {
-    if (finished || !smallKids) return;
-    const t = window.setTimeout(
-      () => voice.speakQueue(rounds[idx].steps.map((s) => s.label)),
-      Math.min(3500, Math.max(2200, rounds[idx].title.length * 32)),
-    );
-    return () => window.clearTimeout(t);
-  }, [idx, finished, smallKids]); // eslint-disable-line react-hooks/exhaustive-deps
-
   function handleTap(step: OrderStep, ev: { currentTarget: HTMLElement }) {
-    if (finished || placed.includes(step.id)) return;
+    if (ls.phase !== 'playing' || !round || placed.includes(step.id)) return;
     const expected = round.steps[placed.length];
     const el = ev.currentTarget;
     const box = stageRef.current?.getBoundingClientRect();
@@ -125,62 +114,57 @@ export default function OrderGame({
 
       if (next.length === round.steps.length) {
         later(() => {
-          if (idx + 1 >= rounds.length) {
-            setStars(starsForWrong(wrongRef.current));
-            setFinished(true);
-            submitScore(gameId, score + PTS_PASSO);
-            voice.speak('Muito bem! Você montou tudo na ordem certa!');
-          } else {
-            setIdx((i) => i + 1);
-          }
+          ls.completeRound();
+          setMsg(null);
         }, 900);
       }
     } else {
       sfx.wrong();
       shake(el);
-      wrongRef.current += 1;
-      setWrongTotal((w) => w + 1);
+      ls.addWrong();
       setMsg(`Quase! Agora é a vez de: ${expected.label}`);
       voice.speak('Quase! Tenta outra vez.');
     }
   }
 
-  function handleReplay() {
-    timers.current.forEach((t) => window.clearTimeout(t));
-    timers.current = [];
-    setIdx(0);
-    setOrder(shuffle(rounds[0].steps));
-    setPlaced([]);
-    setScore(0);
-    setWrongTotal(0);
-    wrongRef.current = 0;
-    setFinished(false);
-    setMsg(null);
-  }
-
-  if (finished) {
+  if (ls.phase === 'done') {
     return (
       <div className="safe-area-pad relative flex min-h-screen-safe w-full flex-col items-center justify-center gap-5 bg-gradient-to-b from-amber-100 via-rose-50 to-sky-100 px-6">
         {!reducedMotion ? (
           <Confetti recycle={false} numberOfPieces={confettiPieces()} gravity={confettiGravity()} />
         ) : null}
         <LevelDone
-          stars={stars}
+          stars={ls.stars}
+          wrong={ls.wrong}
+          onNext={ls.hasNextLevel ? ls.goNextLevel : undefined}
           onExit={onExit}
-          wrong={wrongTotal}
-          headline={stars === 3 ? 'Incrível! ⭐⭐⭐' : stars === 2 ? 'Muito bem! ⭐⭐' : 'Bom esforço! ⭐'}
+          onOpenMap={() => ls.setMapOpen(true)}
         />
         <p className="-mt-1 text-sm font-black text-amber-700">Pontuação: {score} ⭐</p>
         <button
           type="button"
-          onClick={handleReplay}
+          onClick={() => {
+            setScore(0);
+            ls.replayLevel();
+          }}
           className="ui-press rounded-full bg-amber-400 px-8 py-3 text-lg font-black text-amber-950 shadow-[0_6px_0_rgba(202,138,4,0.9)]"
         >
           Jogar de novo 🔁
         </button>
+        {ls.mapOpen ? (
+          <LevelMap
+            title="Níveis"
+            subtitle="Escolha um nível para jogar"
+            items={levelMapItems(gameId, levels, (i) => `Nível ${i + 1}`)}
+            onPick={(id) => ls.goToLevel(levels.findIndex((l) => l.id === id))}
+            onClose={() => ls.setMapOpen(false)}
+          />
+        ) : null}
       </div>
     );
   }
+
+  if (!round) return null;
 
   const totalSteps = round.steps.length;
 
@@ -188,7 +172,7 @@ export default function OrderGame({
     <GameShell title={title} subtitle={subtitle} onExit={onExit} bg={bg} titleClass={titleClass}>
       <div className="relative flex w-full flex-col items-center gap-4 px-4">
         <div className="flex w-full items-center justify-between gap-3">
-          <LevelHUD level={idx + 1} totalLevels={rounds.length} step={placed.length} steps={totalSteps} />
+          <LevelHUD level={ls.levelIdx + 1} totalLevels={levels.length} step={placed.length} steps={totalSteps} />
           <div className="flex items-center gap-2">
             {score > 0 ? (
               <span className="ui-press flex items-center gap-1.5 rounded-full bg-amber-100 px-4 py-2 text-sm font-black text-amber-900 shadow">
@@ -200,6 +184,16 @@ export default function OrderGame({
                 🏆 {Math.max(record, score)}
               </span>
             ) : null}
+            <button
+              type="button"
+              onClick={() => {
+                sfx.pop();
+                ls.setMapOpen(true);
+              }}
+              className="ui-press rounded-full bg-white/85 px-3 py-2 text-sm font-black text-amber-700 shadow"
+            >
+              🗺️
+            </button>
           </div>
         </div>
 
@@ -238,6 +232,16 @@ export default function OrderGame({
           <p className="animate-pop rounded-3xl bg-rose-100 px-6 py-3 text-center text-base font-extrabold text-rose-700 shadow-lg">
             💡 {msg}
           </p>
+        ) : null}
+
+        {ls.mapOpen ? (
+          <LevelMap
+            title="Níveis"
+            subtitle="Escolha um nível para jogar"
+            items={levelMapItems(gameId, levels, (i) => `Nível ${i + 1}`)}
+            onPick={(id) => ls.goToLevel(levels.findIndex((l) => l.id === id))}
+            onClose={() => ls.setMapOpen(false)}
+          />
         ) : null}
       </div>
     </GameShell>

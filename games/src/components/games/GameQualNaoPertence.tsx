@@ -1,4 +1,5 @@
 import ChoiceGame, { type ChoiceRound } from './ChoiceGame';
+import { chunkLevels } from '../../lib/levels';
 
 // ── Qual Não Pertence? (5–6 anos) ────────────────────────────────────────
 // A criança acha, entre três figuras, a que não combina com a história.
@@ -20,7 +21,7 @@ export default function GameQualNaoPertence({ onExit }: { onExit: () => void }) 
       bg="bg-gradient-to-b from-fuchsia-100 via-pink-50 to-rose-100"
       titleClass="text-fuchsia-600"
       variant="grid"
-      rounds={ROUNDS}
+      levels={chunkLevels(ROUNDS, 1)}
       onExit={onExit}
     />
   );

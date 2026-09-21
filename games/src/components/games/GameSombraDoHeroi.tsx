@@ -1,4 +1,5 @@
 import ChoiceGame, { type ChoiceRound } from './ChoiceGame';
+import { chunkLevels } from '../../lib/levels';
 
 // ── Sombra do Herói (7–9 anos) ───────────────────────────────────────────
 // A criança vê a silhueta de um personagem e descobre quem é.
@@ -21,7 +22,7 @@ export default function GameSombraDoHeroi({ onExit }: { onExit: () => void }) {
       bg="bg-gradient-to-b from-slate-200 via-indigo-50 to-violet-100"
       titleClass="text-slate-700"
       variant="shadow"
-      rounds={ROUNDS}
+      levels={chunkLevels(ROUNDS, 1)}
       onExit={onExit}
     />
   );

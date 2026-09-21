@@ -22,11 +22,64 @@ interface SpeakOptions {
   onEnd?: () => void;
 }
 
-const DEFAULT_RATE = 0.92;
-const DEFAULT_PITCH = 1.08;
+const DEFAULT_RATE = 0.95;
+const DEFAULT_PITCH = 1.05;
 
 let cachedVoice: SpeechSynthesisVoice | null = null;
 let speaking = false;
+
+/**
+ * Ordem de preferência das vozes pt-BR (grátis, sem gravar nada): primeiro as
+ * vozes "neurais/naturais" que os sistemas já trazem (Edge/Windows, Google no
+ * Android/Chrome, macOS Enhanced), depois as comuns. Cada padrão tem um peso —
+ * a melhor pontuação vence.
+ */
+const VOICE_PREFERENCES: { re: RegExp; score: number }[] = [
+  { re: /natural|neural|online|premium|enhanced/i, score: 100 },
+  { re: /microsoft.*(francisca|thalita|maria|brenda|elza|antonio|donato)/i, score: 90 },
+  { re: /google.*(portugu|brasil)/i, score: 80 },
+  { re: /luciana|fernanda|francisca|joana|ines|inês|maria|ana|clara/i, score: 60 },
+  { re: /^pt[-_]br$/i, score: 40 },
+  { re: /^pt/i, score: 20 },
+];
+
+/** Pontuação de uma voz (0 = não é pt-BR). */
+function scoreVoice(v: SpeechSynthesisVoice): number {
+  if (!/^pt/i.test(v.lang)) return 0;
+  const label = `${v.name} ${v.voiceURI}`;
+  let best = 1;
+  for (const p of VOICE_PREFERENCES) {
+    if (p.re.test(label)) best = Math.max(best, p.score);
+  }
+  return best;
+}
+
+/** Recalcula e guarda a melhor voz pt-BR disponível. */
+export function refreshVoice(): SpeechSynthesisVoice | null {
+  if (!isSpeechSupported()) return null;
+  try {
+    const voices = window.speechSynthesis.getVoices();
+    if (!voices.length) return cachedVoice;
+    let best: SpeechSynthesisVoice | null = null;
+    let bestScore = 0;
+    for (const v of voices) {
+      const s = scoreVoice(v);
+      if (s > bestScore) {
+        bestScore = s;
+        best = v;
+      }
+    }
+    if (best) cachedVoice = best;
+    return cachedVoice;
+  } catch {
+    return cachedVoice;
+  }
+}
+
+function pickVoice(): SpeechSynthesisVoice | null {
+  if (cachedVoice) return cachedVoice;
+  return refreshVoice();
+}
 
 export function isSpeechSupported(): boolean {
   return typeof window !== 'undefined' && 'speechSynthesis' in window;
@@ -45,23 +98,6 @@ export function cleanForSpeech(text: string): string {
     .trim();
 }
 
-function pickVoice(): SpeechSynthesisVoice | null {
-  if (cachedVoice) return cachedVoice;
-  if (!isSpeechSupported()) return null;
-  try {
-    const voices = window.speechSynthesis.getVoices();
-    if (!voices.length) return null;
-    cachedVoice =
-      voices.find((v) => v.lang === 'pt-BR') ??
-      voices.find((v) => /^pt[-_]BR/i.test(v.lang)) ??
-      voices.find((v) => /^pt/i.test(v.lang)) ??
-      null;
-    return cachedVoice;
-  } catch {
-    return null;
-  }
-}
-
 /**
  * Destrava a síntese de voz no primeiro gesto (iOS). Fala um texto vazio.
  * Também aproveita para aquecer a lista de vozes (que chega assíncrona).
@@ -70,6 +106,7 @@ export function primeVoice() {
   if (!isSpeechSupported()) return;
   try {
     window.speechSynthesis.getVoices();
+    refreshVoice();
     const u = new SpeechSynthesisUtterance(' ');
     u.volume = 0;
     u.lang = 'pt-BR';
@@ -106,9 +143,15 @@ export function speak(text: string, options: SpeakOptions = {}) {
     utterance.onend = done;
     utterance.onerror = done;
 
-    // Vozes carregam de forma assíncrona: tenta de novo quando chegarem.
+    // Vozes carregam de forma assíncrona: escolhe a melhor quando chegarem.
     if (!voice) {
-      synth.addEventListener('voiceschanged', () => pickVoice(), { once: true });
+      synth.addEventListener(
+        'voiceschanged',
+        () => {
+          refreshVoice();
+        },
+        { once: true },
+      );
     }
 
     speaking = true;

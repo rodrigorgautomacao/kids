@@ -3,6 +3,7 @@ import Confetti from 'react-confetti';
 import GameShell from '../GameShell';
 import LevelHUD from '../LevelHUD';
 import LevelDone from '../LevelDone';
+import LevelMap from '../LevelMap';
 import { Backdrop, StarItem } from '../art';
 import type { BackdropId } from '../../data/scenes';
 import { bestScore, submitScore } from '../../lib/progress';
@@ -10,20 +11,20 @@ import { usePrefersReducedMotion } from '../../lib/motion';
 import { confettiGravity, confettiPieces } from '../../lib/confetti';
 import { sfx, voice } from '../../lib/audio';
 import { burst } from '../../lib/fx';
+import { levelMapItems, useLevelState, type GameLevel } from '../../lib/levels';
 
-// ── Quebra-Cabeça Bíblico ────────────────────────────────────────────────
-// A imagem de uma cena (`Backdrop`) é cortada em N×N peças e embaralhada.
-// A criança toca em duas peças para trocá-las até remontar a cena. Tem a
-// miniatura do alvo em cima, então não depende de leitura.
-//
-// Gesto de 1 toque por peça (sem arrastar). Erro não pune: só troca de lugar.
-// Estrelas pelas trocas: quanto menos trocas, mais estrelas.
+// ── Quebra-Cabeça Bíblico (níveis) ───────────────────────────────────────
+// Cada nível é uma cena cortada em mais peças que o anterior. O 1º nível tem
+// 4 peças (2×2) e o 10º chega a 36 (6×6) — a criança troca duas peças de lugar
+// por vez até remontar a imagem. Miniatura do alvo em cima (não depende de ler).
 
-export interface PuzzleRound {
+export interface PuzzleLevel {
   id: string;
   ref: string;
   backdrop: BackdropId;
   label: string;
+  rows: number;
+  cols: number;
 }
 
 interface PuzzleGameProps {
@@ -32,14 +33,12 @@ interface PuzzleGameProps {
   subtitle: string;
   bg: string;
   titleClass: string;
-  grid: 2 | 3;
-  rounds: PuzzleRound[];
+  levels: GameLevel<PuzzleLevel>[];
   onExit: () => void;
 }
 
-function shuffledOrder(n: number): number[] {
-  const arr = Array.from({ length: n * n }, (_, i) => i);
-  // Garante que não comece resolvido.
+function shuffledOrder(count: number): number[] {
+  const arr = Array.from({ length: count }, (_, i) => i);
   do {
     for (let i = arr.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
@@ -55,34 +54,30 @@ export default function PuzzleGame({
   subtitle,
   bg,
   titleClass,
-  grid,
-  rounds,
+  levels,
   onExit,
 }: PuzzleGameProps) {
   const reducedMotion = usePrefersReducedMotion();
-  const n = grid;
-  const [idx, setIdx] = useState(0);
-  const [order, setOrder] = useState<number[]>(() => shuffledOrder(n));
+  const ls = useLevelState(gameId, levels);
+  const puzzle = ls.round;
+  const total = puzzle ? puzzle.rows * puzzle.cols : 0;
+
+  const [order, setOrder] = useState<number[]>(() => shuffledOrder(total));
   const [selected, setSelected] = useState<number | null>(null);
   const [swaps, setSwaps] = useState(0);
-  const [finished, setFinished] = useState(false);
-  const [stars, setStars] = useState(3);
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
   const stageRef = useRef<HTMLDivElement>(null);
   const record = bestScore(gameId);
-  const round = rounds[idx];
 
-  function later(fn: () => void, ms: number) {
-    timers.current.push(window.setTimeout(fn, ms));
-  }
-
+  // Nova cena: embaralha as peças e narra o pedido.
   useEffect(() => {
-    if (idx >= rounds.length) return;
-    setOrder(shuffledOrder(n));
+    if (!puzzle || ls.phase !== 'playing') return;
+    setOrder(shuffledOrder(puzzle.rows * puzzle.cols));
     setSelected(null);
-    const t = window.setTimeout(() => voice.speak(`${rounds[idx].label}. Monte a cena!`), 350);
+    setSwaps(0);
+    const t = window.setTimeout(() => voice.speak(`${puzzle.label}. Monte a cena!`), 350);
     return () => window.clearTimeout(t);
-  }, [idx]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [ls.levelIdx, ls.roundIdx, ls.phase]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(
     () => () => {
@@ -93,7 +88,7 @@ export default function PuzzleGame({
   );
 
   function handleTap(pos: number, ev: { currentTarget: HTMLElement }) {
-    if (finished) return;
+    if (ls.phase !== 'playing' || !puzzle) return;
     sfx.pop();
     if (selected === null) {
       setSelected(pos);
@@ -106,9 +101,8 @@ export default function PuzzleGame({
 
     const next = [...order];
     [next[selected], next[pos]] = [next[pos], next[selected]];
-    const nextSwaps = swaps + 1;
     setOrder(next);
-    setSwaps(nextSwaps);
+    setSwaps((s) => s + 1);
     setSelected(null);
 
     const box = stageRef.current?.getBoundingClientRect();
@@ -121,90 +115,95 @@ export default function PuzzleGame({
     if (next.every((tile, i) => tile === i)) {
       sfx.collect();
       voice.speak('Isso! A cena ficou pronta!');
-      later(() => {
-        if (idx + 1 >= rounds.length) {
-          const limit3 = n === 2 ? 1 : 3;
-          const limit2 = n === 2 ? 4 : 8;
-          setStars(nextSwaps <= limit3 ? 3 : nextSwaps <= limit2 ? 2 : 1);
-          setFinished(true);
-          submitScore(gameId, 100 * rounds.length + Math.max(0, 400 - nextSwaps * 10));
-        } else {
-          setIdx((i) => i + 1);
-          setSwaps(0);
-        }
-      }, 1100);
+      submitScore(gameId, 100 * levels.length + Math.max(0, 600 - swaps * 10));
+      ls.completeRound();
     }
   }
 
-  function handleReplay() {
-    timers.current.forEach((t) => window.clearTimeout(t));
-    timers.current = [];
-    setIdx(0);
-    setOrder(shuffledOrder(n));
-    setSelected(null);
-    setSwaps(0);
-    setFinished(false);
-  }
-
-  if (finished) {
+  if (ls.phase === 'done') {
     return (
       <div className="safe-area-pad relative flex min-h-screen-safe w-full flex-col items-center justify-center gap-5 bg-gradient-to-b from-sky-100 via-indigo-50 to-purple-100 px-6">
         {!reducedMotion ? (
           <Confetti recycle={false} numberOfPieces={confettiPieces()} gravity={confettiGravity()} />
         ) : null}
         <LevelDone
-          stars={stars}
+          stars={ls.stars}
+          wrong={ls.wrong}
+          onNext={ls.hasNextLevel ? ls.goNextLevel : undefined}
           onExit={onExit}
-          headline={stars === 3 ? 'Incrível! ⭐⭐⭐' : stars === 2 ? 'Muito bem! ⭐⭐' : 'Bom esforço! ⭐'}
+          onOpenMap={() => ls.setMapOpen(true)}
         />
         <button
           type="button"
-          onClick={handleReplay}
+          onClick={ls.replayLevel}
           className="ui-press rounded-full bg-indigo-400 px-8 py-3 text-lg font-black text-indigo-950 shadow-[0_6px_0_rgba(99,102,241,0.9)]"
         >
           Jogar de novo 🔁
         </button>
+        {ls.mapOpen ? (
+          <LevelMap
+            title="Níveis"
+            subtitle="Escolha um nível para jogar"
+            items={levelMapItems(gameId, levels, (i) => `Nível ${i + 1}`, (_i, lv) => lv.name ?? '', (_i, lv) => `${(lv.rounds[0]?.rows ?? 0) * (lv.rounds[0]?.cols ?? 0)} peças`)}
+            onPick={(id) => ls.goToLevel(levels.findIndex((l) => l.id === id))}
+            onClose={() => ls.setMapOpen(false)}
+          />
+        ) : null}
       </div>
     );
   }
 
-  if (!round) return null;
+  if (!puzzle) return null;
 
   return (
     <GameShell title={title} subtitle={subtitle} onExit={onExit} bg={bg} titleClass={titleClass}>
       <div className="relative flex w-full flex-col items-center gap-4 px-4">
         <div className="flex w-full items-center justify-between gap-3">
-          <LevelHUD level={1} totalLevels={1} step={idx + 1} steps={rounds.length} />
+          <LevelHUD
+            level={ls.levelIdx + 1}
+            totalLevels={levels.length}
+            step={ls.roundIdx + 1}
+            steps={ls.level.rounds.length}
+          />
           <div className="flex items-center gap-2">
             {record > 0 ? (
               <span className="flex items-center gap-1.5 rounded-full bg-white/85 px-3 py-2 text-sm font-black text-indigo-700 shadow">
                 🏆 {record}
               </span>
             ) : null}
-            <span className="flex items-center gap-1.5 rounded-full bg-amber-100 px-3 py-2 text-sm font-black text-amber-900 shadow">
-              <StarItem size={16} /> Trocas: {swaps}
-            </span>
+            <button
+              type="button"
+              onClick={() => {
+                sfx.pop();
+                ls.setMapOpen(true);
+              }}
+              className="ui-press rounded-full bg-white/85 px-3 py-2 text-sm font-black text-indigo-700 shadow"
+            >
+              🗺️
+            </button>
           </div>
         </div>
 
         <div className="flex w-full items-center gap-4 rounded-3xl bg-white/95 px-4 py-3 shadow-xl">
           <div className="h-16 w-20 shrink-0 overflow-hidden rounded-xl border-2 border-slate-200">
-            <Backdrop id={round.backdrop} />
+            <Backdrop id={puzzle.backdrop} />
           </div>
           <div>
-            <p className="text-lg font-black text-indigo-900">Monte a cena: {round.label}</p>
-            <p className="text-xs font-bold text-slate-400">Toque em duas peças para trocá-las de lugar.</p>
+            <p className="text-lg font-black text-indigo-900">Monte a cena: {puzzle.label}</p>
+            <p className="text-xs font-bold text-slate-400">
+              {puzzle.rows * puzzle.cols} peças · toque em duas para trocá-las de lugar
+            </p>
           </div>
         </div>
 
         <div
           ref={stageRef}
-          className="relative grid w-full gap-1.5 rounded-2xl bg-white p-1.5 shadow-xl"
-          style={{ gridTemplateColumns: `repeat(${n}, minmax(0, 1fr))` }}
+          className="relative grid w-full gap-1 rounded-2xl bg-white p-1.5 shadow-xl"
+          style={{ gridTemplateColumns: `repeat(${puzzle.cols}, minmax(0, 1fr))` }}
         >
           {order.map((tile, pos) => {
-            const row = Math.floor(tile / n);
-            const col = tile % n;
+            const row = Math.floor(tile / puzzle.cols);
+            const col = tile % puzzle.cols;
             const correct = tile === pos;
             return (
               <button
@@ -212,21 +211,25 @@ export default function PuzzleGame({
                 type="button"
                 onClick={(ev) => handleTap(pos, ev)}
                 aria-label={`Peça ${pos + 1}`}
-                className={`relative overflow-hidden rounded-lg border-2 transition-transform ${
-                  selected === pos ? 'scale-95 border-amber-400 ring-4 ring-amber-300' : correct ? 'border-emerald-300' : 'border-slate-200'
+                className={`relative overflow-hidden rounded-md border transition-transform ${
+                  selected === pos
+                    ? 'scale-95 border-amber-400 ring-4 ring-amber-300'
+                    : correct
+                      ? 'border-emerald-300'
+                      : 'border-slate-200'
                 }`}
                 style={{ aspectRatio: '4 / 3' }}
               >
                 <div
                   className="absolute"
                   style={{
-                    width: `${n * 100}%`,
-                    height: `${n * 100}%`,
+                    width: `${puzzle.cols * 100}%`,
+                    height: `${puzzle.rows * 100}%`,
                     left: `-${col * 100}%`,
                     top: `-${row * 100}%`,
                   }}
                 >
-                  <Backdrop id={round.backdrop} />
+                  <Backdrop id={puzzle.backdrop} />
                 </div>
                 {selected === pos ? (
                   <span className="absolute inset-0 flex items-center justify-center bg-amber-300/20" />
@@ -235,6 +238,20 @@ export default function PuzzleGame({
             );
           })}
         </div>
+
+        <p className="flex items-center gap-1.5 rounded-full bg-amber-100 px-3 py-1.5 text-sm font-black text-amber-900 shadow">
+          <StarItem size={16} /> Trocas: {swaps}
+        </p>
+
+        {ls.mapOpen ? (
+          <LevelMap
+            title="Níveis"
+            subtitle="Escolha um nível para jogar"
+            items={levelMapItems(gameId, levels, (i) => `Nível ${i + 1}`, (_i, lv) => lv.name ?? '', (_i, lv) => `${(lv.rounds[0]?.rows ?? 0) * (lv.rounds[0]?.cols ?? 0)} peças`)}
+            onPick={(id) => ls.goToLevel(levels.findIndex((l) => l.id === id))}
+            onClose={() => ls.setMapOpen(false)}
+          />
+        ) : null}
       </div>
     </GameShell>
   );

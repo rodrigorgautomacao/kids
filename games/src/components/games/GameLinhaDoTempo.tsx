@@ -1,4 +1,5 @@
 import OrderGame, { type OrderRound } from './OrderGame';
+import { chunkLevels } from '../../lib/levels';
 
 // ── Linha do Tempo (7–9 anos) ────────────────────────────────────────────
 // Mesmo motor de ordenação, com eventos bíblicos e 5 passos por rodada.
@@ -88,7 +89,7 @@ export default function GameLinhaDoTempo({ onExit }: { onExit: () => void }) {
       bg="bg-gradient-to-b from-violet-100 via-indigo-50 to-purple-100"
       titleClass="text-violet-600"
       intro="Qual evento aconteceu PRIMEIRO? Toque um por um até completar!"
-      rounds={ROUNDS}
+      levels={chunkLevels(ROUNDS, 1)}
       onExit={onExit}
     />
   );

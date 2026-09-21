@@ -1,4 +1,5 @@
 import ChoiceGame, { type ChoiceRound } from './ChoiceGame';
+import { chunkLevels } from '../../lib/levels';
 
 // ── Verdadeiro ou Falso? (7–9 anos) ──────────────────────────────────────
 // Afirmações sobre a Bíblia; a criança decide se são verdadeiras ou não.
@@ -26,7 +27,7 @@ export default function GameVerdadeiroOuFalso({ onExit }: { onExit: () => void }
       bg="bg-gradient-to-b from-slate-100 via-sky-50 to-blue-100"
       titleClass="text-slate-700"
       variant="bool"
-      rounds={ROUNDS}
+      levels={chunkLevels(ROUNDS, 1)}
       onExit={onExit}
     />
   );

@@ -1,4 +1,5 @@
 import HiddenGame, { type HiddenRound } from './HiddenGame';
+import { chunkLevels } from '../../lib/levels';
 
 // ── Ache o Escondido (3–4 anos) ──────────────────────────────────────────
 // Atenção visual: a criança procura o item pedido numa cena cheia de figuras.
@@ -19,7 +20,7 @@ export default function GameAcheOEscondido({ onExit }: { onExit: () => void }) {
       subtitle="Encontre a figura pedida!"
       bg="bg-gradient-to-b from-orange-100 via-amber-50 to-yellow-100"
       titleClass="text-orange-600"
-      rounds={ROUNDS}
+      levels={chunkLevels(ROUNDS, 1)}
       onExit={onExit}
     />
   );

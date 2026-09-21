@@ -1,4 +1,5 @@
 import CountGame, { type CountRound } from './CountGame';
+import { chunkLevels } from '../../lib/levels';
 
 // ── Quantos na História? (5–6 anos) — Antigo Testamento ──────────────────
 // Probleminhas de somar/subtrair com os números das histórias.
@@ -19,7 +20,7 @@ export default function GameQuantosNaHistoria({ onExit }: { onExit: () => void }
       subtitle="Resolva e toque no número certo!"
       bg="bg-gradient-to-b from-teal-100 via-emerald-50 to-lime-100"
       titleClass="text-teal-600"
-      rounds={ROUNDS}
+      levels={chunkLevels(ROUNDS, 1)}
       onExit={onExit}
     />
   );

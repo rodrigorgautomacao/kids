@@ -1,4 +1,5 @@
 import ChoiceGame, { type ChoiceRound } from './ChoiceGame';
+import { chunkLevels } from '../../lib/levels';
 
 // ── Sim ou Não? (3–4 anos) ───────────────────────────────────────────────
 // A criança ouve uma frase curta e decide se é verdadeira (✅) ou não (❌).
@@ -26,7 +27,7 @@ export default function GameSimOuNao({ onExit }: { onExit: () => void }) {
       bg="bg-gradient-to-b from-emerald-100 via-lime-50 to-yellow-100"
       titleClass="text-emerald-600"
       variant="bool"
-      rounds={ROUNDS}
+      levels={chunkLevels(ROUNDS, 1)}
       onExit={onExit}
     />
   );

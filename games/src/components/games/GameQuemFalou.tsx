@@ -1,4 +1,5 @@
 import ChoiceGame, { type ChoiceRound } from './ChoiceGame';
+import { chunkLevels } from '../../lib/levels';
 
 // ── Quem Falou? (7–9 anos) — Novo Testamento ─────────────────────────────
 // A criança lê uma frase e descobre quem a disse.
@@ -21,7 +22,7 @@ export default function GameQuemFalou({ onExit }: { onExit: () => void }) {
       bg="bg-gradient-to-b from-sky-100 via-blue-50 to-indigo-100"
       titleClass="text-sky-600"
       variant="quote"
-      rounds={ROUNDS}
+      levels={chunkLevels(ROUNDS, 1)}
       onExit={onExit}
     />
   );

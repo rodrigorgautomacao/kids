@@ -1,4 +1,5 @@
 import OrderGame, { type OrderRound } from './OrderGame';
+import { chunkLevels } from '../../lib/levels';
 
 // ── A História em Ordem (5–6 anos) ───────────────────────────────────────
 // Sequência narrativa: a criança toca as cenas na ordem em que aconteceram.
@@ -71,7 +72,7 @@ export default function GameHistoriaEmOrdem({ onExit }: { onExit: () => void }) 
       bg="bg-gradient-to-b from-teal-100 via-sky-50 to-emerald-100"
       titleClass="text-teal-600"
       intro="O que aconteceu PRIMEIRO? Toque na cena e continue a história!"
-      rounds={ROUNDS}
+      levels={chunkLevels(ROUNDS, 1)}
       onExit={onExit}
     />
   );

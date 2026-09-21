@@ -273,6 +273,14 @@ React 18 · TypeScript 5 · Vite 5 · Tailwind CSS 3 · lucide-react · react-co
   motores: `ChoiceGame` (6 variantes), `PuzzleGame`, `CountGame`, `HiddenGame`,
   `ConnectGame`, `SortGame`. Todo jogo é classificado por **faixa + tipo
   (AT/NT/AT+NT)**. O Hub esconde "Em breve" quando não há jogos pendentes.
+- ✅ **Fase 13** — **voz melhorada** (escolha automática das melhores vozes
+  neurais pt-BR do próprio aparelho + prosódia mais natural; segue grátis, sem
+  gravar áudio) e **sistema de níveis** (`lib/levels.ts`): cada nível tem
+  estrelas próprias (salvas em `progress`), mapa de níveis 🗺️ e "próximo nível".
+  O **Quebra-Cabeça tem 10 níveis** — começa com 4 peças (2×2) e chega a 36
+  (6×6). Níveis já aplicados nos 7 motores (15 jogos) + Encontre a Cena, Que Som
+  é Esse? e Mostre o Livro. **Ainda faltam níveis** em: Caçadores do Versículo,
+  Pares da Arca, A Estrada da Luz, Heróis da Bíblia e Aventura na Bíblia.
 - 🟡 **Pendências conhecidas:**
   - **Teste em aparelho real** (iPhone/Android): instalação/offline, FPS da
     Aventura, volume da voz, toque em tela pequena, hit area do chip 🔊.
