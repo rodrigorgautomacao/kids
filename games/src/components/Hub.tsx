@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { games, FAIXAS, TIPOS, MAX_LEVELS_PER_GAME, type GameDefinition, type Tipo } from '../data/games';
+import { games, FAIXAS, TIPOS, MAX_LEVELS_PER_GAME, type Faixa, type GameDefinition, type Tipo } from '../data/games';
 import { chapterLevelsDone, chapterStars, loadLevels, totalStars, type ProgressMap } from '../lib/progress';
 import {
   isMusicMuted,
@@ -120,6 +120,7 @@ export default function Hub({ onSelectGame, onLogout }: HubProps) {
   const [musicOn, setMusicOn] = useState(() => !isMusicMuted());
   const [smallKids, setSmallKids] = useState(isSmallKidsMode);
   const [tipoFiltro, setTipoFiltro] = useState<'todos' | Tipo>('todos');
+  const [faixaFiltro, setFaixaFiltro] = useState<'todos' | Faixa>('3-4');
   const [gate, setGate] = useState<string | null>(null);
   const [installed, setInstalled] = useState(isStandalone);
   const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null);
@@ -327,8 +328,44 @@ export default function Hub({ onSelectGame, onLogout }: HubProps) {
             </p>
           </header>
 
+          {/* ─── filtro por idade ─── */}
+          <div className="mt-6">
+            <p className="mb-2 text-center text-xs font-black tracking-wide text-slate-400 uppercase">
+              {t('filtro.idade')}
+            </p>
+            <div className="flex flex-wrap items-center justify-center gap-2">
+              <button
+                type="button"
+                onClick={() => setFaixaFiltro('todos')}
+                aria-pressed={faixaFiltro === 'todos'}
+                className={`ui-press rounded-full px-4 py-2 text-sm font-black shadow ${
+                  faixaFiltro === 'todos'
+                    ? 'bg-emerald-500 text-white'
+                    : 'border border-slate-200 bg-white text-slate-600'
+                }`}
+              >
+                {t('filtro.todos')}
+              </button>
+              {FAIXAS.map((f) => (
+                <button
+                  key={f.id}
+                  type="button"
+                  onClick={() => setFaixaFiltro(f.id)}
+                  aria-pressed={faixaFiltro === f.id}
+                  className={`ui-press rounded-full px-4 py-2 text-sm font-black shadow ${
+                    faixaFiltro === f.id
+                      ? 'bg-emerald-500 text-white'
+                      : 'border border-slate-200 bg-white text-slate-600'
+                  }`}
+                >
+                  {f.mascote} {f.nome}
+                </button>
+              ))}
+            </div>
+          </div>
+
           {/* ─── filtro por tipo ─── */}
-          <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
+          <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
             {FILTROS.map((f) => (
               <button
                 key={f.id}
@@ -359,7 +396,7 @@ export default function Hub({ onSelectGame, onLogout }: HubProps) {
 
           {/* ─── seções por faixa ─── */}
           <div className="mt-6 flex flex-col gap-6">
-            {FAIXAS.map((faixa) => {
+            {FAIXAS.filter((faixa) => faixaFiltro === 'todos' || faixa.id === faixaFiltro).map((faixa) => {
               const visiveis = games.filter(
                 (g) =>
                   g.faixa === faixa.id &&
@@ -416,7 +453,7 @@ export default function Hub({ onSelectGame, onLogout }: HubProps) {
             <p className="mt-1 text-center text-xs font-bold text-slate-400">
               Novas aventuras para cada idade estão a caminho!
             </p>
-            {FAIXAS.map((faixa) => {
+            {FAIXAS.filter((faixa) => faixaFiltro === 'todos' || faixa.id === faixaFiltro).map((faixa) => {
               const breves = games.filter(
                 (g) =>
                   g.faixa === faixa.id &&

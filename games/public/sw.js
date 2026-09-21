@@ -11,7 +11,7 @@
  * A VERSION é trocada automaticamente pelo `scripts/bump-sw.mjs` (prebuild) com
  * o hash do commit — assim o cache antigo é invalidado a cada publicação.
  */
-const VERSION = 'vc084da1';
+const VERSION = 'v2f2560f';
 const BASE = '/kids/';
 const CACHE = `kids-${VERSION}`;
 const SHELL = [

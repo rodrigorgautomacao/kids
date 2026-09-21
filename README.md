@@ -25,6 +25,33 @@ esse campo — trocar o tipo de um jogo é uma linha em `data/games.tsx`.
 **Toda pergunta e toda opção de resposta têm som** (botão 🔊 ou narração
 automática ao escolher), porque nem toda criança sabe ler.
 
+A home abre com **filtro por idade** (Pequeninos / Exploradores / Íntimos de
+Deus / Todos) e **filtro por tipo bíblico** — sem despejar todos os jogos de uma
+vez. A faixa inicial é a 3–4; trocar o padrão é uma linha em `Hub.tsx`
+(`useState<'todos' | Faixa>('3-4')`).
+
+## Voz de estúdio (pré-gerada, grátis)
+
+A narração usa **vozes pré-geradas** com o **Piper** (TTS offline, gratuito) —
+nada é gravado por você. O app toca `public/voice/<hash>.ogg` quando existe e,
+se não existir, cai automaticamente na melhor voz pt-BR do aparelho
+(`speechSynthesis`). Hoje são **1201 frases** (~15 MB).
+
+Para regerar (após mudar textos):
+
+```bash
+# 1) baixar o Piper + voz pt-BR (uma vez) em /tmp/opencode/piper
+# 2) gerar os áudios:
+cd games
+bun scripts/gen-voice.mjs --dry   # só conta as frases
+bun scripts/gen-voice.mjs         # gera public/voice/*.ogg + manifest.json
+```
+
+O script coleta as frases do catálogo de cenas e das strings de narração do
+código, sintetiza com Piper e converte para Opus com `ffmpeg`. Requer o binário
+`piper` (com `LD_LIBRARY_PATH`), a voz `pt_BR-faber-medium.onnx` e o `ffmpeg`
+(variáveis `PIPER_BIN`, `PIPER_LIB`, `PIPER_MODEL`).
+
 Cada pergunta/estação cita a **referência bíblica** (`Livro cap.vers (VERSÃO)`).
 A versão é a da fonte quando atestada; caso contrário, **NAA**
 (Nova Almeida Atualizada, SBB).

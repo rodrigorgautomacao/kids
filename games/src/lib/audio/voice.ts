@@ -12,6 +12,68 @@
 
 import { setDuck } from './context';
 import { isVoiceMuted } from './preferences';
+import { hashText } from './hash';
+
+const BASE = import.meta.env.BASE_URL;
+
+/**
+ * Voz de estúdio pré-gerada (Piper, grátis): `public/voice/<hash>.ogg`.
+ * O manifesto mapeia hash(cleanForSpeech(texto)) → arquivo. Quando o texto tem
+ * áudio, ele toca (igual em todo aparelho e offline); senão cai na voz do
+ * sistema (`speechSynthesis`). Gerado por `scripts/gen-voice.mjs`.
+ */
+let manifest: Record<string, string> | null = null;
+let manifestRequested = false;
+let audioEl: HTMLAudioElement | null = null;
+
+function ensureManifest() {
+  if (manifestRequested || typeof fetch === 'undefined') return;
+  manifestRequested = true;
+  try {
+    fetch(`${BASE}voice/manifest.json`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((m) => {
+        if (m && typeof m === 'object') manifest = m as Record<string, string>;
+      })
+      .catch(() => {
+        /* sem manifesto: segue na voz do aparelho */
+      });
+  } catch {
+    /* ignore */
+  }
+}
+ensureManifest();
+
+/** Toca o arquivo pré-gerado. Retorna false se nem começou (aí usa TTS). */
+function playFile(file: string, onEnd?: () => void): boolean {
+  try {
+    if (!audioEl) audioEl = new Audio();
+    const el = audioEl;
+    el.pause();
+    el.src = `${BASE}voice/${file}`;
+    el.onended = () => {
+      speaking = false;
+      setDuck(false, 0.4);
+      onEnd?.();
+    };
+    el.onerror = () => {
+      speaking = false;
+      setDuck(false, 0.3);
+    };
+    speaking = true;
+    setDuck(true, 0.2);
+    const p = el.play();
+    if (p && typeof p.catch === 'function') {
+      p.catch(() => {
+        speaking = false;
+        setDuck(false, 0.3);
+      });
+    }
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 interface SpeakOptions {
   /** 0.5–2. Velocidade da fala (padrão infantil: um pouco mais devagar). */
@@ -120,9 +182,19 @@ export function primeVoice() {
 /** Fala um texto. Cancela a fala anterior para não enfileirar frases. */
 export function speak(text: string, options: SpeakOptions = {}) {
   if (isVoiceMuted()) return;
-  if (!isSpeechSupported()) return;
   const clean = cleanForSpeech(text);
   if (!clean) return;
+
+  // 1) Voz de estúdio pré-gerada (Piper) — toca se existir para este texto.
+  const file = manifest?.[hashText(clean)];
+  if (file) {
+    if (playFile(file, options.onEnd)) return;
+  } else {
+    ensureManifest();
+  }
+
+  // 2) Fallback: voz do aparelho.
+  if (!isSpeechSupported()) return;
 
   const synth = window.speechSynthesis;
   try {
@@ -165,6 +237,13 @@ export function speak(text: string, options: SpeakOptions = {}) {
 
 /** Interrompe a narração (troca de tela, mudo ligado). */
 export function stopSpeaking() {
+  if (audioEl) {
+    try {
+      audioEl.pause();
+    } catch {
+      /* ignore */
+    }
+  }
   if (!isSpeechSupported()) return;
   try {
     window.speechSynthesis.cancel();
