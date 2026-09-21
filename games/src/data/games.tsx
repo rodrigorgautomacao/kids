@@ -10,6 +10,21 @@ import {
   GameMostreOLivro,
   GameLinhaDoTempo,
   GameCacadoresDoVersiculo,
+  GameQuebraCabeca,
+  GameContaNaArca,
+  GameAcheOIgual,
+  GameSimOuNao,
+  GameAcheOEscondido,
+  GameQuebraCabecaMedio,
+  GameLigueOsPares,
+  GameAntigoOuNovo,
+  GameQuantosNaHistoria,
+  GameQualNaoPertence,
+  GameQuemFalou,
+  GameSeparePorTestamento,
+  GameVerdadeiroOuFalso,
+  GameCompleteOVersiculo,
+  GameSombraDoHeroi,
 } from '../components/games';
 
 export type Faixa = '3-4' | '5-6' | '7-9';
@@ -100,6 +115,26 @@ const GAMES: GameDefinition[] = [
   { id: 'mostre-o-livro',   title: 'Mostre o Livro',       subtitle: 'Qual livro da Bíblia?', sinopse: 'Ouça a pista e toque no livro certo!', faixa: '5-6', tipo: 'at-nt', status: 'pronto', habilidades: ['classificação', 'conhecimento bíblico'], icon: CompassIcon, color: 'bg-cyan-200 text-cyan-900', component: GameMostreOLivro },
   { id: 'linha-do-tempo',   title: 'Linha do Tempo',       subtitle: 'Ordene os eventos', sinopse: 'Organize os eventos bíblicos na ordem certa!', faixa: '7-9', tipo: 'at-nt', status: 'pronto', habilidades: ['sequência', 'memória', 'conhecimento bíblico'], icon: CrownIcon, color: 'bg-violet-200 text-violet-900', component: GameLinhaDoTempo },
   { id: 'cacadores-versiculo', title: 'Caçadores do Versículo', subtitle: 'Complete o versículo', sinopse: 'Ache a palavra que falta no versículo!', faixa: '7-9', tipo: 'at-nt', status: 'pronto', habilidades: ['leitura', 'velocidade', 'conhecimento bíblico'], icon: CrownIcon, color: 'bg-purple-200 text-purple-900', component: GameCacadoresDoVersiculo },
+
+  // ─── Fase 12 — +5 por faixa (quebra-cabeça e mecânicas novas) ──
+  // 3–4
+  { id: 'quebra-cabeca', title: 'Quebra-Cabeça Bíblico', subtitle: 'Monte a cena 2×2', sinopse: 'Troque as peças e remonte a cena bíblica!', faixa: '3-4', tipo: 'at-nt', status: 'pronto', habilidades: ['visão espacial', 'reconhecimento'], icon: StarIcon, color: 'bg-indigo-200 text-indigo-900', component: GameQuebraCabeca },
+  { id: 'conta-na-arca', title: 'Conta na Arca', subtitle: 'Conte os animais', sinopse: 'Conte os animais e toque no número certo!', faixa: '3-4', tipo: 'at', status: 'pronto', habilidades: ['contagem', 'números'], icon: StarIcon, color: 'bg-lime-200 text-lime-900', component: GameContaNaArca },
+  { id: 'ache-o-igual', title: 'Ache o Igual', subtitle: 'Discriminação visual', sinopse: 'Ache a figura igual ao modelo!', faixa: '3-4', tipo: 'at-nt', status: 'pronto', habilidades: ['atenção visual', 'comparação'], icon: StarIcon, color: 'bg-rose-200 text-rose-900', component: GameAcheOIgual },
+  { id: 'sim-ou-nao', title: 'Sim ou Não?', subtitle: 'Verdadeiro ou falso', sinopse: 'A história é verdadeira? Toque em ✅ ou ❌!', faixa: '3-4', tipo: 'at-nt', status: 'pronto', habilidades: ['compreensão', 'decisão'], icon: StarIcon, color: 'bg-emerald-200 text-emerald-900', component: GameSimOuNao },
+  { id: 'ache-o-escondido', title: 'Ache o Escondido', subtitle: 'Atenção visual', sinopse: 'Encontre a figura pedida na cena!', faixa: '3-4', tipo: 'at-nt', status: 'pronto', habilidades: ['atenção', 'vocabulário'], icon: StarIcon, color: 'bg-orange-200 text-orange-900', component: GameAcheOEscondido },
+  // 5–6
+  { id: 'quebra-cabeca-medio', title: 'Quebra-Cabeça Bíblico', subtitle: 'Monte a cena 3×3', sinopse: 'Remonte a cena com 9 peças!', faixa: '5-6', tipo: 'at-nt', status: 'pronto', habilidades: ['visão espacial', 'raciocínio'], icon: CompassIcon, color: 'bg-indigo-200 text-indigo-900', component: GameQuebraCabecaMedio },
+  { id: 'ligue-os-pares', title: 'Ligue os Pares', subtitle: 'Associação', sinopse: 'Ligue cada personagem ao seu par!', faixa: '5-6', tipo: 'at-nt', status: 'pronto', habilidades: ['associação', 'memória'], icon: CompassIcon, color: 'bg-emerald-200 text-emerald-900', component: GameLigueOsPares },
+  { id: 'antigo-ou-novo', title: 'Antigo ou Novo?', subtitle: 'Classificação', sinopse: 'Coloque cada história no testamento certo!', faixa: '5-6', tipo: 'at-nt', status: 'pronto', habilidades: ['classificação', 'conhecimento bíblico'], icon: CompassIcon, color: 'bg-cyan-200 text-cyan-900', component: GameAntigoOuNovo },
+  { id: 'quantos-na-historia', title: 'Quantos na História?', subtitle: 'Somar e subtrair', sinopse: 'Resolva o probleminha da história!', faixa: '5-6', tipo: 'at', status: 'pronto', habilidades: ['soma', 'subtração', 'raciocínio'], icon: CompassIcon, color: 'bg-teal-200 text-teal-900', component: GameQuantosNaHistoria },
+  { id: 'qual-nao-pertence', title: 'Qual Não Pertence?', subtitle: 'Categorias', sinopse: 'Ache a figura que não combina!', faixa: '5-6', tipo: 'at-nt', status: 'pronto', habilidades: ['categorização', 'lógica'], icon: CompassIcon, color: 'bg-fuchsia-200 text-fuchsia-900', component: GameQualNaoPertence },
+  // 7–9
+  { id: 'quem-falou', title: 'Quem Falou?', subtitle: 'Citações', sinopse: 'Descubra quem disse cada frase!', faixa: '7-9', tipo: 'nt', status: 'pronto', habilidades: ['leitura', 'conhecimento bíblico'], icon: CrownIcon, color: 'bg-sky-200 text-sky-900', component: GameQuemFalou },
+  { id: 'separe-por-testamento', title: 'Separe por Testamento', subtitle: 'AT × NT (desafio)', sinopse: 'Separe histórias e eventos por testamento!', faixa: '7-9', tipo: 'at-nt', status: 'pronto', habilidades: ['classificação', 'conhecimento bíblico'], icon: CrownIcon, color: 'bg-blue-200 text-blue-900', component: GameSeparePorTestamento },
+  { id: 'verdadeiro-ou-falso', title: 'Verdadeiro ou Falso?', subtitle: 'Afirmações', sinopse: 'Decida se a afirmação está certa!', faixa: '7-9', tipo: 'at-nt', status: 'pronto', habilidades: ['conhecimento bíblico', 'atenção'], icon: CrownIcon, color: 'bg-slate-200 text-slate-800', component: GameVerdadeiroOuFalso },
+  { id: 'complete-o-versiculo', title: 'Complete o Versículo', subtitle: 'Desafio de leitura', sinopse: 'Escolha a palavra que completa o versículo!', faixa: '7-9', tipo: 'at-nt', status: 'pronto', habilidades: ['leitura', 'conhecimento bíblico'], icon: CrownIcon, color: 'bg-violet-200 text-violet-900', component: GameCompleteOVersiculo },
+  { id: 'sombra-do-heroi', title: 'Sombra do Herói', subtitle: 'Silhuetas', sinopse: 'Descubra o personagem pela silhueta!', faixa: '7-9', tipo: 'at-nt', status: 'pronto', habilidades: ['reconhecimento', 'memória'], icon: CrownIcon, color: 'bg-slate-200 text-slate-800', component: GameSombraDoHeroi },
 ];
 
 // ─── Ícones simples (evita importar lucide em games.ts) ──────────

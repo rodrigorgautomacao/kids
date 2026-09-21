@@ -12,11 +12,15 @@ O catálogo é dividido por **faixa** (Pequeninos 3–4 · Exploradores 5–6 ·
 Heróis 7–9), com filtro por tipo bíblico (**AT · NT · AT+NT**) — as faixas
 ficam centralizadas em `data/games.tsx` (`FAIXAS`) para ajuste fácil.
 
-| Faixa | Jogos |
+| Faixa | Jogos (com tipo bíblico) |
 |---|---|
-| 🐣 **3–4** | **Encontre a Cena** (dica narrada → toque na figura certa) · **Pares da Arca** (memória de pares) · **Que Som é Esse?** (pista sonora → toque no personagem) |
-| 🦊 **5–6** | **Aventura na Bíblia** (mundo 2D + teatro de histórias) · **A História em Ordem** (sequência da narrativa) · **Mostre o Livro** (de qual livro da Bíblia é?) |
-| 🦁 **7–9** | **A Estrada da Luz** (quiz de caminhos) · **Heróis da Bíblia** (quiz com vidas) · **Linha do Tempo** (ordene os eventos) · **Caçadores do Versículo** (complete o versículo) |
+| 🐣 **3–4** | **Encontre a Cena** (AT+NT) · **Pares da Arca** (AT) · **Que Som é Esse?** (AT+NT) · **Quebra-Cabeça Bíblico** (AT+NT) · **Conta na Arca** (AT) · **Ache o Igual** (AT+NT) · **Sim ou Não?** (AT+NT) · **Ache o Escondido** (AT+NT) |
+| 🦊 **5–6** | **Aventura na Bíblia** (AT+NT) · **A História em Ordem** (AT+NT) · **Mostre o Livro** (AT+NT) · **Quebra-Cabeça Bíblico 3×3** (AT+NT) · **Ligue os Pares** (AT+NT) · **Antigo ou Novo?** (AT+NT) · **Quantos na História?** (AT) · **Qual Não Pertence?** (AT+NT) |
+| 🦁 **7–9** | **A Estrada da Luz** (AT+NT) · **Heróis da Bíblia** (AT+NT) · **Linha do Tempo** (AT+NT) · **Caçadores do Versículo** (AT+NT) · **Quem Falou?** (NT) · **Separe por Testamento** (AT+NT) · **Verdadeiro ou Falso?** (AT+NT) · **Complete o Versículo** (AT+NT) · **Sombra do Herói** (AT+NT) |
+
+**25 jogos** (8 na faixa 3–4 · 8 na 5–6 · 9 na 7–9), todos classificados por
+**faixa etária** e por **tipo bíblico** (AT / NT / AT+NT). Os filtros do Hub usam
+esse campo — trocar o tipo de um jogo é uma linha em `data/games.tsx`.
 
 Cada pergunta/estação cita a **referência bíblica** (`Livro cap.vers (VERSÃO)`).
 A versão é a da fonte quando atestada; caso contrário, **NAA**
@@ -122,11 +126,32 @@ kids/
                 ├── GameEncontreACena.tsx    ← 3–4: dica narrada → toque na figura
                 ├── GameParesDaArca.tsx      ← 3–4: memória de pares
                 ├── GameQueSomEsse.tsx       ← 3–4: pista sonora → personagem
+                ├── GameQuebraCabeca.tsx     ← 3–4: quebra-cabeça 2×2 (usa PuzzleGame)
+                ├── GameContaNaArca.tsx      ← 3–4: contagem (usa CountGame)
+                ├── GameAcheOIgual.tsx       ← 3–4: achar o igual (usa ChoiceGame)
+                ├── GameSimOuNao.tsx         ← 3–4: verdadeiro/falso (ChoiceGame)
+                ├── GameAcheOEscondido.tsx   ← 3–4: objeto escondido (HiddenGame)
                 ├── GameHistoriaEmOrdem.tsx  ← 5–6: sequência (usa OrderGame)
                 ├── GameMostreOLivro.tsx     ← 5–6: qual livro da Bíblia?
-                ├── GameLinhaDoTempo.tsx     ← 7–9: ordene eventos (usa OrderGame)
+                ├── GameQuebraCabecaMedio.tsx← 5–6: quebra-cabeça 3×3 (PuzzleGame)
+                ├── GameLigueOsPares.tsx     ← 5–6: associação (ConnectGame)
+                ├── GameAntigoOuNovo.tsx     ← 5–6: classificar AT/NT (SortGame)
+                ├── GameQuantosNaHistoria.tsx← 5–6: somar/subtrair (CountGame)
+                ├── GameQualNaoPertence.tsx  ← 5–6: categorias (ChoiceGame)
+                ├── GameLinhaDoTempo.tsx     ← 7–9: ordene eventos (OrderGame)
                 ├── GameCacadoresDoVersiculo.tsx ← 7–9: complete o versículo
-                ├── OrderGame.tsx            ← motor "toque na ordem" (compartilhado)
+                ├── GameQuemFalou.tsx        ← 7–9: citações (ChoiceGame)
+                ├── GameSeparePorTestamento.tsx ← 7–9: classificar AT/NT (SortGame)
+                ├── GameVerdadeiroOuFalso.tsx← 7–9: afirmações (ChoiceGame)
+                ├── GameCompleteOVersiculo.tsx ← 7–9: lacuna no versículo (ChoiceGame)
+                ├── GameSombraDoHeroi.tsx    ← 7–9: silhuetas (ChoiceGame)
+                ├── OrderGame.tsx            ← motor "toque na ordem"
+                ├── ChoiceGame.tsx           ← motor de escolha (grid/alvo/sombra/bool/quote/verse)
+                ├── PuzzleGame.tsx           ← motor de quebra-cabeça (troca de peças)
+                ├── CountGame.tsx            ← motor de contagem/soma
+                ├── HiddenGame.tsx           ← motor de objeto escondido
+                ├── ConnectGame.tsx          ← motor de ligar pares
+                ├── SortGame.tsx             ← motor de separar em cestos
                 ├── GameEstradaDaLuz.tsx
                 ├── GameHeroisDaBiblia.tsx
                 └── GameAventuraBiblia.tsx ← mundo 2D + menu de histórias + teatro
@@ -241,6 +266,13 @@ React 18 · TypeScript 5 · Vite 5 · Tailwind CSS 3 · lucide-react · react-co
   Esse? (3–4), A História em Ordem e Mostre o Livro (5–6), Linha do Tempo e
   Caçadores do Versículo (7–9). Novo motor compartilhado `OrderGame.tsx` e
   `lib/minigame.ts`; teste de invariantes do catálogo de jogos.
+- ✅ **Fase 12** — **+5 jogos por faixa** (15 novos, total **25**) com mecânicas
+  novas: **quebra-cabeça** (troca de peças sobre os cenários), contagem/soma,
+  objeto escondido, ligar pares, separar em cestos (AT × NT), achar o igual,
+  verdadeiro/falso, quem falou, complete o versículo e sombra do herói. Novos
+  motores: `ChoiceGame` (6 variantes), `PuzzleGame`, `CountGame`, `HiddenGame`,
+  `ConnectGame`, `SortGame`. Todo jogo é classificado por **faixa + tipo
+  (AT/NT/AT+NT)**. O Hub esconde "Em breve" quando não há jogos pendentes.
 - 🟡 **Pendências conhecidas:**
   - **Teste em aparelho real** (iPhone/Android): instalação/offline, FPS da
     Aventura, volume da voz, toque em tela pequena, hit area do chip 🔊.
