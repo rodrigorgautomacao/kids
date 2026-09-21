@@ -14,6 +14,10 @@ import LevelMap from '../LevelMap';
 import PauseOverlay from '../PauseOverlay';
 import HandHint from '../HandHint';
 import { Hero, Npc, StarItem } from '../art';
+import SceneStage from '../SceneStage';
+import { scenesForCharacter, type Scene } from '../../data/scenes';
+import { hasSticker } from '../../lib/stickers';
+import { t } from '../../lib/i18n';
 import {
   bestScore,
   completeLevel,
@@ -85,6 +89,22 @@ const NPC_PRESET: Record<string, string> = {
   'Davi': 'davi',
   'Salomão': 'salomao',
   'Paulo': 'paulo',
+};
+
+/** Rosto por ID de estação para o teatro de cenas (Fase 6). */
+const SCENE_LOOK: Record<string, string> = {
+  noe: 'noe',
+  criacao: 'anjo',
+  elias: 'elias',
+  jonas: 'jonas',
+  eliseu: 'eliseu',
+  daniel: 'daniel',
+  natal: 'maria',
+  moises: 'moises',
+  josue: 'josue',
+  davi: 'davi',
+  salomao: 'salomao',
+  paulo: 'paulo',
 };
 
 /** Espelhos d'água do mundo — usados para trocar poeira por respingo ao andar. */
@@ -466,6 +486,10 @@ export default function GameAventuraBiblia({ onExit }: GameProps) {
   const [near, setNear] = useState<Story | null>(null);
   const [talk, setTalk] = useState<{ s: Story; step: number } | null>(null);
   const [quiz, setQuiz] = useState<{ s: Story; options: Choice[] } | null>(null);
+  /** menu de "que história ouvir" do personagem (Fase 6) */
+  const [menu, setMenu] = useState<Story | null>(null);
+  /** cena-teatro ativa no palco */
+  const [scene, setScene] = useState<Scene | null>(null);
   const [fails, setFails] = useState(0);
   const [toast, setToast] = useState<{ text: string; good: boolean } | null>(null);
   const [finished, setFinished] = useState(false);
@@ -507,7 +531,7 @@ export default function GameAventuraBiblia({ onExit }: GameProps) {
   const doneRef = useRef<Set<string>>(new Set());
   const picksRef = useRef<Set<number>>(new Set());
   const scoreRef = useRef(0);
-  const lock = useRef({ talk: false, quiz: false, finished: false, rotate: false, pause: false });
+  const lock = useRef({ talk: false, quiz: false, scene: false, finished: false, rotate: false, pause: false });
   const ePress = useRef<() => void>(() => {});
 
   useEffect(() => {
@@ -516,6 +540,9 @@ export default function GameAventuraBiblia({ onExit }: GameProps) {
   useEffect(() => {
     lock.current.quiz = !!quiz;
   }, [quiz]);
+  useEffect(() => {
+    lock.current.scene = !!scene;
+  }, [scene]);
   useEffect(() => {
     lock.current.finished = finished;
   }, [finished]);
@@ -653,7 +680,7 @@ export default function GameAventuraBiblia({ onExit }: GameProps) {
   }
 
   function onStagePointerDown(e: ReactPointerEvent<HTMLDivElement>) {
-    if (lock.current.talk || lock.current.quiz || lock.current.finished || lock.current.rotate) return;
+    if (lock.current.talk || lock.current.quiz || lock.current.scene || lock.current.finished || lock.current.rotate) return;
     const el = e.target as HTMLElement | null;
     if (el?.closest('button, [data-ui]')) return;
     e.preventDefault();
@@ -682,7 +709,7 @@ export default function GameAventuraBiblia({ onExit }: GameProps) {
   // navegadores), o clique resolve — sempre ignorando botões/UI.
   function onStageClick(e: ReactMouseEvent<HTMLDivElement>) {
     if (dragging.current) return;
-    if (lock.current.talk || lock.current.quiz || lock.current.finished || lock.current.rotate) return;
+    if (lock.current.talk || lock.current.quiz || lock.current.scene || lock.current.finished || lock.current.rotate) return;
     const el = e.target as HTMLElement | null;
     if (el?.closest('button, [data-ui]')) return;
     moveTo(e.clientX, e.clientY);
@@ -700,21 +727,49 @@ export default function GameAventuraBiblia({ onExit }: GameProps) {
       sfx.pop();
       setTalk({ ...talk, step: talk.step + 1 });
     } else {
-      sfx.open();
-      // Modo pequeninos usa 3 opções (a certa + 2); o padrão usa as 5.
-      const others = shuffle(talk.s.wrongs);
-      setRemoved([]);
-      setQuiz({
-        s: talk.s,
-        options: shuffle([talk.s.right, ...others.slice(0, smallKids ? 2 : 4)]),
-      });
-      setTalk(null);
+      // Fim da fala → abre o MENU de "que história ouvir" (Fase 6).
+      startStoryMenu(talk.s);
     }
+  }
+
+  /** Abre o menu de histórias do personagem (teatro + perguntinha). */
+  function startStoryMenu(s: Story) {
+    sfx.open();
+    setRemoved([]);
+    setMenu(s);
+    setTalk(null);
+  }
+
+  /** Caminho antigo mantido: a "perguntinha do personagem" vale o selo. */
+  function startLegacyQuiz(s: Story) {
+    sfx.open();
+    voice.stopSpeaking();
+    const others = shuffle([...s.wrongs]);
+    setRemoved([]);
+    setMenu(null);
+    setQuiz({
+      s,
+      options: shuffle([s.right, ...others.slice(0, smallKids ? 2 : 4)]),
+    });
+  }
+
+  /** Entra no palco de teatro com a cena escolhida. */
+  function openScene(c: Scene) {
+    sfx.swoosh();
+    voice.stopSpeaking();
+    setMenu(null);
+    setScene(c);
+  }
+
+  function closeScene() {
+    voice.stopSpeaking();
+    setScene(null);
+    setToast(null);
   }
 
   function toggleEpress() {
     const st = STORIES.find((s) => s.id === nearRef.current);
-    if (st && !lock.current.talk && !lock.current.quiz && !lock.current.finished) openTalk(st);
+    if (st && !lock.current.talk && !lock.current.quiz && !lock.current.scene && !lock.current.finished) openTalk(st);
   }
   useEffect(() => {
     ePress.current = toggleEpress;
@@ -849,6 +904,7 @@ export default function GameAventuraBiblia({ onExit }: GameProps) {
       const locked =
         lock.current.talk ||
         lock.current.quiz ||
+        lock.current.scene ||
         lock.current.finished ||
         lock.current.rotate ||
         lock.current.pause;
@@ -1050,6 +1106,8 @@ export default function GameAventuraBiblia({ onExit }: GameProps) {
     setFinished(false);
     setTalk(null);
     setQuiz(null);
+    setMenu(null);
+    setScene(null);
     setToast(null);
     setFails(0);
     nearRef.current = null;
@@ -1439,10 +1497,77 @@ export default function GameAventuraBiblia({ onExit }: GameProps) {
                 onClick={nextStep}
                 className="ui-press w-full rounded-full bg-emerald-500 px-8 py-4 text-2xl font-black text-white shadow-[0_8px_0_rgba(5,150,105,0.9)] hover:scale-105"
               >
-                {talk.step + 1 < talk.s.speak.length ? 'Continuar ▶' : 'Pergunta! 🤔'}
+                {talk.step + 1 < talk.s.speak.length ? 'Continuar ▶' : 'Escolher história 🎭'}
               </button>
             </div>
           </div>
+        ) : null}
+
+        {/* ------- menu de histórias do personagem (Fase 6) ------- */}
+        {menu ? (
+          <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+            <div className="flex max-h-[92%] w-full max-w-lg flex-col items-center gap-3 rounded-3xl bg-white/95 p-5 shadow-2xl">
+              <span className="flex h-16 w-16 items-center justify-center rounded-full bg-amber-100 shadow-inner">
+                <Npc motif={menu.id} preset={NPC_PRESET[menu.npc] ?? menu.id} size={52} state="happy" />
+              </span>
+              <p className="text-center text-lg leading-tight font-black text-slate-800">
+                {menu.npc} · {t('menu.titulo')}
+              </p>
+              <p className="rounded-full bg-indigo-50 px-3 py-1 text-xs font-bold text-indigo-700">{t('menu.dica')}</p>
+              <div className="flex w-full flex-col gap-2 overflow-y-auto">
+                {scenesForCharacter(menu.id).map((s) => {
+                  const got = hasSticker(s.id);
+                  return (
+                    <button
+                      key={s.id}
+                      type="button"
+                      onClick={() => openScene(s)}
+                      aria-label={`Contar: ${s.title}`}
+                      className="ui-press flex items-center gap-3 rounded-2xl border-2 border-slate-100 bg-white p-3 text-left shadow-sm hover:scale-[1.02]"
+                    >
+                      <span className={`text-3xl ${got ? '' : 'opacity-50 grayscale'}`}>{s.sticker}</span>
+                      <span className="flex min-w-0 flex-1 flex-col">
+                        <span className="truncate text-base font-black text-slate-800">🎭 {s.title}</span>
+                        <span className="text-[11px] font-bold text-slate-500">📖 {s.ref}</span>
+                      </span>
+                      <span
+                        className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-black ${
+                          got ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-400'
+                        }`}
+                      >
+                        {got ? '✔ colecionada' : '🔒'}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+              <button
+                type="button"
+                onClick={() => startLegacyQuiz(menu)}
+                className="ui-press w-full rounded-full bg-amber-300 px-5 py-3 text-lg font-black text-amber-950 shadow-[0_5px_0_rgba(217,119,6,0.9)]"
+              >
+                {t('menu.perguntinha')}
+              </button>
+              <button
+                type="button"
+                onClick={() => setMenu(null)}
+                className="ui-press rounded-full bg-slate-100 px-5 py-2 text-sm font-bold text-slate-600 shadow"
+              >
+                Fechar
+              </button>
+            </div>
+          </div>
+        ) : null}
+
+        {/* ------- palco de teatro (Fase 6) ------- */}
+        {scene ? (
+          <SceneStage
+            scene={scene}
+            npcPreset={SCENE_LOOK[scene.characterId] ?? scene.characterId}
+            npcMotif={scene.characterId}
+            smallKids={smallKids}
+            onExit={closeScene}
+          />
         ) : null}
 
         {/* ------- quiz ------- */}

@@ -8,12 +8,19 @@
  *    atualiza em background.
  *
  * O `BASE` precisa acompanhar o `base` do vite.config.ts (GitHub Pages /kids/).
- * Ao publicar uma mudança que invalide o cache antigo, troque a versão abaixo.
+ * A VERSION é trocada automaticamente pelo `scripts/bump-sw.mjs` (prebuild) com
+ * o hash do commit — assim o cache antigo é invalidado a cada publicação.
  */
-const VERSION = 'v2';
+const VERSION = 'vb29ffd4';
 const BASE = '/kids/';
 const CACHE = `kids-${VERSION}`;
-const SHELL = [BASE, `${BASE}index.html`, `${BASE}manifest.webmanifest`];
+const SHELL = [
+  BASE,
+  `${BASE}index.html`,
+  `${BASE}manifest.webmanifest`,
+  `${BASE}fonts/baloo2-latin.woff2`,
+  `${BASE}fonts/baloo2-latin-ext.woff2`,
+];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(

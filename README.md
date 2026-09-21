@@ -28,43 +28,60 @@ pequeninos**, as opções são narradas em sequência — quem ainda não lê jo
 sozinho. Cada personagem da Aventura tem **rosto e vestes próprios**. Jogos
 ainda não lançados aparecem como "Em breve 🔨".
 
+Na **Aventura na Bíblia**, ao falar com um personagem a criança escolhe **qual
+história quer ver como peça de teatro** (palco com cortinas, cenário SVG,
+narração e um quiz que confirma sem punir) e ganha uma **figurinha** ao
+terminar. As figurinhas ficam no **livrinho** (botão 💮 no Hub) — coleção pura,
+nada é bloqueado por falta de figurinha. Há um botão de idioma **PT/EN** para a
+carcaça da interface (o conteúdo bíblico segue em PT-BR).
+
 ## Rodar localmente
 
 ```bash
 cd games
-bun install        # ou: npm ci
+bun install        # instala (bun.lock)
 bun run dev        # → http://localhost:5173
 ```
 
 Build de produção e checagens:
 
 ```bash
-bun run build      # tsc && vite build → games/dist
+bun run build      # prebuild (bump-sw) + tsc && vite build → games/dist
 bun run preview    # serve o build localmente
 bun run typecheck  # TypeScript estrito (tsc --noEmit)
+bun run test       # vitest (jsdom) — catálogo, voz, figurinhas, progresso
 ```
 
 > Neste ambiente use **`bun`**: o `npm` do PATH é o do Windows e falha em
-> caminhos UNC. No CI (Linux) o `npm ci` normal funciona.
+> caminhos UNC. O CI também usa **bun** (`oven-sh/setup-bun@v2`).
 
 ## Estrutura
 
 ```
 kids/
-├── .github/workflows/deploy.yml   ← GitHub Actions → GitHub Pages
+├── .github/workflows/
+│   ├── deploy.yml                 ← GitHub Actions (bun) → GitHub Pages
+│   └── audit.yml                  ← Lighthouse + acessibilidade (semanal/manual)
+├── .lighthouserc.json             ← metas de perf/a11y/SEO da auditoria
 └── games/                         ← raiz do app Vite
-    ├── index.html
+    ├── index.html                 ← metas + preview social + JSON-LD (WebApplication)
     ├── vite.config.ts             ← base: '/kids/' (GitHub Pages)
+    ├── vitest.config.ts           ← testes em ambiente jsdom
     ├── tailwind.config.js
-    ├── scripts/gen-icons.mjs      ← gera os PNG do PWA (sem dependências)
+    ├── scripts/
+    │   ├── gen-icons.mjs          ← gera os PNG do PWA (sem dependências)
+    │   └── bump-sw.mjs            ← prebuild: VERSION do SW = hash do commit
     ├── public/
     │   ├── manifest.webmanifest   ← nome, ícones, standalone, tema
-    │   ├── sw.js                  ← offline: shell + assets
+    │   ├── sw.js                  ← offline: shell + assets + fontes
+    │   ├── sitemap.xml · robots.txt
+    │   ├── fonts/                 ← Baloo 2 (woff2, latin + latin-ext)
     │   └── icons/                 ← 180/192/512/maskable (gerados)
     └── src/
         ├── App.tsx                ← alterna Hub ⇄ jogo ativo (+ transição de tela)
         ├── data/games.tsx         ← REGISTRO dos jogos (faixa + tipo + status; ícones inline)
-        ├── index.css              ← tailwind + dvh/safe-area/ui-press/reduced-motion
+        ├── data/scenes.ts         ← catálogo das 36 cenas-teatro (ref NAA + quiz + figurinha)
+        ├── index.css              ← tailwind + @font-face (Baloo 2) + dvh/safe-area
         ├── lib/
         │   ├── audio/             ← efeitos, trilhas adaptativas e narração
         │   │   ├── context.ts     ← Web Audio, buses, ducking, unlock iOS
@@ -73,6 +90,8 @@ kids/
         │   │   ├── music.ts       ← trilhas por cena + camadas de intensidade
         │   │   ├── voice.ts       ← speechSynthesis + speakQueue (narração de opções)
         │   │   └── index.ts       ← re-exports (+ `sfx`, `music`, `voice`)
+        │   ├── i18n.ts            ← carcaça PT/EN (conteúdo bíblico fica em PT)
+        │   ├── stickers.ts        ← coleção de figurinhas (localStorage)
         │   ├── progress.ts        ← progresso, estrelas, unlocks, recordes
         │   ├── prefs.ts           ← modo pequeninos, 1ª vez, mundo salvo
         │   ├── fx.ts              ← partículas, número voando, screen shake
@@ -86,19 +105,22 @@ kids/
             ├── LevelMap.tsx       ← mapa de trechos/estações (rejogar)
             ├── PauseOverlay.tsx   ← pausa (continuar / recomeçar / sair)
             ├── HandHint.tsx       ← onboarding sem texto (mãozinha animada)
-            ├── Hub.tsx            ← home por faixa + filtro por tipo + página "em breve"
+            ├── Hub.tsx            ← home por faixa + filtro + figurinhas + idioma
+            ├── CollectionBook.tsx ← livrinho de figurinhas (por personagem)
+            ├── SceneStage.tsx     ← teatro de cenas (cortinas, atos, quiz, figurinha)
             ├── InstallHint.tsx    ← "Adicionar à Tela de Início"
             ├── RotateHint.tsx     ← aviso "vire o aparelho" (celular em pé)
             ├── art/               ← arte SVG própria (substitui emoji de elenco)
             │   ├── Hero.tsx       ← herói, com estados idle/walk/happy/sad
             │   ├── Npc.tsx        ← personagem com LOOKS (rosto/vestes por personagem) + motivo no peito
+            │   ├── Backdrop.tsx   ← 22 cenários SVG do teatro
             │   ├── Motifs.tsx     ← 12 motivos (arca, peixe, leão, coroa…)
             │   └── StarItem.tsx   ← estrela coletável
             └── games/
                 ├── GameEncontreACena.tsx  ← piloto 3–4 (dica narrada → toque na figura)
                 ├── GameEstradaDaLuz.tsx
                 ├── GameHeroisDaBiblia.tsx
-                └── GameAventuraBiblia.tsx
+                └── GameAventuraBiblia.tsx ← mundo 2D + menu de histórias + teatro
 ```
 
 ## Como adicionar um novo jogo
@@ -117,8 +139,12 @@ ver o segundo cérebro em `~/.config/opencode/brain-jogos/`.
 ## Deploy automático
 
 `.github/workflows/deploy.yml` roda em todo push para `main`:
-checkout → `setup-node@v4` (Node 20) → `npm ci` → `npm run build` →
-`upload-pages-artifact@v3` (`games/dist`) → `deploy-pages@v4`.
+checkout → `setup-bun@v2` → `bun install --frozen-lockfile` → `bun run typecheck`
+→ `bun run test` → `bun run build` → `upload-pages-artifact@v3` (`games/dist`)
+→ `deploy-pages@v4`.
+
+Há também `.github/workflows/audit.yml` (Lighthouse + acessibilidade, com
+`.lighthouserc.json`): roda toda segunda e sob demanda, **sem bloquear o deploy**.
 
 Precisa estar em **Settings → Pages → Build and deployment → Source: GitHub Actions**.
 
@@ -151,13 +177,15 @@ ImageMagick/PIL — só precisa de Node 18+ (usa `node:zlib`). Ele produz
 
 ### Ao publicar uma versão nova
 
-O service worker guarda em cache o shell e os assets. Se você mudar algo que
-precise invalidar cache antigo, **troque o `VERSION` em `public/sw.js`**
-(ex.: `kids-v1` → `kids-v2`).
+O service worker guarda em cache o shell, os assets e as fontes. Não é mais
+preciso trocar a `VERSION` na mão: o `prebuild` (`scripts/bump-sw.mjs`) grava o
+**hash do commit** em `public/sw.js` a cada build, então o cache antigo é
+invalidado automaticamente quando algo novo é publicado.
 
 ## Stack
 
 React 18 · TypeScript 5 · Vite 5 · Tailwind CSS 3 · lucide-react · react-confetti
+· Vitest 2 + jsdom (testes) · bun (instalação/CI)
 
 ## Estado / próximos passos
 
@@ -184,6 +212,20 @@ React 18 · TypeScript 5 · Vite 5 · Tailwind CSS 3 · lucide-react · react-co
   breve"), **voz nas opções** (chip 🔊 + `speakQueue` no modo pequeninos),
   **rosto/vestes por personagem** (`Npc.look`/`LOOKS`) e **piloto 3–4
   "Encontre a Cena"**. Decisão no brain-jogos (`ADR-003`).
+- ✅ **Fases 6–7** — **teatro de cenas** na Aventura: ao falar com o NPC a
+  criança escolhe a história e assiste como peça (cortinas, refletores, cenário
+  SVG, atos narrados, quiz que confirma sem punir). Catálogo com **36 cenas** em
+  `data/scenes.ts` (12 personagens, toda cena com referência NAA) e **22
+  cenários** em `components/art/Backdrop.tsx`. O quiz/selo antigo virou o
+  caminho "❓ Perguntinha". Decisão no brain-jogos (`ADR-004`).
+- ✅ **Fase 8** — **coleção de figurinhas** (`lib/stickers.ts` +
+  `CollectionBook.tsx` + botão 💮 no Hub), por personagem, sem bloquear nada.
+- ✅ **Fase 9** — **testes e CI**: Vitest + jsdom (4 arquivos, 23 testes),
+  CI migrado para **bun** (typecheck + test + build), workflow de
+  **auditoria Lighthouse/a11y**, JSON-LD, `sitemap.xml`, `robots.txt` e
+  **bump automático da VERSION do service worker**.
+- ✅ **Fase 10** — **i18n leve PT/EN** da interface, **fonte Baloo 2
+  self-hosted** (woff2, offline) e `sfx.sticker()`.
 - 🟡 **Pendências conhecidas:**
   - **Teste em aparelho real** (iPhone/Android): instalação/offline, FPS da
     Aventura, volume da voz, toque em tela pequena, hit area do chip 🔊.

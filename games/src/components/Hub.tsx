@@ -14,6 +14,10 @@ import { isIOS, isStandalone } from '../lib/device';
 import InstallHint from './InstallHint';
 import { isSmallKidsMode, setSmallKidsMode } from '../lib/prefs';
 import { StarItem } from './art';
+import { SCENE_COUNT } from '../data/scenes';
+import { loadStickers, subscribeStickers } from '../lib/stickers';
+import { getLang, isEn, setLang, t, type TKey } from '../lib/i18n';
+import CollectionBook from './CollectionBook';
 
 interface HubProps {
   onSelectGame: (id: string) => void;
@@ -25,11 +29,11 @@ interface BeforeInstallPromptEvent extends Event {
   userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
 }
 
-const FILTROS: { id: 'todos' | Tipo; label: string }[] = [
-  { id: 'todos', label: 'Todos' },
-  { id: 'at', label: 'Antigo Testamento' },
-  { id: 'nt', label: 'Novo Testamento' },
-  { id: 'at-nt', label: 'AT+NT' },
+const FILTROS: { id: 'todos' | Tipo; tKey: TKey }[] = [
+  { id: 'todos', tKey: 'filtro.todos' },
+  { id: 'at', tKey: 'filtro.at' },
+  { id: 'nt', tKey: 'filtro.nt' },
+  { id: 'at-nt', tKey: 'filtro.at-nt' },
 ];
 
 // ─── Ícones inline (sem lucide, para manter o bundle pequeno) ──────────
@@ -80,7 +84,7 @@ function GameCard({
         </span>
       </span>
       <span className="ui-press shrink-0 rounded-full bg-indigo-500 px-4 py-2 text-sm font-black text-white shadow-md">
-        {done > 0 ? 'Continuar →' : 'Jogar →'}
+        {done > 0 ? t('hub.continuar') : t('hub.jogar')}
       </span>
     </button>
   );
@@ -105,7 +109,7 @@ function SoonCard({ game }: { game: GameDefinition }) {
         ) : null}
       </span>
       <span className="shrink-0 rounded-full bg-slate-200 px-3 py-1.5 text-xs font-black text-slate-500">
-        Em breve 🔨
+        {t('hub.em-breve')} 🔨
       </span>
     </div>
   );
@@ -119,6 +123,9 @@ export default function Hub({ onSelectGame, onLogout }: HubProps) {
   const [gate, setGate] = useState<string | null>(null);
   const [installed, setInstalled] = useState(isStandalone);
   const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null);
+  const [bookOpen, setBookOpen] = useState(false);
+  const [stickerCount, setStickerCount] = useState(() => loadStickers().size);
+  const [lang, setLangState] = useState<ReturnType<typeof getLang>>(getLang);
   const ios = isIOS();
 
   // Mantém os botões de som em sincronia com o que estiver salvo.
@@ -130,6 +137,16 @@ export default function Hub({ onSelectGame, onLogout }: HubProps) {
       }),
     [],
   );
+
+  // Contador de figurinhas reage quando a Aventura coleciona uma cena.
+  useEffect(() => subscribeStickers(() => setStickerCount(loadStickers().size)), []);
+
+  function toggleLang() {
+    const next: 'pt' | 'en' = isEn() ? 'pt' : 'en';
+    setLang(next);
+    setLangState(next);
+    sfx.pop();
+  }
 
   // Acompanha instalabilidade (PWA) nos dois navegadores principais.
   useEffect(() => {
@@ -256,6 +273,25 @@ export default function Hub({ onSelectGame, onLogout }: HubProps) {
               </button>
               <button
                 type="button"
+                onClick={() => setBookOpen(true)}
+                aria-label={`${t('hub.figurinhas')} — ${stickerCount}/${SCENE_COUNT}`}
+                className="ui-press relative flex h-9 w-9 items-center justify-center rounded-full bg-violet-400 text-violet-950 shadow"
+              >
+                💮
+                <span className="absolute -right-1.5 -top-1.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-amber-400 px-1 text-[10px] font-black text-amber-950 shadow">
+                  {stickerCount}
+                </span>
+              </button>
+              <button
+                type="button"
+                onClick={toggleLang}
+                aria-label={`Idioma: ${lang === 'pt' ? 'português' : 'inglês'}`}
+                className="ui-press flex h-9 items-center rounded-full border border-slate-200 bg-white px-2 text-xs font-black text-slate-600 shadow"
+              >
+                {lang === 'pt' ? 'PT' : 'EN'}
+              </button>
+              <button
+                type="button"
                 onClick={toggleMusic}
                 aria-pressed={musicOn}
                 aria-label={`Música ${musicOn ? 'ligada' : 'desligada'}`}
@@ -305,7 +341,7 @@ export default function Hub({ onSelectGame, onLogout }: HubProps) {
                     : 'border border-slate-200 bg-white text-slate-600'
                 }`}
               >
-                {f.label}
+                {t(f.tKey)}
               </button>
             ))}
           </div>
@@ -409,6 +445,9 @@ export default function Hub({ onSelectGame, onLogout }: HubProps) {
           </footer>
         </main>
       </div>
+
+      {/* ─── livrinho de figurinhas (Fase 8) ─── */}
+      <CollectionBook open={bookOpen} onClose={() => setBookOpen(false)} />
 
       {/* ─── popup de instalação (gate) ─── */}
       {gate ? (

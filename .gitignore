@@ -1,6 +1,5 @@
 node_modules/
 dist/
-bun.lock
 *.local
 *.log
 .DS_Store

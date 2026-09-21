@@ -3,6 +3,10 @@ export default {
   content: ['./index.html', './src/**/*.{ts,tsx}'],
   theme: {
     extend: {
+      /** Fonte da marca (Baloo 2, self-hosted em public/fonts). */
+      fontFamily: {
+        sans: ['"Baloo 2"', 'ui-rounded', 'system-ui', 'sans-serif'],
+      },
       /**
        * Tokens de paleta (skill `jogos-visual` §8): papéis semânticos em vez de
        * cores soltas espalhadas pelos componentes. Escalas pequenas de propósito

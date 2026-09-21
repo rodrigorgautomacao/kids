@@ -190,6 +190,17 @@ export function badge() {
   note({ midi: 91, at: 0.07, dur: 0.3, type: 'triangle', vol: 0.09, layer: 'octave', filter: 4600 });
 }
 
+/**
+ * Figurinha colada no livrinho: brilho ascendente e curtinho (distinto do
+ * `badge` de história) — é o "colei!" da coleção.
+ */
+export function sticker() {
+  if (isSfxMuted()) return;
+  note({ midi: 84, dur: 0.1, type: 'sine', vol: 0.06, filter: 5600, vary: true });
+  note({ midi: 88, at: 0.07, dur: 0.12, type: 'sine', vol: 0.07, filter: 5800 });
+  note({ midi: 93, at: 0.15, dur: 0.2, type: 'triangle', vol: 0.08, layer: 'octave', filter: 6000 });
+}
+
 /** Vitória de nível: fanfarra de 4 notas + acorde. */
 export function win() {
   if (isSfxMuted()) return;
