@@ -45,12 +45,19 @@ function Ark({ x, y, scale = 1 }: { x: number; y: number; scale?: number }) {
   const k = scale;
   return (
     <g transform={`translate(${x} ${y}) scale(${k})`}>
-      <path d="M0 30 Q 6 2 30 2 L 78 2 Q 100 6 104 30 Z" fill="#92400e" />
-      <path d="M12 30 Q 16 12 34 12 L 74 12 Q 92 14 94 30 Z" fill="#b45309" />
-      <rect x="52" y="16" width="26" height="12" rx="3" fill="#fef3c7" />
-      <rect x="16" y="22" width="14" height="7" rx="2" fill="#fde68a" opacity={0.85} />
-      <path d="M0 30 L 104 30 L 100 38 L 4 38 Z" fill="#78350f" />
-      <path d="M10 38 L 16 30" stroke="#fcd34d" strokeWidth={2} fill="none" />
+      {/* casco retangular (arca, não navio): proa e popa quase retas */}
+      <path d="M4 14 L100 14 L96 34 Q 52 40 8 34 Z" fill="#b45309" stroke="#78350f" strokeWidth="1.5" strokeLinejoin="round" />
+      {/* tábuas do casco */}
+      <path d="M7 20 H97 M9 26 H95 M12 31 H92" stroke="#92400e" strokeWidth="1.2" opacity="0.85" />
+      {/* telhado em duas águas */}
+      <path d="M0 14 L52 1 L104 14 Z" fill="#92400e" stroke="#78350f" strokeWidth="1.5" strokeLinejoin="round" />
+      {/* janela / abertura de luz no topo */}
+      <rect x="43" y="5" width="18" height="6" rx="1.5" fill="#fef3c7" stroke="#78350f" strokeWidth="1" />
+      {/* porta na lateral */}
+      <rect x="72" y="20" width="14" height="14" rx="1.5" fill="#78350f" stroke="#5b3a10" strokeWidth="1" />
+      <circle cx="83" cy="27" r="1.2" fill="#fcd34d" />
+      {/* cantoneiras de madeira */}
+      <path d="M4 14 L8 34M100 14 L96 34" stroke="#78350f" strokeWidth="1.2" />
     </g>
   );
 }
