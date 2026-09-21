@@ -1,0 +1,36 @@
+{
+  "name": "Jogos da Lição — Arcade Kids",
+  "short_name": "Jogos da Lição",
+  "description": "Mini-jogos bíblicos para crianças de 4 a 9 anos: escolhas, heróis da Bíblia e uma aventura em mundo 2D.",
+  "lang": "pt-BR",
+  "dir": "ltr",
+  "start_url": "/kids/",
+  "scope": "/kids/",
+  "id": "/kids/",
+  "display": "standalone",
+  "display_override": ["standalone", "fullscreen", "minimal-ui"],
+  "orientation": "any",
+  "background_color": "#150b2e",
+  "theme_color": "#150b2e",
+  "categories": ["games", "education", "kids"],
+  "icons": [
+    {
+      "src": "/kids/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/kids/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/kids/icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
