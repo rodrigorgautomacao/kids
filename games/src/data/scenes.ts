@@ -122,6 +122,27 @@ export const SCENES: Scene[] = [
     sticker: '🌧️',
   },
   {
+    id: 'n-pomba',
+    characterId: 'noe',
+    title: 'A pomba e o ramo de oliveira',
+    ref: 'Gênesis 8.8-12 (NAA)',
+    backdrop: 'arco-iris',
+    props: ['🕊️', '🌿'],
+    acts: [
+      'Noé soltou uma pomba para ver se as águas já tinham baixado.',
+      'A pomba voltou com um raminho de oliveira no bico!',
+      'Então Noé soube que a terra estava ficando seca.',
+    ],
+    q: 'O que a pomba trouxe no bico?',
+    right: { t: 'Um ramo de oliveira', e: '🌿' },
+    wrongs: [
+      { t: 'Uma flor', e: '🌸' },
+      { t: 'Uma pedrinha', e: '🪨' },
+      { t: 'Nada', e: '🙈' },
+    ],
+    sticker: '🕊️',
+  },
+  {
     id: 'n-arco-iris',
     characterId: 'noe',
     title: 'O arco-íris da promessa',
@@ -164,6 +185,48 @@ export const SCENES: Scene[] = [
       { t: 'O mar', e: '🌊' },
     ],
     sticker: '🌍',
+  },
+  {
+    id: 'c-descanso',
+    characterId: 'criacao',
+    title: 'O sétimo dia de descanso',
+    ref: 'Gênesis 2.1-3 (NAA)',
+    backdrop: 'campo',
+    props: ['🌅', '🌿'],
+    acts: [
+      'Deus criou tudo em seis dias: a luz, o mar, as plantas e os animais.',
+      'No sétimo dia, Deus descansou do seu trabalho.',
+      'E abençoou esse dia tão especial.',
+    ],
+    q: 'O que Deus fez no sétimo dia?',
+    right: { t: 'Descansou', e: '😌' },
+    wrongs: [
+      { t: 'Criou os peixes', e: '🐟' },
+      { t: 'Dormiu a tarde toda', e: '😴' },
+      { t: 'Foi viajar', e: '🧳' },
+    ],
+    sticker: '🌅',
+  },
+  {
+    id: 'c-eden',
+    characterId: 'criacao',
+    title: 'O jardim do Éden',
+    ref: 'Gênesis 2.8-9 (NAA)',
+    backdrop: 'campo',
+    props: ['🌳', '🍎'],
+    acts: [
+      'Deus plantou um jardim lindo, cheio de árvores e frutas.',
+      'Ali colocou o primeiro homem e a primeira mulher.',
+      'Eles cuidavam do jardim e passeavam com Deus.',
+    ],
+    q: 'Como era o jardim que Deus plantou?',
+    right: { t: 'Bonito e cheio de frutas', e: '🌳' },
+    wrongs: [
+      { t: 'Escuro e vazio', e: '🌑' },
+      { t: 'Só de pedras', e: '🪨' },
+      { t: 'Cheio de neve', e: '❄️' },
+    ],
+    sticker: '🌳',
   },
   {
     id: 'c-pastores',
@@ -252,6 +315,28 @@ export const SCENES: Scene[] = [
     sticker: '🔥',
   },
 
+  {
+    id: 'e-anjo',
+    characterId: 'elias',
+    title: 'O anjo traz pão e água',
+    ref: '1 Reis 19.5-8 (NAA)',
+    backdrop: 'deserto',
+    props: ['🍞', '💧'],
+    acts: [
+      'Elias estava cansado e com medo, deitado no deserto.',
+      'Um anjo do Senhor tocou nele e disse: "Levante-se e coma!"',
+      'Havia pão quentinho e água. Deus cuidou de Elias outra vez.',
+    ],
+    q: 'Quem levou pão e água para Elias no deserto?',
+    right: { t: 'Um anjo do Senhor', e: '😇' },
+    wrongs: [
+      { t: 'Um pastor', e: '🐑' },
+      { t: 'Um rei', e: '👑' },
+      { t: 'Ninguém', e: '🙈' },
+    ],
+    sticker: '🍞',
+  },
+
   /* ------------------------------ Jonas (jonas) ------------------------------ */
   {
     id: 'j-fuga',
@@ -315,6 +400,28 @@ export const SCENES: Scene[] = [
       { t: 'Nada', e: '🤷' },
     ],
     sticker: '🏛️',
+  },
+
+  {
+    id: 'j-planta',
+    characterId: 'jonas',
+    title: 'A planta que deu sombra',
+    ref: 'Jonas 4.6-11 (NAA)',
+    backdrop: 'campo',
+    props: ['🌿', '☀️'],
+    acts: [
+      'Jonas ficou emburrado e sentou fora da cidade.',
+      'Deus fez crescer uma planta para dar sombra e refrescar Jonas.',
+      'E ensinou: "Eu tenho cuidado até dessa planta… imagina das pessoas!"',
+    ],
+    q: 'O que Deus fez crescer para dar sombra a Jonas?',
+    right: { t: 'Uma planta', e: '🌿' },
+    wrongs: [
+      { t: 'Uma casa', e: '🏠' },
+      { t: 'Um guarda-sol', e: '⛱️' },
+      { t: 'Uma nuvem', e: '☁️' },
+    ],
+    sticker: '🌿',
   },
 
   /* ------------------------------ Eliseu (eliseu) ------------------------------ */
@@ -382,6 +489,28 @@ export const SCENES: Scene[] = [
     sticker: '💧',
   },
 
+  {
+    id: 'l-machado',
+    characterId: 'eliseu',
+    title: 'O machado que flutuou',
+    ref: '2 Reis 6.1-7 (NAA)',
+    backdrop: 'rio',
+    props: ['🪓', '💧'],
+    acts: [
+      'Um dos ajudantes deixou o machado cair no rio fundo.',
+      'Ele ficou triste: "Ai, era emprestado!"',
+      'Eliseu orou, e o ferro do machado flutuou até a mão dele!',
+    ],
+    q: 'O que aconteceu com o machado que caiu no rio?',
+    right: { t: 'Ele flutuou', e: '🪓' },
+    wrongs: [
+      { t: 'Virou um peixe', e: '🐟' },
+      { t: 'Sumiu para sempre', e: '💨' },
+      { t: 'Afundou mais', e: '⬇️' },
+    ],
+    sticker: '🪓',
+  },
+
   /* ------------------------------ Daniel (daniel) ------------------------------ */
   {
     id: 'd-alimentos',
@@ -424,6 +553,27 @@ export const SCENES: Scene[] = [
       { t: 'Ninguém', e: '🙈' },
     ],
     sticker: '🔥',
+  },
+  {
+    id: 'd-oracao',
+    characterId: 'daniel',
+    title: 'Daniel ora todos os dias',
+    ref: 'Daniel 6.10-11 (NAA)',
+    backdrop: 'casa',
+    props: ['🙏', '🪟'],
+    acts: [
+      'Daniel tinha o costume de orar três vezes por dia.',
+      'Ele abria a janela e agradecia a Deus, como sempre fazia.',
+      'Nada conseguia tirar a amizade de Daniel com Deus.',
+    ],
+    q: 'Quantas vezes por dia Daniel orava?',
+    right: { t: 'Três vezes', e: '🙏' },
+    wrongs: [
+      { t: 'Nunca', e: '🙈' },
+      { t: 'Só de madrugada', e: '🌙' },
+      { t: 'Uma vez por mês', e: '📅' },
+    ],
+    sticker: '🙏',
   },
   {
     id: 'd-cova',
@@ -510,6 +660,28 @@ export const SCENES: Scene[] = [
       { t: 'Um balão', e: '🎈' },
     ],
     sticker: '🌟',
+  },
+
+  {
+    id: 'm-templo',
+    characterId: 'natal',
+    title: 'O menino Jesus no templo',
+    ref: 'Lucas 2.41-52 (NAA)',
+    backdrop: 'cidade',
+    props: ['📜', '👦'],
+    acts: [
+      'Quando Jesus era menino, a família ia todo ano a Jerusalém.',
+      'Um dia, ele ficou no templo conversando com os mestres.',
+      'Todos ficaram admirados com a sabedoria do menino Jesus!',
+    ],
+    q: 'Onde o menino Jesus ficou conversando com os mestres?',
+    right: { t: 'No templo', e: '📜' },
+    wrongs: [
+      { t: 'Na praia', e: '🏖️' },
+      { t: 'No mercado', e: '🛒' },
+      { t: 'Na escola', e: '🏫' },
+    ],
+    sticker: '📜',
   },
 
   /* ------------------------------ Moisés (moises) ------------------------------ */
@@ -600,6 +772,27 @@ export const SCENES: Scene[] = [
 
   /* ------------------------------ Josué (josue) ------------------------------ */
   {
+    id: 'jo-raabe',
+    characterId: 'josue',
+    title: 'Raabe ajuda os espias',
+    ref: 'Josué 2.1-6 (NAA)',
+    backdrop: 'muralha',
+    props: ['🧵', '🪟'],
+    acts: [
+      'Josué enviou dois espias para conhecer Jericó.',
+      'Raabe os escondeu no telhado e os ajudou a fugir em segurança.',
+      'Ela confiou no Deus de Israel — e sua família foi salva!',
+    ],
+    q: 'Quem escondeu e ajudou os espias em Jericó?',
+    right: { t: 'Raabe', e: '🧵' },
+    wrongs: [
+      { t: 'O rei da cidade', e: '👑' },
+      { t: 'Um soldado', e: '🛡️' },
+      { t: 'Um pastor', e: '🐑' },
+    ],
+    sticker: '🧵',
+  },
+  {
     id: 'jo-jordao',
     characterId: 'josue',
     title: 'O rio que se abriu',
@@ -664,6 +857,27 @@ export const SCENES: Scene[] = [
   },
 
   /* ------------------------------ Davi (davi) ------------------------------ */
+  {
+    id: 'v-ungido',
+    characterId: 'davi',
+    title: 'Davi é escolhido por Samuel',
+    ref: '1 Samuel 16.1-13 (NAA)',
+    backdrop: 'campo',
+    props: ['🫗', '🐑'],
+    acts: [
+      'Deus mandou o profeta Samuel procurar um novo rei.',
+      'Samuel viu os irmãos fortes, mas Deus disse: "Deus vê o coração."',
+      'Então Samuel ungiu Davi, o filho mais jovem, que cuidava das ovelhas.',
+    ],
+    q: 'O que Deus olha quando escolhe alguém?',
+    right: { t: 'O coração', e: '💛' },
+    wrongs: [
+      { t: 'A altura', e: '📏' },
+      { t: 'A força', e: '💪' },
+      { t: 'A roupa', e: '👕' },
+    ],
+    sticker: '🫗',
+  },
   {
     id: 'v-harpa',
     characterId: 'davi',
@@ -772,6 +986,27 @@ export const SCENES: Scene[] = [
     sticker: '⚖️',
   },
   {
+    id: 'so-templo',
+    characterId: 'salomao',
+    title: 'O templo de Deus',
+    ref: '1 Reis 6.1 (NAA)',
+    backdrop: 'cidade',
+    props: ['🏗️', '✨'],
+    acts: [
+      'Salomão construiu uma casa especial para adorar a Deus.',
+      'Muitos trabalhadores cortaram pedras e madeira com cuidado.',
+      'Quando ficou pronta, a glória de Deus encheu o templo!',
+    ],
+    q: 'O que Salomão construiu para adorar a Deus?',
+    right: { t: 'O templo', e: '🏗️' },
+    wrongs: [
+      { t: 'Um navio', e: '⛵' },
+      { t: 'Uma ponte', e: '🌉' },
+      { t: 'Uma torre de frutas', e: '🍇' },
+    ],
+    sticker: '🏗️',
+  },
+  {
     id: 'so-saba',
     characterId: 'salomao',
     title: 'A rainha de Sabá',
@@ -856,6 +1091,27 @@ export const SCENES: Scene[] = [
       { t: 'O vento', e: '💨' },
     ],
     sticker: '⛵',
+  },
+  {
+    id: 'p-cartas',
+    characterId: 'paulo',
+    title: 'As cartas de Paulo',
+    ref: 'Filipenses 4.4-7 (NAA)',
+    backdrop: 'prisao',
+    props: ['✉️', '🕯️'],
+    acts: [
+      'Mesmo preso, Paulo escrevia cartas para os amigos.',
+      'Ele dizia: "Alegrem-se sempre! Deus está perto."',
+      'E ensinava a orar com gratidão, sem ficar com medo.',
+    ],
+    q: 'O que Paulo escrevia para os amigos?',
+    right: { t: 'Cartas cheias de fé', e: '✉️' },
+    wrongs: [
+      { t: 'Listas de compras', e: '🛒' },
+      { t: 'Bilhetes de fuga', e: '🏃' },
+      { t: 'Nada', e: '🙈' },
+    ],
+    sticker: '✉️',
   },
 ];
 

@@ -4,6 +4,12 @@ import {
   GameHeroisDaBiblia,
   GameAventuraBiblia,
   GameEncontreACena,
+  GameParesDaArca,
+  GameQueSomEsse,
+  GameHistoriaEmOrdem,
+  GameMostreOLivro,
+  GameLinhaDoTempo,
+  GameCacadoresDoVersiculo,
 } from '../components/games';
 
 export type Faixa = '3-4' | '5-6' | '7-9';
@@ -87,13 +93,13 @@ const GAMES: GameDefinition[] = [
     component: GameAventuraBiblia,
   },
 
-  // ─── Em breve (por faixa) ──────────────────────────────────────
-  { id: 'pares-da-arca',    title: 'Pares da Arca',       subtitle: '3–4 anos', sinopse: 'Encontre os pares de animais!', faixa: '3-4', tipo: 'nt', status: 'em-breve', habilidades: ['memória', 'pares'], emBreveMotivo: 'Um jogo de memória com os animais da arca de Noé!', icon: StarIcon, color: 'bg-pink-200 text-pink-900' },
-  { id: 'que-som-e-esse',   title: 'Que Som é Esse?',      subtitle: '3–4 anos', sinopse: 'Adivinhe o som da história!', faixa: '3-4', tipo: 'at-nt', status: 'em-breve', habilidades: ['audição', 'reconhecimento'], emBreveMotivo: 'Ouça sons da Bíblia e toque no personagem certo!', icon: StarIcon, color: 'bg-amber-100 text-amber-900' },
-  { id: 'historia-em-ordem', title: 'A História em Ordem',  subtitle: '5–6 anos', sinopse: 'Coloque as cenas na ordem certa!', faixa: '5-6', tipo: 'at-nt', status: 'em-breve', habilidades: ['sequência', 'tempo', 'narrativa'], emBreveMotivo: 'Monte a história arrastando as cenas na sequência correta!', icon: CompassIcon, color: 'bg-teal-200 text-teal-900' },
-  { id: 'mostre-o-livro',   title: 'Mostre o Livro',       subtitle: '5–6 anos', sinopse: 'Qual livro da Bíblia fala disso?', faixa: '5-6', tipo: 'at-nt', status: 'em-breve', habilidades: ['classificação', 'conhecimento bíblico'], emBreveMotivo: 'Toque no livro certo quando ouvir a pista!', icon: CompassIcon, color: 'bg-cyan-200 text-cyan-900' },
-  { id: 'linha-do-tempo',   title: 'Linha do Tempo',       subtitle: '7–9 anos', sinopse: 'Organize os eventos bíblicos na ordem certa!', faixa: '7-9', tipo: 'at-nt', status: 'em-breve', habilidades: ['sequência', 'memória', 'conhecimento bíblico'], emBreveMotivo: 'Arraste os eventos e monte a linha do tempo!', icon: CrownIcon, color: 'bg-violet-200 text-violet-900' },
-  { id: 'cacadores-versiculo', title: 'Caçadores do Versículo', subtitle: '7–9 anos', sinopse: 'Encontre o versículo no texto!', faixa: '7-9', tipo: 'at-nt', status: 'em-breve', habilidades: ['leitura', 'velocidade', 'conhecimento bíblico'], emBreveMotivo: 'Ache o versículo escondido no tempo!', icon: CrownIcon, color: 'bg-purple-200 text-purple-900' },
+  // ─── Prontos (continuação: Fase 11) ────────────────────────────
+  { id: 'pares-da-arca',    title: 'Pares da Arca',       subtitle: 'Memória de pares', sinopse: 'Encontre os pares de animais!', faixa: '3-4', tipo: 'at', status: 'pronto', habilidades: ['memória', 'pares'], icon: StarIcon, color: 'bg-pink-200 text-pink-900', component: GameParesDaArca },
+  { id: 'que-som-e-esse',   title: 'Que Som é Esse?',      subtitle: 'Escuta e escolha', sinopse: 'Ouça a pista sonora e toque no personagem certo!', faixa: '3-4', tipo: 'at-nt', status: 'pronto', habilidades: ['audição', 'reconhecimento'], icon: StarIcon, color: 'bg-amber-100 text-amber-900', component: GameQueSomEsse },
+  { id: 'historia-em-ordem', title: 'A História em Ordem',  subtitle: 'Sequência da história', sinopse: 'Toque nas cenas na ordem em que aconteceram!', faixa: '5-6', tipo: 'at-nt', status: 'pronto', habilidades: ['sequência', 'tempo', 'narrativa'], icon: CompassIcon, color: 'bg-teal-200 text-teal-900', component: GameHistoriaEmOrdem },
+  { id: 'mostre-o-livro',   title: 'Mostre o Livro',       subtitle: 'Qual livro da Bíblia?', sinopse: 'Ouça a pista e toque no livro certo!', faixa: '5-6', tipo: 'at-nt', status: 'pronto', habilidades: ['classificação', 'conhecimento bíblico'], icon: CompassIcon, color: 'bg-cyan-200 text-cyan-900', component: GameMostreOLivro },
+  { id: 'linha-do-tempo',   title: 'Linha do Tempo',       subtitle: 'Ordene os eventos', sinopse: 'Organize os eventos bíblicos na ordem certa!', faixa: '7-9', tipo: 'at-nt', status: 'pronto', habilidades: ['sequência', 'memória', 'conhecimento bíblico'], icon: CrownIcon, color: 'bg-violet-200 text-violet-900', component: GameLinhaDoTempo },
+  { id: 'cacadores-versiculo', title: 'Caçadores do Versículo', subtitle: 'Complete o versículo', sinopse: 'Ache a palavra que falta no versículo!', faixa: '7-9', tipo: 'at-nt', status: 'pronto', habilidades: ['leitura', 'velocidade', 'conhecimento bíblico'], icon: CrownIcon, color: 'bg-purple-200 text-purple-900', component: GameCacadoresDoVersiculo },
 ];
 
 // ─── Ícones simples (evita importar lucide em games.ts) ──────────

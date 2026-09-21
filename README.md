@@ -12,11 +12,11 @@ O catálogo é dividido por **faixa** (Pequeninos 3–4 · Exploradores 5–6 ·
 Heróis 7–9), com filtro por tipo bíblico (**AT · NT · AT+NT**) — as faixas
 ficam centralizadas em `data/games.tsx` (`FAIXAS`) para ajuste fácil.
 
-| Faixa | Jogos prontos | Jogos em breve |
-|---|---|---|
-| 🐣 **3–4** | **Encontre a Cena** (piloto: dica narrada → toque na figura certa) | Pares da Arca · Que Som é Esse? |
-| 🦊 **5–6** | **Aventura na Bíblia** (mundo 2D: andar, conversar com os heróis, responder) | A História em Ordem · Mostre o Livro |
-| 🦁 **7–9** | **A Estrada da Luz** (quiz de caminhos) · **Heróis da Bíblia** (quiz com vidas) | Linha do Tempo · Caçadores do Versículo |
+| Faixa | Jogos |
+|---|---|
+| 🐣 **3–4** | **Encontre a Cena** (dica narrada → toque na figura certa) · **Pares da Arca** (memória de pares) · **Que Som é Esse?** (pista sonora → toque no personagem) |
+| 🦊 **5–6** | **Aventura na Bíblia** (mundo 2D + teatro de histórias) · **A História em Ordem** (sequência da narrativa) · **Mostre o Livro** (de qual livro da Bíblia é?) |
+| 🦁 **7–9** | **A Estrada da Luz** (quiz de caminhos) · **Heróis da Bíblia** (quiz com vidas) · **Linha do Tempo** (ordene os eventos) · **Caçadores do Versículo** (complete o versículo) |
 
 Cada pergunta/estação cita a **referência bíblica** (`Livro cap.vers (VERSÃO)`).
 A versão é a da fonte quando atestada; caso contrário, **NAA**
@@ -26,14 +26,15 @@ O progresso fica no `localStorage` do aparelho (estrelas, níveis e recorde por
 jogo). **Cada opção de resposta tem um alto-falante 🔊** e, no **modo
 pequeninos**, as opções são narradas em sequência — quem ainda não lê joga
 sozinho. Cada personagem da Aventura tem **rosto e vestes próprios**. Jogos
-ainda não lançados aparecem como "Em breve 🔨".
+novos entram como "Em breve 🔨" até serem implementados (hoje não há nenhum).
 
 Na **Aventura na Bíblia**, ao falar com um personagem a criança escolhe **qual
 história quer ver como peça de teatro** (palco com cortinas, cenário SVG,
 narração e um quiz que confirma sem punir) e ganha uma **figurinha** ao
-terminar. As figurinhas ficam no **livrinho** (botão 💮 no Hub) — coleção pura,
-nada é bloqueado por falta de figurinha. Há um botão de idioma **PT/EN** para a
-carcaça da interface (o conteúdo bíblico segue em PT-BR).
+terminar. São **48 cenas — 4 por personagem** (`data/scenes.ts`). As figurinhas
+ficam no **livrinho** (botão 💮 no Hub) — coleção pura, nada é bloqueado por
+falta de figurinha. Há um botão de idioma **PT/EN** para a carcaça da interface
+(o conteúdo bíblico segue em PT-BR).
 
 ## Rodar localmente
 
@@ -96,6 +97,7 @@ kids/
         │   ├── prefs.ts           ← modo pequeninos, 1ª vez, mundo salvo
         │   ├── fx.ts              ← partículas, número voando, screen shake
         │   ├── motion.ts          ← prefers-reduced-motion
+        │   ├── minigame.ts        ← shuffle + regra de estrelas dos mini-jogos
         │   ├── device.ts          ← standalone / iPhone / celular em pé
         │   └── confetti.ts        ← confete dosado por aparelho
         └── components/
@@ -117,7 +119,14 @@ kids/
             │   ├── Motifs.tsx     ← 12 motivos (arca, peixe, leão, coroa…)
             │   └── StarItem.tsx   ← estrela coletável
             └── games/
-                ├── GameEncontreACena.tsx  ← piloto 3–4 (dica narrada → toque na figura)
+                ├── GameEncontreACena.tsx    ← 3–4: dica narrada → toque na figura
+                ├── GameParesDaArca.tsx      ← 3–4: memória de pares
+                ├── GameQueSomEsse.tsx       ← 3–4: pista sonora → personagem
+                ├── GameHistoriaEmOrdem.tsx  ← 5–6: sequência (usa OrderGame)
+                ├── GameMostreOLivro.tsx     ← 5–6: qual livro da Bíblia?
+                ├── GameLinhaDoTempo.tsx     ← 7–9: ordene eventos (usa OrderGame)
+                ├── GameCacadoresDoVersiculo.tsx ← 7–9: complete o versículo
+                ├── OrderGame.tsx            ← motor "toque na ordem" (compartilhado)
                 ├── GameEstradaDaLuz.tsx
                 ├── GameHeroisDaBiblia.tsx
                 └── GameAventuraBiblia.tsx ← mundo 2D + menu de histórias + teatro
@@ -220,12 +229,18 @@ React 18 · TypeScript 5 · Vite 5 · Tailwind CSS 3 · lucide-react · react-co
   caminho "❓ Perguntinha". Decisão no brain-jogos (`ADR-004`).
 - ✅ **Fase 8** — **coleção de figurinhas** (`lib/stickers.ts` +
   `CollectionBook.tsx` + botão 💮 no Hub), por personagem, sem bloquear nada.
-- ✅ **Fase 9** — **testes e CI**: Vitest + jsdom (4 arquivos, 23 testes),
+- ✅ **Fase 9** — **testes e CI**: Vitest + jsdom (5 arquivos, 28 testes),
   CI migrado para **bun** (typecheck + test + build), workflow de
   **auditoria Lighthouse/a11y**, JSON-LD, `sitemap.xml`, `robots.txt` e
   **bump automático da VERSION do service worker**.
 - ✅ **Fase 10** — **i18n leve PT/EN** da interface, **fonte Baloo 2
   self-hosted** (woff2, offline) e `sfx.sticker()`.
+- ✅ **Fase 11** — **todos os personagens com 4 cenas** (catálogo de **48
+  cenas** em `data/scenes.ts`, paridade com o roteiro de Moisés) e os **6 jogos
+  "em breve" implementados** nas faixas existentes: Pares da Arca e Que Som é
+  Esse? (3–4), A História em Ordem e Mostre o Livro (5–6), Linha do Tempo e
+  Caçadores do Versículo (7–9). Novo motor compartilhado `OrderGame.tsx` e
+  `lib/minigame.ts`; teste de invariantes do catálogo de jogos.
 - 🟡 **Pendências conhecidas:**
   - **Teste em aparelho real** (iPhone/Android): instalação/offline, FPS da
     Aventura, volume da voz, toque em tela pequena, hit area do chip 🔊.

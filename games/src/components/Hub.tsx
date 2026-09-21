@@ -408,6 +408,7 @@ export default function Hub({ onSelectGame, onLogout }: HubProps) {
           </div>
 
           {/* ─── em breve nas outras faixas (todas, agrupadas) ─── */}
+          {games.some((g) => g.status === 'em-breve') ? (
           <section className="mt-6 rounded-3xl border-2 border-slate-100 bg-white px-4 py-5 shadow-xl">
             <h2 className="text-center text-xl font-black text-slate-700">
               Em breve nas outras faixas ✨
@@ -439,6 +440,7 @@ export default function Hub({ onSelectGame, onLogout }: HubProps) {
               );
             })}
           </section>
+          ) : null}
 
           <footer className="mt-8 pb-10 text-center text-xs font-bold text-slate-400">
             Feito com 💛 para crianças brasileiras · v0.1
