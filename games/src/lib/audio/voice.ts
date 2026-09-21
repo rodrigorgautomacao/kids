@@ -1,0 +1,139 @@
+// Narração por síntese de voz do sistema (decisão D2 do ADR-002).
+//
+// Por que `speechSynthesis` e não arquivos gravados:
+// - grátis, offline, zero peso no repositório e nenhuma licença de voz a resolver;
+// - atende o público 4–6 anos que ainda não lê (pré-leitores);
+// - o preço é a voz variar por aparelho — por isso TODO texto narrado também
+//   aparece na tela (áudio nunca é o único canal — skill jogos-audio §8).
+//
+// Cuidados de iOS: a primeira fala precisa sair de um gesto do usuário; por isso
+// `primeVoice()` é chamado no primeiro toque (ver App.tsx). A voz também é
+// cortada se o usuário mudar de tela ou mutar.
+
+import { setDuck } from './context';
+import { isVoiceMuted } from './preferences';
+
+interface SpeakOptions {
+  /** 0.5–2. Velocidade da fala (padrão infantil: um pouco mais devagar). */
+  rate?: number;
+  /** 0–2. Tom (padrão levemente mais agudo para soar amigável). */
+  pitch?: number;
+  /** Chamado quando a fala termina (ou falha). */
+  onEnd?: () => void;
+}
+
+const DEFAULT_RATE = 0.92;
+const DEFAULT_PITCH = 1.08;
+
+let cachedVoice: SpeechSynthesisVoice | null = null;
+let speaking = false;
+
+export function isSpeechSupported(): boolean {
+  return typeof window !== 'undefined' && 'speechSynthesis' in window;
+}
+
+/**
+ * Limpa o texto para leitura em voz alta: emoji não é falado de forma útil, e
+ * "Gênesis 6.14 (NAA)" soa melhor como "Gênesis 6 versículo 14".
+ */
+export function cleanForSpeech(text: string): string {
+  return text
+    .replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}\u{2190}-\u{21FF}\u{FE0F}\u{200D}]/gu, ' ')
+    .replace(/\(NAA\)/gi, '')
+    .replace(/\b(\d+)\.(\d+)\b/g, '$1 versículo $2')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function pickVoice(): SpeechSynthesisVoice | null {
+  if (cachedVoice) return cachedVoice;
+  if (!isSpeechSupported()) return null;
+  try {
+    const voices = window.speechSynthesis.getVoices();
+    if (!voices.length) return null;
+    cachedVoice =
+      voices.find((v) => v.lang === 'pt-BR') ??
+      voices.find((v) => /^pt[-_]BR/i.test(v.lang)) ??
+      voices.find((v) => /^pt/i.test(v.lang)) ??
+      null;
+    return cachedVoice;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Destrava a síntese de voz no primeiro gesto (iOS). Fala um texto vazio.
+ * Também aproveita para aquecer a lista de vozes (que chega assíncrona).
+ */
+export function primeVoice() {
+  if (!isSpeechSupported()) return;
+  try {
+    window.speechSynthesis.getVoices();
+    const u = new SpeechSynthesisUtterance(' ');
+    u.volume = 0;
+    u.lang = 'pt-BR';
+    window.speechSynthesis.speak(u);
+    window.speechSynthesis.cancel();
+  } catch {
+    /* ignore */
+  }
+}
+
+/** Fala um texto. Cancela a fala anterior para não enfileirar frases. */
+export function speak(text: string, options: SpeakOptions = {}) {
+  if (isVoiceMuted()) return;
+  if (!isSpeechSupported()) return;
+  const clean = cleanForSpeech(text);
+  if (!clean) return;
+
+  const synth = window.speechSynthesis;
+  try {
+    synth.cancel();
+    const utterance = new SpeechSynthesisUtterance(clean);
+    utterance.lang = 'pt-BR';
+    utterance.rate = options.rate ?? DEFAULT_RATE;
+    utterance.pitch = options.pitch ?? DEFAULT_PITCH;
+    utterance.volume = 1;
+    const voice = pickVoice();
+    if (voice) utterance.voice = voice;
+
+    const done = () => {
+      speaking = false;
+      setDuck(false, 0.4);
+      options.onEnd?.();
+    };
+    utterance.onend = done;
+    utterance.onerror = done;
+
+    // Vozes carregam de forma assíncrona: tenta de novo quando chegarem.
+    if (!voice) {
+      synth.addEventListener('voiceschanged', () => pickVoice(), { once: true });
+    }
+
+    speaking = true;
+    setDuck(true, 0.2);
+    synth.speak(utterance);
+  } catch {
+    speaking = false;
+    setDuck(false, 0.3);
+  }
+}
+
+/** Interrompe a narração (troca de tela, mudo ligado). */
+export function stopSpeaking() {
+  if (!isSpeechSupported()) return;
+  try {
+    window.speechSynthesis.cancel();
+  } catch {
+    /* ignore */
+  }
+  if (speaking) {
+    speaking = false;
+    setDuck(false, 0.3);
+  }
+}
+
+export function isSpeaking(): boolean {
+  return speaking;
+}
