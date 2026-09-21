@@ -15,4 +15,145 @@ body {
   -webkit-tap-highlight-color: transparent;
   overscroll-behavior: none;
   touch-action: manipulation;
+  /* evita "flash" branco antes do React montar */
+  background-color: #150b2e;
+}
+
+@layer utilities {
+  /**
+   * Altura de tela que funciona no mobile: `100vh` mente no Safari do iOS
+   * (a barra inferior cobre o conteúdo). `dvh` acompanha a barra dinâmica.
+   * Usar sempre `min-height` para o conteúdo poder crescer, nunca clipe.
+   */
+  .min-h-screen-safe {
+    min-height: 100vh;
+    min-height: 100dvh;
+  }
+
+  /** Respeita notch, ilha e home indicator do iPhone (viewport-fit=cover).
+   *  Como o padding entra no "containing block" dos filhos absolutos, quem usa
+   *  `top-4`/`left-4` já cai automaticamente depois da área segura. */
+  .safe-area-pad {
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-right: env(safe-area-inset-right, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    padding-left: env(safe-area-inset-left, 0px);
+  }
+
+  /**
+   * Superfície de jogo: gestos do dedo não rolam, não dão zoom e não abrem o
+   * menu de "salvar imagem" (iOS). O zoom da página continua liberado fora daqui.
+   */
+  .game-surface {
+    touch-action: none;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  /**
+   * Feedback de toque padrão dos botões (skill `jogos-visual` §4/§7):
+   * "squash" ao pressionar, com easing aprovado (pop) e sem blur.
+   */
+  .ui-press {
+    transform-origin: center 80%;
+    transition:
+      transform 120ms cubic-bezier(0.34, 1.56, 0.64, 1),
+      box-shadow 120ms ease;
+  }
+  .ui-press:active {
+    transform: translateY(4px) scale(0.97, 0.94);
+  }
+
+  /**
+   * Screen shake curto e contido (≤ 6 px, 250 ms). Aplicado por `fx.shake()`
+   * em erros. As keyframes ficam aqui para não dependerem de purge do Tailwind.
+   * Sem `fill-mode`: `translateX(0)` persistente também viraria containing block
+   * dos `position: fixed` internos.
+   */
+  .stage-shake {
+    animation: mare-shake 250ms ease-in-out;
+  }
+
+  /** Sombra de contato: dá "peso" a personagens e objetos, custo quase zero. */
+  .contact-shadow {
+    background: radial-gradient(closest-side, rgba(0, 0, 0, 0.38), rgba(0, 0, 0, 0) 72%);
+  }
+
+  /** Cápsula de HUD: fundo sólido (não `backdrop-blur`) + contorno + sombra dura. */
+  .hud-pill {
+    border-radius: 9999px;
+    background-color: rgba(15, 23, 42, 0.82);
+    border: 2px solid rgba(255, 255, 255, 0.16);
+    box-shadow: 0 3px 0 rgba(0, 0, 0, 0.4);
+  }
+
+  /**
+   * Transições de tela (hub ⇄ jogo): fade/settle de 250–400 ms, nunca troca seca.
+   * Sem `fill-mode`: um `transform` persistente no wrapper transformaria os
+   * `position: fixed` de dentro (confete, véu de escuridão) em `absolute`.
+   */
+  .screen-in {
+    animation: mare-screen-in 320ms ease-out;
+  }
+  .screen-out {
+    animation: mare-screen-out 200ms ease-in;
+  }
+}
+
+@keyframes mare-shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20% {
+    transform: translateX(-6px) rotate(-0.6deg);
+  }
+  40% {
+    transform: translateX(5px) rotate(0.5deg);
+  }
+  60% {
+    transform: translateX(-3px);
+  }
+  80% {
+    transform: translateX(2px);
+  }
+}
+
+@keyframes mare-screen-in {
+  from {
+    opacity: 0;
+    transform: scale(0.985) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes mare-screen-out {
+  from {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.99) translateY(-6px);
+  }
+}
+
+/**
+ * Acessibilidade: quem pediu "menos movimento" no sistema não recebe loops
+ * infinitos, parallax nem transições longas. Animações com `fill-mode: both`
+ * (ex.: `animate-pop`) saltam direto para o estado final.
+ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
 }

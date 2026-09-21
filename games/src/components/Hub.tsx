@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Crown, Lock, Star, Volume2, VolumeX } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Crown, Lock, Mic, MicOff, Music, Star, Volume2, VolumeX } from 'lucide-react';
 import { games } from '../data/games';
 import {
   chapterLevelsDone,
@@ -12,7 +12,19 @@ import {
   totalLevelsDone,
   totalStars,
 } from '../lib/progress';
-import { isMuted, setMuted } from '../lib/sound';
+import {
+  isMusicMuted,
+  isSfxMuted,
+  isVoiceMuted,
+  setMusicMuted,
+  setSfxMuted,
+  setVoiceMuted,
+  subscribeSoundPrefs,
+  sfx,
+  voice,
+} from '../lib/audio';
+import InstallHint from './InstallHint';
+import { isSmallKidsMode, setSmallKidsMode } from '../lib/prefs';
 
 interface HubProps {
   onSelectGame: (id: string) => void;
@@ -20,13 +32,28 @@ interface HubProps {
 
 /**
  * Tela principal da saga "A Estrada da Luz": cada resposta certa aproxima
- * o jogador de Deus; errar recua e acende o fogo do inferno.
+ * o jogador de Deus; errar escurece o caminho e recua um passo.
  * A ordem dos jogos em src/data/games.ts é a ordem dos capítulos.
  */
 export default function Hub({ onSelectGame }: HubProps) {
   const [freeMode, setFree] = useState(isFreeMode());
-  const [muted, setSound] = useState(isMuted());
+  const [sfxOn, setSfxOn] = useState(() => !isSfxMuted());
+  const [musicOn, setMusicOn] = useState(() => !isMusicMuted());
+  const [voiceOn, setVoiceOn] = useState(() => !isVoiceMuted());
+  const [smallKids, setSmallKids] = useState(isSmallKidsMode);
   const [hint, setHint] = useState<string | null>(null);
+
+  // Mantém os três botões em sincronia com o que estiver salvo (ex.: mudo
+  // acionado dentro de um jogo).
+  useEffect(
+    () =>
+      subscribeSoundPrefs(() => {
+        setSfxOn(!isSfxMuted());
+        setMusicOn(!isMusicMuted());
+        setVoiceOn(!isVoiceMuted());
+      }),
+    [],
+  );
 
   const progress = loadLevels();
   const totalGameLevels = (g: { id: string; totalLevels?: number }) =>
@@ -46,10 +73,42 @@ export default function Hub({ onSelectGame }: HubProps) {
     setHint(null);
   }
 
-  function toggleMute() {
-    const next = !muted;
-    setSound(next);
-    setMuted(next);
+  function toggleSfx() {
+    const next = !sfxOn;
+    setSfxOn(next);
+    setSfxMuted(!next);
+    if (next) sfx.pop();
+  }
+
+  function toggleMusic() {
+    const next = !musicOn;
+    setMusicOn(next);
+    setMusicMuted(!next);
+  }
+
+  function toggleVoice() {
+    const next = !voiceOn;
+    setVoiceOn(next);
+    setVoiceMuted(!next);
+    if (next) voice.speak('Narração ligada!');
+    else voice.stopSpeaking();
+  }
+
+  /**
+   * Modo pequeninos (pré-leitores): 3 opções grandes no lugar de 5 e narração
+   * sempre ligada. É a diferença entre jogar e não jogar para quem tem 6 anos.
+   */
+  function toggleSmallKids() {
+    const next = !smallKids;
+    setSmallKids(next);
+    setSmallKidsMode(next);
+    if (next) {
+      setVoiceMuted(false);
+      setVoiceOn(true);
+      voice.speak('Modo pequeninos ligado! Agora tem menos opções e voz em tudo.');
+    } else {
+      voice.speak('Modo pequeninos desligado.');
+    }
   }
 
   function lockedHint(index: number) {
@@ -57,14 +116,14 @@ export default function Hub({ onSelectGame }: HubProps) {
   }
 
   return (
-    <div className="relative min-h-screen w-full overflow-hidden bg-[#150b2e]">
+    <div className="safe-area-pad relative min-h-screen-safe w-full overflow-hidden bg-[#150b2e]">
       {/* brilhos de fundo (estilo cabinet de fliperama) */}
       <div className="pointer-events-none absolute -top-24 -left-24 h-80 w-80 rounded-full bg-yellow-400/20 blur-3xl" />
       <div className="pointer-events-none absolute top-1/3 -right-28 h-96 w-96 rounded-full bg-sky-400/20 blur-3xl" />
       <div className="pointer-events-none absolute bottom-0 left-1/4 h-72 w-72 rounded-full bg-indigo-400/20 blur-3xl" />
       <div className="pointer-events-none absolute inset-0 opacity-[0.08] [background-image:repeating-linear-gradient(0deg,transparent,transparent_34px,#fff_34px,#fff_36px)]" />
 
-      <main className="relative z-10 flex min-h-screen flex-col items-center gap-6 p-6">
+      <main className="relative z-10 flex min-h-screen-safe flex-col items-center gap-6 p-6">
         {/* ------- cabeçalho da saga ------- */}
         <header className="text-center">
           <p className="font-mono text-xs tracking-[0.35em] text-yellow-300 uppercase">
@@ -122,7 +181,7 @@ export default function Hub({ onSelectGame }: HubProps) {
             type="button"
             onClick={toggleFree}
             aria-pressed={freeMode}
-            className={`rounded-full px-5 py-2 text-sm font-extrabold shadow transition-transform active:scale-95 ${
+            className={`ui-press rounded-full px-5 py-2 text-sm font-extrabold shadow ${
               freeMode ? 'bg-yellow-300 text-amber-900' : 'bg-white/10 text-white/85'
             }`}
           >
@@ -130,14 +189,61 @@ export default function Hub({ onSelectGame }: HubProps) {
           </button>
           <button
             type="button"
-            onClick={toggleMute}
-            aria-pressed={muted}
-            className="flex items-center gap-2 rounded-full bg-white/10 px-5 py-2 text-sm font-extrabold text-white/85 shadow transition-transform active:scale-95"
+            onClick={toggleSmallKids}
+            aria-pressed={smallKids}
+            aria-label={`Modo pequeninos ${smallKids ? 'ligado' : 'desligado'}`}
+            className={`ui-press rounded-full px-5 py-2 text-sm font-extrabold shadow ${
+              smallKids ? 'bg-emerald-400 text-emerald-950' : 'bg-white/10 text-white/85'
+            }`}
           >
-            {muted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
-            {muted ? 'Som: OFF' : 'Som: ON'}
+            🧒 Modo pequeninos: {smallKids ? 'ON' : 'OFF'}
+          </button>
+          <button
+            type="button"
+            onClick={toggleSfx}
+            aria-pressed={sfxOn}
+            aria-label={`Efeitos sonoros ${sfxOn ? 'ligados' : 'desligados'}`}
+            className={`ui-press flex items-center gap-2 rounded-full px-4 py-2 text-sm font-extrabold shadow ${
+              sfxOn ? 'bg-white/15 text-white' : 'bg-white/5 text-white/50'
+            }`}
+          >
+            {sfxOn ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
+            Efeitos: {sfxOn ? 'ON' : 'OFF'}
+          </button>
+          <button
+            type="button"
+            onClick={toggleMusic}
+            aria-pressed={musicOn}
+            aria-label={`Música ${musicOn ? 'ligada' : 'desligada'}`}
+            className={`ui-press flex items-center gap-2 rounded-full px-4 py-2 text-sm font-extrabold shadow ${
+              musicOn ? 'bg-white/15 text-white' : 'bg-white/5 text-white/50'
+            }`}
+          >
+            <Music className="h-4 w-4" />
+            Música: {musicOn ? 'ON' : 'OFF'}
+          </button>
+          <button
+            type="button"
+            onClick={toggleVoice}
+            aria-pressed={voiceOn}
+            aria-label={`Narração ${voiceOn ? 'ligada' : 'desligada'}`}
+            className={`ui-press flex items-center gap-2 rounded-full px-4 py-2 text-sm font-extrabold shadow ${
+              voiceOn ? 'bg-white/15 text-white' : 'bg-white/5 text-white/50'
+            }`}
+          >
+            {voiceOn ? <Mic className="h-4 w-4" /> : <MicOff className="h-4 w-4" />}
+            Narração: {voiceOn ? 'ON' : 'OFF'}
           </button>
         </div>
+
+        {smallKids ? (
+          <p className="animate-pop max-w-xl rounded-3xl bg-emerald-400/15 px-6 py-2 text-center text-sm font-bold text-emerald-100">
+            🧒 Modo pequeninos: 3 opções grandes e voz em tudo. Feito para quem ainda não lê!
+          </p>
+        ) : null}
+
+        {/* ------- convite para instalar (PWA) ------- */}
+        <InstallHint />
 
         {/* ------- aviso de capítulo bloqueado ------- */}
         {hint ? (

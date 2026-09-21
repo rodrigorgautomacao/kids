@@ -29,7 +29,7 @@ export const games: GameDefinition[] = [
     title: 'A Estrada da Luz',
     subtitle: 'Faça o certo e caminhe até Deus',
     sinopse:
-      'Cada resposta certa te caminha até a Luz. Errar acende o fogo do inferno — mas Deus sempre espera você voltar!',
+      'Cada resposta certa te aproxima da Luz. Errar escurece o caminho — mas Deus sempre te espera para voltar!',
     icon: Crown,
     color: 'bg-gradient-to-b from-indigo-700 via-blue-600 to-sky-500',
     totalLevels: 3,
