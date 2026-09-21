@@ -44,17 +44,20 @@ interface PreparedQuestion extends Question {
 }
 
 const STEPS = 5;
-const TOTAL_TRECHOS = 3;
-const QUESTIONS_PER_TRECHO = 10;
+const TOTAL_TRECHOS = 6;
+const QUESTIONS_PER_TRECHO = 5;
 
 /** Nome curto de cada trecho — é o que aparece no mapa para a criança escolher. */
 const TRECHOS = [
   { label: 'Trecho 1', sublabel: 'Escolhas do dia a dia', emoji: '🌤️' },
   { label: 'Trecho 2', sublabel: 'Verdade e tesouro do céu', emoji: '💛' },
   { label: 'Trecho 3', sublabel: 'Amor, perdão e a Luz', emoji: '🌟' },
+  { label: 'Trecho 4', sublabel: 'Coragem e verdade', emoji: '🛡️' },
+  { label: 'Trecho 5', sublabel: 'Generosidade', emoji: '🎁' },
+  { label: 'Trecho 6', sublabel: 'Juntos na Luz', emoji: '🌈' },
 ];
 
-// 30 perguntas da lição: 3 trechos × 10 (cada uma com 5 opções)
+// 30 perguntas da lição: 6 trechos × 5 (cada uma com 5 opções)
 const QUESTIONS: Question[] = [
   { q: 'Você encontra uma moeda no chão…', right: { t: 'Devolvo ao dono', e: '🙂' }, wrongs: [{ t: 'Guardo escondido', e: '😜' }, { t: 'Jogo no lixo', e: '🗑️' }, { t: 'Piso por cima', e: '👟' }, { t: 'Dou para o primeiro que vejo', e: '🎲' }], ref: 'Êxodo 23.4 (NAA)' },
   { q: 'O vaso quebrou sem querer…', right: { t: 'Conto a verdade', e: '💛' }, wrongs: [{ t: 'Digo que não fui eu', e: '🙈' }, { t: 'Escondo os cacos', e: '🕳️' }, { t: 'Culpo o gato', e: '🐱' }, { t: 'Saio correndo', e: '🏃' }], ref: 'Efésios 4.25 (NAA)' },

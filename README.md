@@ -278,9 +278,9 @@ React 18 · TypeScript 5 · Vite 5 · Tailwind CSS 3 · lucide-react · react-co
   gravar áudio) e **sistema de níveis** (`lib/levels.ts`): cada nível tem
   estrelas próprias (salvas em `progress`), mapa de níveis 🗺️ e "próximo nível".
   O **Quebra-Cabeça tem 10 níveis** — começa com 4 peças (2×2) e chega a 36
-  (6×6). Níveis já aplicados nos 7 motores (15 jogos) + Encontre a Cena, Que Som
-  é Esse? e Mostre o Livro. **Ainda faltam níveis** em: Caçadores do Versículo,
-  Pares da Arca, A Estrada da Luz, Heróis da Bíblia e Aventura na Bíblia.
+  (6×6). **Todos os jogos têm ≥5 níveis**: os 7 motores (15 jogos), Encontre a
+  Cena, Que Som é Esse?, Mostre o Livro, Caçadores, Pares da Arca (4→10 pares),
+  A Estrada da Luz e Heróis da Bíblia (6 trechos cada) e Aventura (12 estações).
 - 🟡 **Pendências conhecidas:**
   - **Teste em aparelho real** (iPhone/Android): instalação/offline, FPS da
     Aventura, volume da voz, toque em tela pequena, hit area do chip 🔊.

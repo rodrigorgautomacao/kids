@@ -46,8 +46,8 @@ interface PreparedQuestion extends Question {
 }
 
 const STEPS = 5;
-const TOTAL_TRECHOS = 3;
-const QUESTIONS_PER_TRECHO = 10;
+const TOTAL_TRECHOS = 6;
+const QUESTIONS_PER_TRECHO = 5;
 const MAX_VIDAS = 3;
 const PTS_CORRETO = 100;
 const PTS_BONUS_SEQUENCIA = 25;
@@ -57,9 +57,12 @@ const TRECHOS = [
   { label: 'Trecho 1', sublabel: 'Heróis da fé', emoji: '🦁' },
   { label: 'Trecho 2', sublabel: 'Grandes missões', emoji: '🚢' },
   { label: 'Trecho 3', sublabel: 'Reis e profetas', emoji: '👑' },
+  { label: 'Trecho 4', sublabel: 'Coragem e fé', emoji: '🛡️' },
+  { label: 'Trecho 5', sublabel: 'Missões e milagres', emoji: '✨' },
+  { label: 'Trecho 6', sublabel: 'A promessa final', emoji: '🌈' },
 ];
 
-// 30 perguntas da lição: 3 trechos × 10 (cada uma com 5 opções parecidas)
+// 30 perguntas da lição: 6 trechos × 5 (cada uma com 5 opções parecidas)
 const QUESTIONS: Question[] = [
   // ------- Trecho 1: grandes histórias do Antigo Testamento -------
   { q: 'Quem construiu a arca para salvar os animais do dilúvio?', right: { t: 'Noé', e: '🕊️' }, wrongs: [{ t: 'Moisés', e: '🗿' }, { t: 'Abraão', e: '🏕️' }, { t: 'Davi', e: '🎯' }, { t: 'Elias', e: '⚡' }], ref: 'Gênesis 6.14 (NAA)' },

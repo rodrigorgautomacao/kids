@@ -79,7 +79,7 @@ const GAMES: GameDefinition[] = [
     sinopse: 'Responda certo para caminhar pela estrada e chegar à luz!',
     faixa: '7-9', tipo: 'at-nt', status: 'pronto',
     habilidades: ['conhecimento bíblico', 'raciocínio', 'leitura rápida'],
-    totalLevels: 3,                     // 3 trechos × 4 perguntas
+    totalLevels: 6,                     // 6 trechos × 5 perguntas
     icon: SunIcon,
     color: 'bg-yellow-200 text-amber-900',
     component: GameEstradaDaLuz,
@@ -91,7 +91,7 @@ const GAMES: GameDefinition[] = [
     sinopse: 'Conheça os heróis da Bíblia! Responda certo e evite perder as 3 vidas.',
     faixa: '7-9', tipo: 'at-nt', status: 'pronto',
     habilidades: ['conhecimento bíblico', 'memória de longo prazo'],
-    totalLevels: 3,                     // 3 trechos × 4 perguntas
+    totalLevels: 6,                     // 6 trechos × 5 perguntas
     icon: CrownIcon,
     color: 'bg-indigo-200 text-indigo-900',
     component: GameHeroisDaBiblia,
