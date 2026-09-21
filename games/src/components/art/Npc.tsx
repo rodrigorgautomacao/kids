@@ -3,13 +3,61 @@ import { motifArt } from './Motifs';
 
 export type NpcState = 'idle' | 'happy' | 'sad';
 
+/**
+ * Aparência de um personagem (pedido do dono: "um rosto diferente a cada
+ * personagem"). Cada personagem da Bíblia tem sua própria combinação de pele,
+ * cabelo, barba e adereço — Maria tem véu, Salomão tem coroa, Noé e Moisés
+ * têm barba branca, o Anjo tem cabelo dourado, etc.
+ */
+export interface NpcLook {
+  skin: string;
+  hair: string;
+  hairStyle: 'short' | 'buzz' | 'wavy' | 'long';
+  beard: boolean;
+  beardColor: string;
+  headwear: 'none' | 'crown' | 'hood' | 'headband';
+  headwearColor: string;
+  robe: string;
+}
+
+export const DEFAULT_LOOK: NpcLook = {
+  skin: '#fbd6ad',
+  hair: '#4b2e17',
+  hairStyle: 'short',
+  beard: false,
+  beardColor: '#e5e7eb',
+  headwear: 'none',
+  headwearColor: '#2563eb',
+  robe: '#0ea5e9',
+};
+
+/** Identidades dos personagens das 12 estações da Aventura (e demais usos). */
+export const LOOKS: Record<string, Partial<NpcLook>> = {
+  noe: { skin: '#d9a066', hair: '#e2e8f0', hairStyle: 'wavy', beard: true, beardColor: '#e2e8f0', robe: '#b45309' },
+  anjo: { skin: '#fbd6ad', hair: '#fde047', hairStyle: 'wavy', robe: '#f59e0b', headwear: 'crown', headwearColor: '#facc15' },
+  elias: { skin: '#d9a066', hair: '#111827', hairStyle: 'wavy', beard: true, beardColor: '#111827', robe: '#7c3aed' },
+  jonas: { skin: '#fbd6ad', hair: '#4b2e17', hairStyle: 'short', robe: '#0ea5e9' },
+  eliseu: { skin: '#d9a066', hair: '#4b2e17', hairStyle: 'short', beard: true, beardColor: '#4b2e17', robe: '#059669' },
+  daniel: { skin: '#c68642', hair: '#111827', hairStyle: 'short', robe: '#dc2626' },
+  maria: { skin: '#fbd6ad', hair: '#78350f', hairStyle: 'wavy', headwear: 'hood', headwearColor: '#2563eb', robe: '#2563eb' },
+  moises: { skin: '#d9a066', hair: '#e2e8f0', hairStyle: 'long', beard: true, beardColor: '#e2e8f0', robe: '#166534' },
+  josue: { skin: '#d9a066', hair: '#111827', hairStyle: 'short', beard: true, beardColor: '#111827', robe: '#a16207' },
+  davi: { skin: '#fbd6ad', hair: '#92400e', hairStyle: 'short', robe: '#d97706' },
+  salomao: { skin: '#fbd6ad', hair: '#111827', hairStyle: 'buzz', headwear: 'crown', headwearColor: '#facc15', robe: '#a16207' },
+  paulo: { skin: '#d9a066', hair: '#64748b', hairStyle: 'buzz', beard: true, beardColor: '#64748b', robe: '#4f46e5' },
+};
+
 interface NpcProps {
   /** id da história — define o motivo no peito */
   motif: string;
-  /** cor da túnica (cada estação tem a sua) */
+  /** cor da túnica (sobrescreve a do look) */
   tone?: string;
-  /** barba (patriarcas) — Maria e o anjo ficam sem */
+  /** barba (sobrescreve a do look) — atalho para usos sem preset */
   beard?: boolean;
+  /** identidade visual: chave de `LOOKS` (ex.: 'moises') */
+  preset?: string;
+  /** aparência completa (prioridade sobre `preset`/`tone`/`beard`) */
+  look?: Partial<NpcLook>;
   state?: NpcState;
   size?: number;
   className?: string;
@@ -17,19 +65,31 @@ interface NpcProps {
 
 /**
  * NPC de estação em SVG inline (skill `jogos-visual` §2/§3): figura com túnica,
- * barba opcional e o **motivo da história no peito**. Substitui o emoji de NPC
- * por arte própria, que anima e não muda de cara entre iPhone/Android/Windows.
+ * rosto próprio por personagem e o **motivo da história no peito**. Substitui o
+ * emoji de NPC por arte própria, que anima e não muda de cara entre aparelhos.
  */
 export default function Npc({
   motif,
-  tone = '#0ea5e9',
-  beard = false,
+  tone,
+  beard,
+  preset,
+  look: lookOverride,
   state = 'idle',
   size = 64,
   className,
 }: NpcProps) {
   const uid = useId().replace(/[:]/g, '');
   const anim = state === 'happy' ? 'animate-pop' : 'animate-hero-bob';
+
+  const look: NpcLook = {
+    ...DEFAULT_LOOK,
+    ...(preset ? LOOKS[preset] : {}),
+    ...(typeof tone !== 'undefined' ? { robe: tone } : {}),
+    ...(typeof beard !== 'undefined' ? { beard, beardColor: DEFAULT_LOOK.beardColor } : {}),
+    ...(lookOverride ?? {}),
+  };
+
+  const { skin, hair, hairStyle, beardColor, headwear, headwearColor, robe } = look;
 
   return (
     <svg
@@ -41,14 +101,25 @@ export default function Npc({
     >
       <defs>
         <linearGradient id={`robe-${uid}`} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor={tone} />
+          <stop offset="0%" stopColor={robe} />
           <stop offset="100%" stopColor="#0f172a" stopOpacity="0.75" />
         </linearGradient>
         <linearGradient id={`face-${uid}`} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#fbd6ad" />
-          <stop offset="100%" stopColor="#e2ab7c" />
+          <stop offset="0%" stopColor={skin} />
+          <stop offset="100%" stopColor="#000000" stopOpacity="0" />
         </linearGradient>
       </defs>
+
+      {/* véu/capa da cabeça (Maria) — desenhado atrás do rosto */}
+      {headwear === 'hood' ? (
+        <path
+          d="M12.5 14C12.5 5.5 35.5 5.5 35.5 14v3.5c-4.5-2.5-15-2.5-23 0Z"
+          fill={headwearColor}
+          stroke="#0f172a"
+          strokeWidth="1.6"
+          strokeLinejoin="round"
+        />
+      ) : null}
 
       {/* túnica */}
       <path
@@ -68,18 +139,52 @@ export default function Npc({
       </svg>
 
       {/* cabeça */}
-      <circle cx="24" cy="12.5" r="10" fill={`url(#face-${uid})`} stroke="#0f172a" strokeWidth="1.8" />
-      {/* cabelo */}
-      <path
-        d="M14.2 11C14.8 5.6 19 2.6 24 2.6S33.2 5.6 33.8 11c-2.7-2.3-6.1-3.4-9.8-3.4S17 8.7 14.2 11Z"
-        fill="#4b2e17"
-      />
-      {beard ? (
+      <circle cx="24" cy="12.5" r="10" fill={skin} stroke="#0f172a" strokeWidth="1.8" />
+
+      {/* cabelo por estilo */}
+      {hairStyle === 'long' ? (
+        <path
+          d="M14.4 12c.4-5.6 4.8-9 9.6-9s9.2 3.4 9.6 9c-2.6-2.1-6-3.2-9.6-3.2s-7 1.1-9.6 3.2Z"
+          fill={hair}
+        />
+      ) : null}
+      {hairStyle === 'short' || hairStyle === 'wavy' ? (
+        <path
+          d="M14.2 11C14.8 5.6 19 2.6 24 2.6S33.2 5.6 33.8 11c-2.7-2.3-6.1-3.4-9.8-3.4S17 8.7 14.2 11Z"
+          fill={hair}
+        />
+      ) : null}
+      {hairStyle === 'buzz' ? (
+        <path
+          d="M14.6 12.4C15 7.2 18.9 4.4 24 4.4s9 2.8 9.4 8c-2.6-1.9-6-2.9-9.4-2.9s-6.8 1-9.4 2.9Z"
+          fill={hair}
+        />
+      ) : null}
+      {hairStyle === 'wavy' ? (
+        <path d="M14 12.5c-1.4 1-.8 3.3.6 3.3 1.6.1 2.6-2 3.4-3.8-1.5.9-2.8 1.3-4 .5Zm20 0c1.4 1 .8 3.3-.6 3.3-1.6.1-2.6-2-3.4-3.8 1.5.9 2.8 1.3 4 .5Zm-10 1.6c-1.7.2-2.9 1.9-2.7 3.4 1.5.2 3-1 3.4-2.6Z" fill={hair} />
+      ) : null}
+
+      {/* coroa / faixa */}
+      {headwear === 'crown' ? (
+        <path
+          d="m14 6.2 1.8-2.2 2 1.9 2.1-2.3 2.1 2.3 2.1-2.3 2.1 2.3 2-1.9 1.8 2.2v3.2H14Z"
+          fill={headwearColor}
+          stroke="#0f172a"
+          strokeWidth="1.3"
+          strokeLinejoin="round"
+        />
+      ) : null}
+      {headwear === 'headband' ? (
+        <path d="M14.6 9.4h18.8v3.4H14.6Z" fill={headwearColor} stroke="#0f172a" strokeWidth="1.2" />
+      ) : null}
+
+      {look.beard ? (
         <path
           d="M17 14.5c0 5 3.2 8.4 7 8.4s7-3.4 7-8.4c-1.6 2.6-4.2 3.6-7 3.6s-5.4-1-7-3.6Z"
-          fill="#e5e7eb"
-          stroke="#9ca3af"
+          fill={beardColor}
+          stroke="#0f172a"
           strokeWidth="0.9"
+          strokeOpacity="0.6"
         />
       ) : null}
 

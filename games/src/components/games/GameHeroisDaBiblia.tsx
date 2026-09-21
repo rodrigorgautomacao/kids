@@ -326,6 +326,17 @@ export default function GameHeroisDaBiblia({ onExit }: GameProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [current?.q, won, gameOver, paused]);
 
+  // Modo pequeninos: depois da pergunta, narra as opções em sequência — quem
+  // ainda não lê precisa OUVIR as escolhas antes de tocar.
+  useEffect(() => {
+    if (!smallKids || won || paused || gameOver || !current || options.length === 0) return;
+    const id = window.setTimeout(() => {
+      voice.speakQueue(options.map((o) => o.t));
+    }, Math.min(4500, Math.max(2400, current.q.length * 30)));
+    return () => window.clearTimeout(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [current?.q, won, gameOver, paused, options]);
+
   useEffect(() => () => voice.stopSpeaking(), []);
 
   return (
@@ -523,16 +534,30 @@ export default function GameHeroisDaBiblia({ onExit }: GameProps) {
             </div>
             <div className="grid w-full grid-cols-2 gap-3">
               {options.map((opt, i) => (
-                <button
-                  key={opt.t}
-                  type="button"
-                  onClick={(ev) => answer(opt, ev)}
-                  className={`ui-press flex min-h-20 flex-col items-center justify-center gap-1 rounded-3xl border-2 border-slate-200 bg-white px-4 py-3 font-bold text-slate-600 shadow-md hover:scale-105 ${
-                    smallKids ? 'text-xl' : 'text-lg'
-                  } ${i === options.length - 1 ? 'col-span-2' : ''}`}
-                >
-                  <span className={smallKids ? 'text-4xl' : 'text-3xl'}>{opt.e}</span> {opt.t}
-                </button>
+                <div key={opt.t} className={`relative ${i === options.length - 1 ? 'col-span-2' : ''}`}>
+                  <button
+                    type="button"
+                    onClick={(ev) => answer(opt, ev)}
+                    aria-label={`Responder: ${opt.t}`}
+                    className={`ui-press flex min-h-20 w-full flex-col items-center justify-center gap-1 rounded-3xl border-2 border-slate-200 bg-white px-4 py-3 pr-14 font-bold text-slate-600 shadow-md hover:scale-105 ${
+                      smallKids ? 'text-xl' : 'text-lg'
+                    }`}
+                  >
+                    <span className={smallKids ? 'text-4xl' : 'text-3xl'}>{opt.e}</span> {opt.t}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(ev) => {
+                      ev.stopPropagation();
+                      sfx.pop();
+                      voice.speak(opt.t);
+                    }}
+                    aria-label={`Ouvir: ${opt.t}`}
+                    className="ui-press absolute top-1/2 right-2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-amber-300 text-amber-950 shadow-md"
+                  >
+                    <Volume2 className="h-5 w-5" />
+                  </button>
+                </div>
               ))}
             </div>
 

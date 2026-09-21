@@ -1,0 +1,116 @@
+import type { ComponentType } from 'react';
+import {
+  GameEstradaDaLuz,
+  GameHeroisDaBiblia,
+  GameAventuraBiblia,
+  GameEncontreACena,
+} from '../components/games';
+
+export type Faixa = '3-4' | '5-6' | '7-9';
+export type Tipo = 'at' | 'nt' | 'at-nt';
+export type GameStatus = 'pronto' | 'em-breve';
+
+export const FAIXAS: readonly { id: Faixa; nome: string; idade: string; mascote: string; gradient: string; text: string }[] = [
+  { id: '3-4', nome: 'Pequeninos',  idade: '3 e 4 anos',  mascote: '🐣', gradient: 'from-amber-200 via-rose-100 to-pink-200', text: 'text-amber-900' },
+  { id: '5-6', nome: 'Exploradores', idade: '5 e 6 anos',  mascote: '🦊', gradient: 'from-sky-200 via-emerald-50 to-teal-200',   text: 'text-sky-900' },
+  { id: '7-9', nome: 'Heróis',       idade: '7 a 9 anos',  mascote: '🦁', gradient: 'from-indigo-200 via-violet-50 to-purple-200', text: 'text-indigo-900' },
+];
+
+export const TIPOS: readonly { id: Tipo; nome: string; emoji: string; badge: string; bg: string; text: string }[] = [
+  { id: 'at',    nome: 'Antigo Testamento',        emoji: '📜', badge: 'bg-amber-100',  bg: 'bg-amber-50',    text: 'text-amber-800'  },
+  { id: 'nt',    nome: 'Novo Testamento',          emoji: '✝️', badge: 'bg-sky-100',    bg: 'bg-sky-50',      text: 'text-sky-800'    },
+  { id: 'at-nt', nome: 'Antigo + Novo Testamento', emoji: '📖', badge: 'bg-emerald-100', bg: 'bg-emerald-50', text: 'text-emerald-800' },
+];
+
+export interface GameDefinition {
+  id: string;
+  title: string;
+  subtitle: string;
+  sinopse: string;
+  faixa: Faixa;
+  tipo: Tipo;
+  status: GameStatus;
+  habilidades: string[];              // tags curtas para o card (ex.: 'memória', 'narrativa')
+  emBreveMotivo?: string;             // texto "Em breve!" no card
+  totalLevels?: number;               // usado em games que têm fases (Estrada/Heróis) — None = piloto contínuo
+  icon: ComponentType<{ size?: number }>;
+  color: string;
+  component?: ComponentType<{ onExit: () => void }>;
+}
+
+// ─── Jogos PRONTOS ────────────────────────────────────────────────
+const GAMES: GameDefinition[] = [
+  {
+    id: 'encontre-a-cena',
+    title: 'Encontre a Cena',
+    subtitle: 'Piloto para Pequeninos',
+    sinopse: 'Toque na figura certa! Uma dica é narrada e você escolhe a cena da Bíblia.',
+    faixa: '3-4', tipo: 'at-nt', status: 'pronto',
+    habilidades: ['reconhecimento visual', 'compreensão auditiva', 'memória'],
+    icon: StarIcon,
+    color: 'bg-amber-300 text-amber-900',
+    component: GameEncontreACena,
+  },
+  {
+    id: 'estrada-da-luz',
+    title: 'A Estrada da Luz',
+    subtitle: 'Quiz com caminhos',
+    sinopse: 'Responda certo para caminhar pela estrada e chegar à luz!',
+    faixa: '7-9', tipo: 'at-nt', status: 'pronto',
+    habilidades: ['conhecimento bíblico', 'raciocínio', 'leitura rápida'],
+    totalLevels: 3,                     // 3 trechos × 4 perguntas
+    icon: SunIcon,
+    color: 'bg-yellow-200 text-amber-900',
+    component: GameEstradaDaLuz,
+  },
+  {
+    id: 'herois-da-biblia',
+    title: 'Heróis da Bíblia',
+    subtitle: 'Quiz com vidas',
+    sinopse: 'Conheça os heróis da Bíblia! Responda certo e evite perder as 3 vidas.',
+    faixa: '7-9', tipo: 'at-nt', status: 'pronto',
+    habilidades: ['conhecimento bíblico', 'memória de longo prazo'],
+    totalLevels: 3,                     // 3 trechos × 4 perguntas
+    icon: CrownIcon,
+    color: 'bg-indigo-200 text-indigo-900',
+    component: GameHeroisDaBiblia,
+  },
+  {
+    id: 'aventura-biblia',
+    title: 'Aventura na Bíblia',
+    subtitle: 'Mundo aberto',
+    sinopse: 'Explore um mundo e encontre 12 personagens! Ouça suas histórias e responda a pergunta.',
+    faixa: '5-6', tipo: 'at-nt', status: 'pronto',
+    habilidades: ['narrativa', 'compreensão auditiva', 'conhecimento bíblico'],
+    icon: CompassIcon,
+    color: 'bg-emerald-200 text-emerald-900',
+    component: GameAventuraBiblia,
+  },
+
+  // ─── Em breve (por faixa) ──────────────────────────────────────
+  { id: 'pares-da-arca',    title: 'Pares da Arca',       subtitle: '3–4 anos', sinopse: 'Encontre os pares de animais!', faixa: '3-4', tipo: 'nt', status: 'em-breve', habilidades: ['memória', 'pares'], emBreveMotivo: 'Um jogo de memória com os animais da arca de Noé!', icon: StarIcon, color: 'bg-pink-200 text-pink-900' },
+  { id: 'que-som-e-esse',   title: 'Que Som é Esse?',      subtitle: '3–4 anos', sinopse: 'Adivinhe o som da história!', faixa: '3-4', tipo: 'at-nt', status: 'em-breve', habilidades: ['audição', 'reconhecimento'], emBreveMotivo: 'Ouça sons da Bíblia e toque no personagem certo!', icon: StarIcon, color: 'bg-amber-100 text-amber-900' },
+  { id: 'historia-em-ordem', title: 'A História em Ordem',  subtitle: '5–6 anos', sinopse: 'Coloque as cenas na ordem certa!', faixa: '5-6', tipo: 'at-nt', status: 'em-breve', habilidades: ['sequência', 'tempo', 'narrativa'], emBreveMotivo: 'Monte a história arrastando as cenas na sequência correta!', icon: CompassIcon, color: 'bg-teal-200 text-teal-900' },
+  { id: 'mostre-o-livro',   title: 'Mostre o Livro',       subtitle: '5–6 anos', sinopse: 'Qual livro da Bíblia fala disso?', faixa: '5-6', tipo: 'at-nt', status: 'em-breve', habilidades: ['classificação', 'conhecimento bíblico'], emBreveMotivo: 'Toque no livro certo quando ouvir a pista!', icon: CompassIcon, color: 'bg-cyan-200 text-cyan-900' },
+  { id: 'linha-do-tempo',   title: 'Linha do Tempo',       subtitle: '7–9 anos', sinopse: 'Organize os eventos bíblicos na ordem certa!', faixa: '7-9', tipo: 'at-nt', status: 'em-breve', habilidades: ['sequência', 'memória', 'conhecimento bíblico'], emBreveMotivo: 'Arraste os eventos e monte a linha do tempo!', icon: CrownIcon, color: 'bg-violet-200 text-violet-900' },
+  { id: 'cacadores-versiculo', title: 'Caçadores do Versículo', subtitle: '7–9 anos', sinopse: 'Encontre o versículo no texto!', faixa: '7-9', tipo: 'at-nt', status: 'em-breve', habilidades: ['leitura', 'velocidade', 'conhecimento bíblico'], emBreveMotivo: 'Ache o versículo escondido no tempo!', icon: CrownIcon, color: 'bg-purple-200 text-purple-900' },
+];
+
+// ─── Ícones simples (evita importar lucide em games.ts) ──────────
+function StarIcon({ size = 28 }: { size?: number }) {
+  return <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/></svg>;
+}
+function SunIcon({ size = 28 }: { size?: number }) {
+  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>;
+}
+function CrownIcon({ size = 28 }: { size?: number }) {
+  return <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor"><path d="M2 20h20L19 8l-5 5-2-7-2 7-5-5z"/></svg>;
+}
+function CompassIcon({ size = 28 }: { size?: number }) {
+  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M16.24 7.76l-2.12 6.36-6.36 2.12 2.12-6.36 6.36-2.12z"/></svg>;
+}
+
+// Backward compat — jogos antigos importam MAX_LEVELS_PER_GAME do aqui
+export const MAX_LEVELS_PER_GAME = 3;
+
+export const games = GAMES;

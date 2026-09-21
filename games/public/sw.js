@@ -1,5 +1,5 @@
 /*
- * Service worker dos Jogos da Lição (Arcade Kids).
+ * Service worker dos Jogos Bíblicos (Arcade Kids).
  *
  * Estratégia:
  *  - Navegação (HTML): network-first com fallback para o shell em cache → abre
@@ -10,7 +10,7 @@
  * O `BASE` precisa acompanhar o `base` do vite.config.ts (GitHub Pages /kids/).
  * Ao publicar uma mudança que invalide o cache antigo, troque a versão abaixo.
  */
-const VERSION = 'v1';
+const VERSION = 'v2';
 const BASE = '/kids/';
 const CACHE = `kids-${VERSION}`;
 const SHELL = [BASE, `${BASE}index.html`, `${BASE}manifest.webmanifest`];

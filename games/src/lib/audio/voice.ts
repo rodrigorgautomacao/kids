@@ -134,6 +134,26 @@ export function stopSpeaking() {
   }
 }
 
+/**
+ * Fala uma sequência em ordem — cada texto começa quando o anterior termina.
+ * Usado no modo pequeninos para narrar as opções de resposta de uma pergunta
+ * (quem ainda não lê precisa OUVIR as escolhas). A cadeia para sozinha se o
+ * mudo for ligado no meio ou se algum texto for vazio.
+ */
+export function speakQueue(texts: string[], options: SpeakOptions = {}) {
+  let i = 0;
+  const next = () => {
+    if (i >= texts.length) return;
+    const t = texts[i++];
+    if (!isVoiceMuted() && cleanForSpeech(t)) {
+      speak(t, { ...options, onEnd: next });
+    } else {
+      next();
+    }
+  };
+  next();
+}
+
 export function isSpeaking(): boolean {
   return speaking;
 }

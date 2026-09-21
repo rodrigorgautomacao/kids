@@ -1,25 +1,32 @@
-# 🎮 Jogos da Lição — Arcade Kids
+# 🎮 Jogos Bíblicos — Arcade Kids
 
-Mini-jogos bíblicos web para crianças de **4 a 9 anos** (React + TypeScript +
+Mini-jogos bíblicos web para crianças de **3 a 9 anos** (React + TypeScript +
 Tailwind CSS + Vite). Roda no **computador, tablet, smartphone e iPhone**.
 Projeto de **ministério, gratuito e sem conta de criança**.
 
 Publicado em GitHub Pages: `https://rodrigorgautomacao.github.io/kids/`
 
-## Jogos disponíveis
+## Organização: por faixa etária + tipo bíblico
 
-| # | Capítulo | Mecânica | Níveis |
-|---|----------|----------|--------|
-| 01 | **A Estrada da Luz** | Quiz de escolhas: fazer o certo aproxima da Luz | 3 trechos × 10 perguntas |
-| 02 | **Heróis da Bíblia** | Quiz de personagens e livros, com 3 vidas por trecho | 3 trechos × 10 perguntas |
-| 03 | **Aventura na Bíblia** | Mundo 2D: andar, conversar com os heróis, coletar estrelas e responder | 12 estações |
+O catálogo é dividido por **faixa** (Pequeninos 3–4 · Exploradores 5–6 ·
+Heróis 7–9), com filtro por tipo bíblico (**AT · NT · AT+NT**) — as faixas
+ficam centralizadas em `data/games.tsx` (`FAIXAS`) para ajuste fácil.
+
+| Faixa | Jogos prontos | Jogos em breve |
+|---|---|---|
+| 🐣 **3–4** | **Encontre a Cena** (piloto: dica narrada → toque na figura certa) | Pares da Arca · Que Som é Esse? |
+| 🦊 **5–6** | **Aventura na Bíblia** (mundo 2D: andar, conversar com os heróis, responder) | A História em Ordem · Mostre o Livro |
+| 🦁 **7–9** | **A Estrada da Luz** (quiz de caminhos) · **Heróis da Bíblia** (quiz com vidas) | Linha do Tempo · Caçadores do Versículo |
 
 Cada pergunta/estação cita a **referência bíblica** (`Livro cap.vers (VERSÃO)`).
 A versão é a da fonte quando atestada; caso contrário, **NAA**
 (Nova Almeida Atualizada, SBB).
 
-O Hub tem visual de fliperama: cada capítulo é um "cartucho". O progresso fica
-no `localStorage` do aparelho (estrelas, níveis e recorde por capítulo).
+O progresso fica no `localStorage` do aparelho (estrelas, níveis e recorde por
+jogo). **Cada opção de resposta tem um alto-falante 🔊** e, no **modo
+pequeninos**, as opções são narradas em sequência — quem ainda não lê joga
+sozinho. Cada personagem da Aventura tem **rosto e vestes próprios**. Jogos
+ainda não lançados aparecem como "Em breve 🔨".
 
 ## Rodar localmente
 
@@ -56,7 +63,7 @@ kids/
     │   └── icons/                 ← 180/192/512/maskable (gerados)
     └── src/
         ├── App.tsx                ← alterna Hub ⇄ jogo ativo (+ transição de tela)
-        ├── data/games.ts          ← REGISTRO dos capítulos (adicione aqui!)
+        ├── data/games.tsx         ← REGISTRO dos jogos (faixa + tipo + status; ícones inline)
         ├── index.css              ← tailwind + dvh/safe-area/ui-press/reduced-motion
         ├── lib/
         │   ├── audio/             ← efeitos, trilhas adaptativas e narração
@@ -64,7 +71,7 @@ kids/
         │   │   ├── preferences.ts ← mudo de efeitos/música/narração
         │   │   ├── sfx.ts         ← efeitos sintetizados (sem arquivos)
         │   │   ├── music.ts       ← trilhas por cena + camadas de intensidade
-        │   │   ├── voice.ts       ← speechSynthesis (narração)
+        │   │   ├── voice.ts       ← speechSynthesis + speakQueue (narração de opções)
         │   │   └── index.ts       ← re-exports (+ `sfx`, `music`, `voice`)
         │   ├── progress.ts        ← progresso, estrelas, unlocks, recordes
         │   ├── prefs.ts           ← modo pequeninos, 1ª vez, mundo salvo
@@ -79,26 +86,30 @@ kids/
             ├── LevelMap.tsx       ← mapa de trechos/estações (rejogar)
             ├── PauseOverlay.tsx   ← pausa (continuar / recomeçar / sair)
             ├── HandHint.tsx       ← onboarding sem texto (mãozinha animada)
-            ├── Hub.tsx            ← tela de entrada arcade
+            ├── Hub.tsx            ← home por faixa + filtro por tipo + página "em breve"
             ├── InstallHint.tsx    ← "Adicionar à Tela de Início"
             ├── RotateHint.tsx     ← aviso "vire o aparelho" (celular em pé)
             ├── art/               ← arte SVG própria (substitui emoji de elenco)
             │   ├── Hero.tsx       ← herói, com estados idle/walk/happy/sad
-            │   ├── Npc.tsx        ← personagem com o motivo da história no peito
+            │   ├── Npc.tsx        ← personagem com LOOKS (rosto/vestes por personagem) + motivo no peito
             │   ├── Motifs.tsx     ← 12 motivos (arca, peixe, leão, coroa…)
             │   └── StarItem.tsx   ← estrela coletável
             └── games/
+                ├── GameEncontreACena.tsx  ← piloto 3–4 (dica narrada → toque na figura)
                 ├── GameEstradaDaLuz.tsx
                 ├── GameHeroisDaBiblia.tsx
                 └── GameAventuraBiblia.tsx
 ```
 
-## Como adicionar um novo capítulo
+## Como adicionar um novo jogo
 
-1. Crie `src/components/games/MeuJogo.tsx` exportando `({ onExit }) => JSX`.
-2. Importe em `src/data/games.ts` e acrescente um objeto ao array `games`
-   (`id`, `title`, `subtitle`, `sinopse`, `icon`, `color`, `totalLevels`, `component`).
-3. Pronto — aparece automaticamente no Hub. **A ordem do array = ordem da jornada.**
+1. Escolha a faixa (`3-4 | 5-6 | 7-9`) e o tipo (`at | nt | at-nt`) e crie
+   `src/components/games/MeuJogo.tsx` exportando `({ onExit }) => JSX`.
+2. Importe em `src/data/games.tsx` e acrescente um objeto à lista `games`
+   (`faixa`, `tipo`, `status: 'pronto' | 'em-breve'`, `habilidades`,
+   `emBreveMotivo?`, `icon`, `color`, `component`).
+3. Pronto — aparece automaticamente na seção da faixa no Hub. As faixas e os
+   tipos são centralizados em `FAIXAS`/`TIPOS` no mesmo arquivo.
 
 Regras de conteúdo (referência bíblica obrigatória, tom de graça, versão NAA):
 ver o segundo cérebro em `~/.config/opencode/brain-jogos/`.
@@ -168,14 +179,20 @@ React 18 · TypeScript 5 · Vite 5 · Tailwind CSS 3 · lucide-react · react-co
   a qualquer trecho, dica do "quase" (a opção errada sai do caminho), estrelas
   explicadas, mundo salvo + retomada, pausa, modo pequeninos (3 opções) e
   **erro com punição única** (sem tripla perda).
+- ✅ **Fase 5** — catálogo por **faixa etária (3–4/5–6/7–9) + tipo bíblico
+  (AT/NT/AT+NT)**, Hub redesenhado (filtros, seções por faixa, cards "Em
+  breve"), **voz nas opções** (chip 🔊 + `speakQueue` no modo pequeninos),
+  **rosto/vestes por personagem** (`Npc.look`/`LOOKS`) e **piloto 3–4
+  "Encontre a Cena"**. Decisão no brain-jogos (`ADR-003`).
 - 🟡 **Pendências conhecidas:**
   - **Teste em aparelho real** (iPhone/Android): instalação/offline, FPS da
-    Aventura, volume da voz, toque em tela pequena.
+    Aventura, volume da voz, toque em tela pequena, hit area do chip 🔊.
   - Arte é **SVG inline** em vez de sprites WebP (desvio registrado no segundo
     cérebro) — trocar é substituição localizada em `components/art/`.
   - Cenário estático da Aventura ainda não foi extraído para componente
     memoizado (só faz sentido se o FPS em aparelho real pedir).
   - Revisar o mapeamento tema → versículo de *A Estrada da Luz*.
   - Contraste do rodapé da Estrada (`text-white/50`).
+  - Confirmar as faixas (3–4 / 5–6 / 7–9) com o dono — ajuste é só em `FAIXAS`.
 - 🟡 Dependências: `vite`/`esbuild` com advisories **de dev server** (não afetam o
   site publicado); atualizar Vite em tarefa dedicada.

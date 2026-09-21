@@ -71,6 +71,22 @@ const PICKUP_PTS = 25;
 
 const START = { x: 150, y: 700 };
 
+/** Rosto de cada personagem (pedido do dono): chave de `LOOKS` por nome do NPC. */
+const NPC_PRESET: Record<string, string> = {
+  'Noé': 'noe',
+  'Anjo': 'anjo',
+  'Elias': 'elias',
+  'Jonas': 'jonas',
+  'Eliseu': 'eliseu',
+  'Daniel': 'daniel',
+  'Maria': 'maria',
+  'Moisés': 'moises',
+  'Josué': 'josue',
+  'Davi': 'davi',
+  'Salomão': 'salomao',
+  'Paulo': 'paulo',
+};
+
 /** Espelhos d'água do mundo — usados para trocar poeira por respingo ao andar. */
 const WATER: Rect[] = [
   { x: 70, y: 140, w: 340, h: 230 },
@@ -712,12 +728,17 @@ export default function GameAventuraBiblia({ onExit }: GameProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [talk?.s.id, talk?.step]);
 
-  // Pergunta do quiz.
+  // Pergunta do quiz: narra a pergunta e, no modo pequeninos, depois as opções
+  // em sequência (quem ainda não lê precisa ouvir as escolhas).
   useEffect(() => {
     if (!quiz) return;
     voice.speak(quiz.s.q);
+    const t = window.setTimeout(() => {
+      if (smallKids) voice.speakQueue(quiz.options.map((o) => o.t));
+    }, Math.min(4500, Math.max(2400, quiz.s.q.length * 30)));
+    return () => window.clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [quiz?.s.id]);
+  }, [quiz?.s.id, quiz?.options]);
 
   // Música adaptativa: as camadas sobem conforme os selos conquistados.
   useEffect(() => {
@@ -1304,7 +1325,7 @@ export default function GameAventuraBiblia({ onExit }: GameProps) {
                       : 'border-white/70 bg-white/80'
                   }`}
                 >
-                  <Npc motif={s.id} size={52} state={collected ? 'happy' : 'idle'} />
+                  <Npc motif={s.id} preset={NPC_PRESET[s.npc] ?? s.id} size={52} state={collected ? 'happy' : 'idle'} />
                 </span>
                 <span className="rounded-full bg-amber-200/95 px-2 py-0.5 text-[10px] font-black text-amber-900 shadow-lg ring-1 ring-amber-400/60">
                   📖 {s.ref}
@@ -1391,7 +1412,7 @@ export default function GameAventuraBiblia({ onExit }: GameProps) {
           <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
             <div className="flex w-full max-w-lg flex-col items-center gap-4 rounded-3xl bg-white/95 p-6 text-center shadow-2xl">
               <span className="flex h-20 w-20 items-center justify-center rounded-full bg-amber-100 shadow-inner">
-                <Npc motif={talk.s.id} size={66} state="happy" />
+                <Npc motif={talk.s.id} preset={NPC_PRESET[talk.s.npc] ?? talk.s.id} size={66} state="happy" />
               </span>
               <p className="text-sm font-black text-emerald-700 uppercase">
                 {talk.s.npc} conta · 📖 {talk.s.ref}
@@ -1444,21 +1465,38 @@ export default function GameAventuraBiblia({ onExit }: GameProps) {
                 {quiz.options.map((opt, i) => {
                   const gone = removed.includes(opt.t);
                   return (
-                    <button
+                    <div
                       key={opt.t}
-                      type="button"
-                      disabled={gone}
-                      onClick={(ev) => answerQuiz(opt, ev)}
-                      className={`ui-press flex min-h-20 flex-col items-center justify-center gap-1 rounded-3xl border-2 px-4 py-3 font-bold shadow-md ${
-                        gone
-                          ? 'border-slate-200 bg-slate-100 text-slate-400 line-through opacity-60'
-                          : 'border-slate-200 bg-white text-slate-600 hover:scale-105'
-                      } ${smallKids ? 'text-xl' : 'text-lg'} ${
-                        !gone && i === quiz.options.length - 1 ? 'col-span-2' : ''
-                      }`}
+                      className={`relative ${!gone && i === quiz.options.length - 1 ? 'col-span-2' : ''}`}
                     >
-                      <span className={smallKids ? 'text-4xl' : 'text-3xl'}>{opt.e}</span> {opt.t}
-                    </button>
+                      <button
+                        type="button"
+                        disabled={gone}
+                        onClick={(ev) => answerQuiz(opt, ev)}
+                        aria-label={`Responder: ${opt.t}`}
+                        className={`ui-press flex min-h-20 w-full flex-col items-center justify-center gap-1 rounded-3xl border-2 px-4 py-3 pr-14 font-bold shadow-md ${
+                          gone
+                            ? 'border-slate-200 bg-slate-100 text-slate-400 line-through opacity-60'
+                            : 'border-slate-200 bg-white text-slate-600 hover:scale-105'
+                        } ${smallKids ? 'text-xl' : 'text-lg'}`}
+                      >
+                        <span className={smallKids ? 'text-4xl' : 'text-3xl'}>{opt.e}</span> {opt.t}
+                      </button>
+                      {!gone ? (
+                        <button
+                          type="button"
+                          onClick={(ev) => {
+                            ev.stopPropagation();
+                            sfx.pop();
+                            voice.speak(opt.t);
+                          }}
+                          aria-label={`Ouvir: ${opt.t}`}
+                          className="ui-press absolute top-1/2 right-2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-amber-300 text-amber-950 shadow-md"
+                        >
+                          <Volume2 className="h-5 w-5" />
+                        </button>
+                      ) : null}
+                    </div>
                   );
                 })}
               </div>

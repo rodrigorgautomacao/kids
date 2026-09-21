@@ -1,77 +1,161 @@
 import { useEffect, useState } from 'react';
-import { Crown, Lock, Mic, MicOff, Music, Star, Volume2, VolumeX } from 'lucide-react';
-import { games } from '../data/games';
-import {
-  chapterLevelsDone,
-  chapterStars,
-  isChapterUnlocked,
-  isFreeMode,
-  loadLevels,
-  MAX_LEVELS_PER_GAME,
-  setFreeMode,
-  totalLevelsDone,
-  totalStars,
-} from '../lib/progress';
+import { games, FAIXAS, TIPOS, MAX_LEVELS_PER_GAME, type GameDefinition, type Tipo } from '../data/games';
+import { chapterLevelsDone, chapterStars, loadLevels, totalStars, type ProgressMap } from '../lib/progress';
 import {
   isMusicMuted,
   isSfxMuted,
-  isVoiceMuted,
   setMusicMuted,
   setSfxMuted,
   setVoiceMuted,
   subscribeSoundPrefs,
   sfx,
-  voice,
 } from '../lib/audio';
+import { isIOS, isStandalone } from '../lib/device';
 import InstallHint from './InstallHint';
 import { isSmallKidsMode, setSmallKidsMode } from '../lib/prefs';
+import { StarItem } from './art';
 
 interface HubProps {
   onSelectGame: (id: string) => void;
+  onLogout?: () => void;
 }
 
-/**
- * Tela principal da saga "A Estrada da Luz": cada resposta certa aproxima
- * o jogador de Deus; errar escurece o caminho e recua um passo.
- * A ordem dos jogos em src/data/games.ts é a ordem dos capítulos.
- */
-export default function Hub({ onSelectGame }: HubProps) {
-  const [freeMode, setFree] = useState(isFreeMode());
+interface BeforeInstallPromptEvent extends Event {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
+}
+
+const FILTROS: { id: 'todos' | Tipo; label: string }[] = [
+  { id: 'todos', label: 'Todos' },
+  { id: 'at', label: 'Antigo Testamento' },
+  { id: 'nt', label: 'Novo Testamento' },
+  { id: 'at-nt', label: 'AT+NT' },
+];
+
+// ─── Ícones inline (sem lucide, para manter o bundle pequeno) ──────────
+const SoundOnIcon = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>;
+const SoundOffIcon = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>;
+const MusicOnIcon = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>;
+const MusicOffIcon = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/><line x1="1" y1="1" x2="23" y2="23"/></svg>;
+const SmallKidsIcon = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>;
+
+// ─── Cards ──────────────────────────────────────────────────────────────
+function GameCard({
+  game,
+  progress,
+  onPlay,
+}: {
+  game: GameDefinition;
+  progress: ProgressMap;
+  onPlay: () => void;
+}) {
+  const Icon = game.icon;
+  const tipo = TIPOS.find((t) => t.id === game.tipo);
+  const total = game.totalLevels ?? MAX_LEVELS_PER_GAME;
+  const stars = chapterStars(progress, game.id);
+  const done = chapterLevelsDone(progress, game.id);
+
+  return (
+    <button
+      type="button"
+      onClick={onPlay}
+      aria-label={`Jogar ${game.title}`}
+      className="ui-press flex w-full items-center gap-3 rounded-3xl border-2 border-slate-100 bg-white p-4 text-left shadow-lg transition-transform hover:scale-[1.02] active:scale-[0.98]"
+    >
+      <span className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl ${game.color}`}>
+        <Icon size={48} />
+      </span>
+      <span className="flex min-w-0 flex-1 flex-col gap-1">
+        <span className="text-lg leading-tight font-black text-slate-800">{game.title}</span>
+        <span className="truncate text-xs font-bold text-slate-500">{game.subtitle}</span>
+        <span className="flex flex-wrap items-center gap-1.5">
+          {tipo ? (
+            <span className={`rounded-full px-2 py-0.5 text-[10px] font-black uppercase ${tipo.badge} ${tipo.text}`}>
+              {tipo.emoji} {tipo.nome}
+            </span>
+          ) : null}
+          <span className="flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-black text-amber-700">
+            <StarItem size={12} /> {stars}/{total * 3}
+          </span>
+        </span>
+      </span>
+      <span className="ui-press shrink-0 rounded-full bg-indigo-500 px-4 py-2 text-sm font-black text-white shadow-md">
+        {done > 0 ? 'Continuar →' : 'Jogar →'}
+      </span>
+    </button>
+  );
+}
+
+function SoonCard({ game }: { game: GameDefinition }) {
+  const Icon = game.icon;
+  const tipo = TIPOS.find((t) => t.id === game.tipo);
+
+  return (
+    <div className="flex w-full select-none items-center gap-3 rounded-3xl border-2 border-dashed border-slate-200 bg-slate-50/80 p-4 opacity-90">
+      <span className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl opacity-60 ${game.color}`}>
+        <Icon size={48} />
+      </span>
+      <span className="flex min-w-0 flex-1 flex-col gap-1">
+        <span className="text-base leading-tight font-black text-slate-500">{game.title}</span>
+        <span className="text-xs font-bold text-slate-400">{game.emBreveMotivo}</span>
+        {tipo ? (
+          <span className={`self-start rounded-full px-2 py-0.5 text-[10px] font-black uppercase ${tipo.badge} ${tipo.text}`}>
+            {tipo.emoji} {tipo.nome}
+          </span>
+        ) : null}
+      </span>
+      <span className="shrink-0 rounded-full bg-slate-200 px-3 py-1.5 text-xs font-black text-slate-500">
+        Em breve 🔨
+      </span>
+    </div>
+  );
+}
+
+export default function Hub({ onSelectGame, onLogout }: HubProps) {
   const [sfxOn, setSfxOn] = useState(() => !isSfxMuted());
   const [musicOn, setMusicOn] = useState(() => !isMusicMuted());
-  const [voiceOn, setVoiceOn] = useState(() => !isVoiceMuted());
   const [smallKids, setSmallKids] = useState(isSmallKidsMode);
-  const [hint, setHint] = useState<string | null>(null);
+  const [tipoFiltro, setTipoFiltro] = useState<'todos' | Tipo>('todos');
+  const [gate, setGate] = useState<string | null>(null);
+  const [installed, setInstalled] = useState(isStandalone);
+  const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null);
+  const ios = isIOS();
 
-  // Mantém os três botões em sincronia com o que estiver salvo (ex.: mudo
-  // acionado dentro de um jogo).
+  // Mantém os botões de som em sincronia com o que estiver salvo.
   useEffect(
     () =>
       subscribeSoundPrefs(() => {
         setSfxOn(!isSfxMuted());
         setMusicOn(!isMusicMuted());
-        setVoiceOn(!isVoiceMuted());
       }),
     [],
   );
 
-  const progress = loadLevels();
-  const totalGameLevels = (g: { id: string; totalLevels?: number }) =>
-    g.totalLevels ?? MAX_LEVELS_PER_GAME;
-  const doneLevels = totalLevelsDone(
-    progress,
-    games.map((g) => g.id),
-    totalGameLevels,
-  );
-  const maxLevels = games.reduce((acc, g) => acc + totalGameLevels(g), 0);
-  const journeyDone = doneLevels >= maxLevels;
+  // Acompanha instalabilidade (PWA) nos dois navegadores principais.
+  useEffect(() => {
+    const onPrompt = (e: Event) => {
+      e.preventDefault();
+      setInstallPrompt(e as BeforeInstallPromptEvent);
+    };
+    const onInstalled = () => setInstalled(true);
+    window.addEventListener('beforeinstallprompt', onPrompt);
+    window.addEventListener('appinstalled', onInstalled);
+    return () => {
+      window.removeEventListener('beforeinstallprompt', onPrompt);
+      window.removeEventListener('appinstalled', onInstalled);
+    };
+  }, []);
 
-  function toggleFree() {
-    const next = !freeMode;
-    setFree(next);
-    setFreeMode(next);
-    setHint(null);
-  }
+  const progress = loadLevels();
+  const ready = games.filter((g) => g.status === 'pronto');
+  const maxLevels = ready.reduce((acc, g) => acc + (g.totalLevels ?? MAX_LEVELS_PER_GAME), 0);
+  const doneLevels = ready.reduce(
+    (acc, g) => acc + Math.min(chapterLevelsDone(progress, g.id), g.totalLevels ?? MAX_LEVELS_PER_GAME),
+    0,
+  );
+  const stars = totalStars(progress);
+  // Instalação só é obrigatória onde o aparelho realmente oferece instalar.
+  const installable = !installed && (Boolean(installPrompt) || ios);
 
   function toggleSfx() {
     const next = !sfxOn;
@@ -86,285 +170,281 @@ export default function Hub({ onSelectGame }: HubProps) {
     setMusicMuted(!next);
   }
 
-  function toggleVoice() {
-    const next = !voiceOn;
-    setVoiceOn(next);
-    setVoiceMuted(!next);
-    if (next) voice.speak('Narração ligada!');
-    else voice.stopSpeaking();
-  }
-
-  /**
-   * Modo pequeninos (pré-leitores): 3 opções grandes no lugar de 5 e narração
-   * sempre ligada. É a diferença entre jogar e não jogar para quem tem 6 anos.
-   */
   function toggleSmallKids() {
     const next = !smallKids;
     setSmallKids(next);
     setSmallKidsMode(next);
     if (next) {
+      // Pré-leitores precisam da voz em tudo: garante a narração ligada.
       setVoiceMuted(false);
-      setVoiceOn(true);
-      voice.speak('Modo pequeninos ligado! Agora tem menos opções e voz em tudo.');
-    } else {
-      voice.speak('Modo pequeninos desligado.');
+      setSfxOn(true);
+      setSfxMuted(false);
+      sfx.pop();
     }
   }
 
-  function lockedHint(index: number) {
-    setHint(`Complete pelo menos 1 nível do capítulo ${index} para abrir este! 🔒`);
+  /** Jogos só abrem quando instalado — senão, popup de instalação primeiro. */
+  function handleSelect(id: string) {
+    sfx.pop();
+    if (installed || !installable) {
+      onSelectGame(id);
+      return;
+    }
+    setGate(id);
+  }
+
+  function playAnyway() {
+    if (!gate) return;
+    sfx.pop();
+    setGate(null);
+    onSelectGame(gate);
   }
 
   return (
-    <div className="safe-area-pad relative min-h-screen-safe w-full overflow-hidden bg-[#150b2e]">
-      {/* brilhos de fundo (estilo cabinet de fliperama) */}
-      <div className="pointer-events-none absolute -top-24 -left-24 h-80 w-80 rounded-full bg-yellow-400/20 blur-3xl" />
-      <div className="pointer-events-none absolute top-1/3 -right-28 h-96 w-96 rounded-full bg-sky-400/20 blur-3xl" />
-      <div className="pointer-events-none absolute bottom-0 left-1/4 h-72 w-72 rounded-full bg-indigo-400/20 blur-3xl" />
-      <div className="pointer-events-none absolute inset-0 opacity-[0.08] [background-image:repeating-linear-gradient(0deg,transparent,transparent_34px,#fff_34px,#fff_36px)]" />
+    <div className="safe-area-pad relative min-h-screen-safe w-full overflow-x-hidden bg-gradient-to-b from-sky-100 via-rose-50 to-amber-100">
+      {/* brilhos de fundo */}
+      <div className="pointer-events-none absolute -top-24 -left-24 h-80 w-80 rounded-full bg-yellow-300/40 blur-3xl" />
+      <div className="pointer-events-none absolute top-1/3 -right-24 h-72 w-72 rounded-full bg-sky-300/40 blur-3xl" />
+      <div className="pointer-events-none absolute bottom-10 left-1/4 h-72 w-72 rounded-full bg-emerald-200/40 blur-3xl" />
 
-      <main className="relative z-10 flex min-h-screen-safe flex-col items-center gap-6 p-6">
-        {/* ------- cabeçalho da saga ------- */}
-        <header className="text-center">
-          <p className="font-mono text-xs tracking-[0.35em] text-yellow-300 uppercase">
-            A Grande Jornada
-          </p>
-          <h1 className="mt-2 bg-gradient-to-r from-yellow-300 via-sky-300 to-emerald-300 bg-clip-text text-5xl font-black italic text-transparent drop-shadow-[0_4px_0_rgba(0,0,0,0.45)] sm:text-6xl">
-            Jogos da Lição
-          </h1>
-          <p className="mt-3 text-lg text-white/80">
-            {journeyDone
-              ? 'Você venceu todos os níveis da jornada! 🏆'
-              : 'Responda certo e caminhe cada vez mais perto de Deus! ☀️'}
-          </p>
-        </header>
-
-        {/* ------- progresso ------- */}
-        <div className="w-full max-w-3xl">
-          <div className="mb-1 flex items-center justify-between text-sm font-bold text-white/85">
-            <span className="flex items-center gap-1.5">
-              {journeyDone ? (
-                <>
-                  <Crown className="h-5 w-5 text-yellow-300" /> Jornada completa!
-                </>
-              ) : (
-                <>
-                  <Star className="h-5 w-5 fill-yellow-300 text-yellow-300" />{' '}
-                  {doneLevels}/{maxLevels} níveis
-                </>
-              )}
-            </span>
-            <span>
-              {journeyDone
-                ? '100%'
-                : `${Math.round((doneLevels / maxLevels) * 100)}%`}{' '}
-              · {totalStars(progress)} ⭐
-            </span>
-          </div>
-          <div className="h-4 overflow-hidden rounded-full bg-black/30">
-            <div
-              className={`h-full rounded-full transition-all duration-700 ${
-                journeyDone
-                  ? 'bg-gradient-to-r from-yellow-300 to-amber-400 shadow-[0_0_16px_rgba(253,224,71,0.9)]'
-                  : 'bg-gradient-to-r from-sky-400 to-cyan-300'
-              }`}
-              style={{
-                width: `${Math.max((doneLevels / maxLevels) * 100, journeyDone ? 100 : 2)}%`,
-              }}
-            />
-          </div>
-        </div>
-
-        {/* ------- controles: modo livre + som ------- */}
-        <div className="flex flex-wrap items-center justify-center gap-3">
-          <button
-            type="button"
-            onClick={toggleFree}
-            aria-pressed={freeMode}
-            className={`ui-press rounded-full px-5 py-2 text-sm font-extrabold shadow ${
-              freeMode ? 'bg-yellow-300 text-amber-900' : 'bg-white/10 text-white/85'
-            }`}
-          >
-            {freeMode ? '✨ Modo livre: ON' : '🔒 Modo sequencial'}
-          </button>
-          <button
-            type="button"
-            onClick={toggleSmallKids}
-            aria-pressed={smallKids}
-            aria-label={`Modo pequeninos ${smallKids ? 'ligado' : 'desligado'}`}
-            className={`ui-press rounded-full px-5 py-2 text-sm font-extrabold shadow ${
-              smallKids ? 'bg-emerald-400 text-emerald-950' : 'bg-white/10 text-white/85'
-            }`}
-          >
-            🧒 Modo pequeninos: {smallKids ? 'ON' : 'OFF'}
-          </button>
-          <button
-            type="button"
-            onClick={toggleSfx}
-            aria-pressed={sfxOn}
-            aria-label={`Efeitos sonoros ${sfxOn ? 'ligados' : 'desligados'}`}
-            className={`ui-press flex items-center gap-2 rounded-full px-4 py-2 text-sm font-extrabold shadow ${
-              sfxOn ? 'bg-white/15 text-white' : 'bg-white/5 text-white/50'
-            }`}
-          >
-            {sfxOn ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
-            Efeitos: {sfxOn ? 'ON' : 'OFF'}
-          </button>
-          <button
-            type="button"
-            onClick={toggleMusic}
-            aria-pressed={musicOn}
-            aria-label={`Música ${musicOn ? 'ligada' : 'desligada'}`}
-            className={`ui-press flex items-center gap-2 rounded-full px-4 py-2 text-sm font-extrabold shadow ${
-              musicOn ? 'bg-white/15 text-white' : 'bg-white/5 text-white/50'
-            }`}
-          >
-            <Music className="h-4 w-4" />
-            Música: {musicOn ? 'ON' : 'OFF'}
-          </button>
-          <button
-            type="button"
-            onClick={toggleVoice}
-            aria-pressed={voiceOn}
-            aria-label={`Narração ${voiceOn ? 'ligada' : 'desligada'}`}
-            className={`ui-press flex items-center gap-2 rounded-full px-4 py-2 text-sm font-extrabold shadow ${
-              voiceOn ? 'bg-white/15 text-white' : 'bg-white/5 text-white/50'
-            }`}
-          >
-            {voiceOn ? <Mic className="h-4 w-4" /> : <MicOff className="h-4 w-4" />}
-            Narração: {voiceOn ? 'ON' : 'OFF'}
-          </button>
-        </div>
-
-        {smallKids ? (
-          <p className="animate-pop max-w-xl rounded-3xl bg-emerald-400/15 px-6 py-2 text-center text-sm font-bold text-emerald-100">
-            🧒 Modo pequeninos: 3 opções grandes e voz em tudo. Feito para quem ainda não lê!
-          </p>
-        ) : null}
-
-        {/* ------- convite para instalar (PWA) ------- */}
-        <InstallHint />
-
-        {/* ------- aviso de capítulo bloqueado ------- */}
-        {hint ? (
-          <p
-            role="alert"
-            className="animate-pop rounded-full bg-white/10 px-6 py-2 text-sm font-bold text-yellow-100 shadow"
-          >
-            {hint}
-          </p>
-        ) : null}
-
-        {/* ------- capítulos da jornada ------- */}
-        <div className="mt-2 flex w-full max-w-3xl flex-col gap-4">
-          {games.map((game, index) => {
-            const unlocked = isChapterUnlocked(index, games, progress);
-            const totalLevels = totalGameLevels(game);
-            const levelsDone = chapterLevelsDone(progress, game.id);
-            const stars = chapterStars(progress, game.id);
-            const complete = levelsDone >= totalLevels;
-            const isLastChapter = index === games.length - 1;
-            const Icon = game.icon;
-
-            return (
+      <div className="relative z-10">
+        {/* ─── barra superior fixa: progresso + toggles ─── */}
+        <div className="sticky top-0 z-40 border-b-2 border-slate-100 bg-white/90 px-4 py-3 backdrop-blur">
+          <div className="mx-auto flex max-w-3xl items-center justify-between gap-3">
+            <div className="flex items-center gap-1.5 rounded-full bg-amber-100 px-3.5 py-2 text-sm font-black text-amber-900 shadow">
+              <StarItem size={16} />
+              {stars} ⭐
+              <span className="text-amber-400">·</span>
+              {doneLevels}/{maxLevels} níveis
+            </div>
+            <div className="flex items-center gap-1.5">
+              {onLogout ? (
+                <button
+                  type="button"
+                  onClick={onLogout}
+                  aria-label="Sair"
+                  className="ui-press flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow"
+                >
+                  🚪
+                </button>
+              ) : null}
               <button
-                key={game.id}
                 type="button"
-                onClick={() => (unlocked ? onSelectGame(game.id) : lockedHint(index))}
-                aria-label={unlocked ? `Jogar ${game.title}` : `${game.title} (bloqueado)`}
-                className={`group relative flex w-full items-center gap-4 rounded-3xl border-4 p-5 text-left shadow-[0_10px_0_rgba(0,0,0,0.45)] transition-transform duration-150 active:scale-[0.98] ${
-                  unlocked
-                    ? `${game.color} border-white/40 hover:scale-[1.02]`
-                    : 'border-white/10 bg-slate-800/80 opacity-70'
+                onClick={toggleSmallKids}
+                aria-pressed={smallKids}
+                aria-label={`Modo pequeninos ${smallKids ? 'ligado' : 'desligado'}`}
+                className={`ui-press flex h-9 w-9 items-center justify-center rounded-full shadow ${
+                  smallKids
+                    ? 'bg-emerald-400 text-emerald-950'
+                    : 'border border-slate-200 bg-white text-slate-600'
                 }`}
               >
-                {/* número do capítulo / cadeado */}
-                <span
-                  className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full font-mono text-lg font-black ${
-                    unlocked ? 'bg-black/25 text-white' : 'bg-black/30 text-slate-400'
-                  }`}
-                >
-                  {unlocked ? String(index + 1).padStart(2, '0') : <Lock className="h-5 w-5" />}
-                </span>
-
-                {/* ícone do jogo */}
-                <span
-                  className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border-2 ${
-                    unlocked ? 'border-white/40 bg-white/25' : 'border-white/10 bg-white/5'
-                  }`}
-                >
-                  <Icon
-                    className={`h-8 w-8 ${unlocked ? 'text-white drop-shadow' : 'text-slate-500'}`}
-                  />
-                </span>
-
-                {/* título + sinopse + progresso */}
-                <span className="flex min-w-0 flex-1 flex-col gap-1.5">
-                  <span className="truncate text-lg leading-tight font-extrabold text-white drop-shadow-md">
-                    {game.title}
-                  </span>
-                  <span className="line-clamp-2 text-xs font-medium text-white/85">
-                    {game.sinopse}
-                  </span>
-
-                  {unlocked ? (
-                    <span className="flex flex-col gap-1">
-                      <span className="flex items-center justify-between gap-2 text-xs font-black text-white">
-                        <span>
-                          {levelsDone}/{totalLevels} níveis
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Star className="h-3.5 w-3.5 fill-yellow-300 text-yellow-300" />
-                          {stars}/{totalLevels * 3}
-                        </span>
-                      </span>
-                      <span className="h-2.5 overflow-hidden rounded-full bg-black/25">
-                        <span
-                          className={`block h-full rounded-full transition-all duration-500 ${
-                            complete
-                              ? 'bg-yellow-300'
-                              : 'bg-white/70'
-                          }`}
-                          style={{ width: `${(levelsDone / totalLevels) * 100}%` }}
-                        />
-                      </span>
-                    </span>
-                  ) : null}
-
-                  {isLastChapter && unlocked && complete ? (
-                    <span className="mt-0.5 flex items-center gap-1 text-xs font-black text-yellow-200">
-                      <Crown className="h-4 w-4" /> Jornada encerrada com vitória!
-                    </span>
-                  ) : null}
-                </span>
-
-                {/* botão */}
-                <span
-                  className={`flex shrink-0 flex-col items-center gap-1.5 rounded-full px-4 py-2 text-xs font-extrabold transition-transform group-active:scale-90 ${
-                    unlocked
-                      ? complete
-                        ? 'bg-yellow-300 text-amber-900'
-                        : 'bg-black/30 text-white'
-                      : 'bg-black/40 text-slate-300'
-                  }`}
-                >
-                  {!unlocked ? (
-                    '🔒 Bloqueado'
-                  ) : complete ? (
-                    '🏆 Vencido'
-                  ) : levelsDone > 0 ? (
-                    '▶ CONTINUAR'
-                  ) : (
-                    '▶ COMEÇAR'
-                  )}
-                </span>
+                <SmallKidsIcon />
               </button>
-            );
-          })}
+              <button
+                type="button"
+                onClick={toggleSfx}
+                aria-pressed={sfxOn}
+                aria-label={`Efeitos sonoros ${sfxOn ? 'ligados' : 'desligados'}`}
+                className={`ui-press flex h-9 w-9 items-center justify-center rounded-full shadow ${
+                  sfxOn
+                    ? 'bg-sky-400 text-sky-950'
+                    : 'border border-slate-200 bg-white text-slate-400'
+                }`}
+              >
+                {sfxOn ? <SoundOnIcon /> : <SoundOffIcon />}
+              </button>
+              <button
+                type="button"
+                onClick={toggleMusic}
+                aria-pressed={musicOn}
+                aria-label={`Música ${musicOn ? 'ligada' : 'desligada'}`}
+                className={`ui-press flex h-9 w-9 items-center justify-center rounded-full shadow ${
+                  musicOn
+                    ? 'bg-rose-400 text-rose-950'
+                    : 'border border-slate-200 bg-white text-slate-400'
+                }`}
+              >
+                {musicOn ? <MusicOnIcon /> : <MusicOffIcon />}
+              </button>
+            </div>
+          </div>
         </div>
 
-        <p className="animate-bounce text-lg font-bold text-cyan-200">▼ toca para começar ▼</p>
-      </main>
+        <main className="mx-auto w-full max-w-3xl px-4">
+          {/* ─── herói ─── */}
+          <header className="pt-8 text-center">
+            <div className="flex items-center justify-center gap-4 text-6xl">
+              <span className="inline-block animate-hero-bob">🐣</span>
+              <span className="inline-block animate-hero-bob" style={{ animationDelay: '180ms' }}>
+                🦊
+              </span>
+              <span className="inline-block animate-hero-bob" style={{ animationDelay: '360ms' }}>
+                🦁
+              </span>
+            </div>
+            <h1 className="mt-3 text-5xl font-black tracking-tight text-slate-800 drop-shadow-sm sm:text-6xl">
+              Jogos Bíblicos
+            </h1>
+            <p className="mx-auto mt-2 max-w-md text-base font-bold text-slate-500">
+              Pequeninos, Exploradores e Heróis — a Bíblia é uma aventura para toda criança!
+            </p>
+          </header>
+
+          {/* ─── filtro por tipo ─── */}
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
+            {FILTROS.map((f) => (
+              <button
+                key={f.id}
+                type="button"
+                onClick={() => setTipoFiltro(f.id)}
+                aria-pressed={tipoFiltro === f.id}
+                className={`ui-press rounded-full px-4 py-2 text-sm font-black shadow ${
+                  tipoFiltro === f.id
+                    ? 'bg-indigo-500 text-white'
+                    : 'border border-slate-200 bg-white text-slate-600'
+                }`}
+              >
+                {f.label}
+              </button>
+            ))}
+          </div>
+
+          {smallKids ? (
+            <p className="animate-pop mx-auto mt-3 max-w-md rounded-3xl bg-emerald-200/70 px-6 py-2 text-center text-sm font-bold text-emerald-800">
+              🧒 Modo pequeninos: figuras grandes e voz em tudo. Feito para quem ainda não lê!
+            </p>
+          ) : null}
+
+          {/* convite para instalar (PWA) */}
+          <div className="mt-2">
+            <InstallHint />
+          </div>
+
+          {/* ─── seções por faixa ─── */}
+          <div className="mt-6 flex flex-col gap-6">
+            {FAIXAS.map((faixa) => {
+              const visiveis = games.filter(
+                (g) =>
+                  g.faixa === faixa.id &&
+                  (tipoFiltro === 'todos' || g.tipo === tipoFiltro),
+              );
+              const prontos = visiveis.filter((g) => g.status === 'pronto');
+              if (prontos.length === 0) return null;
+              const breves = visiveis.filter((g) => g.status === 'em-breve');
+
+              return (
+                <section
+                  key={faixa.id}
+                  className="relative overflow-hidden rounded-3xl border-2 border-slate-100 bg-white shadow-xl"
+                >
+                  <div
+                    aria-hidden
+                    className={`pointer-events-none absolute inset-0 bg-gradient-to-br ${faixa.gradient} opacity-70`}
+                  />
+                  <div className="relative p-4 sm:p-5">
+                    <div className="flex items-center gap-3">
+                      <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-white text-3xl shadow">
+                        {faixa.mascote}
+                      </span>
+                      <div>
+                        <h2 className={`text-2xl font-black ${faixa.text}`}>{faixa.nome}</h2>
+                        <p className="text-xs font-bold text-slate-500">{faixa.idade}</p>
+                      </div>
+                    </div>
+                    <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                      {prontos.map((g) => (
+                        <GameCard
+                          key={g.id}
+                          game={g}
+                          progress={progress}
+                          onPlay={() => handleSelect(g.id)}
+                        />
+                      ))}
+                      {breves.map((g) => (
+                        <SoonCard key={g.id} game={g} />
+                      ))}
+                    </div>
+                  </div>
+                </section>
+              );
+            })}
+          </div>
+
+          {/* ─── em breve nas outras faixas (todas, agrupadas) ─── */}
+          <section className="mt-6 rounded-3xl border-2 border-slate-100 bg-white px-4 py-5 shadow-xl">
+            <h2 className="text-center text-xl font-black text-slate-700">
+              Em breve nas outras faixas ✨
+            </h2>
+            <p className="mt-1 text-center text-xs font-bold text-slate-400">
+              Novas aventuras para cada idade estão a caminho!
+            </p>
+            {FAIXAS.map((faixa) => {
+              const breves = games.filter(
+                (g) =>
+                  g.faixa === faixa.id &&
+                  g.status === 'em-breve' &&
+                  (tipoFiltro === 'todos' || g.tipo === tipoFiltro),
+              );
+              if (breves.length === 0) return null;
+              return (
+                <div key={faixa.id} className="mt-4">
+                  <h3
+                    className={`flex items-center gap-2 text-sm font-black uppercase tracking-wide ${faixa.text}`}
+                  >
+                    {faixa.mascote} {faixa.nome} — em breve
+                  </h3>
+                  <div className="mt-2 grid gap-3 sm:grid-cols-2">
+                    {breves.map((g) => (
+                      <SoonCard key={g.id} game={g} />
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </section>
+
+          <footer className="mt-8 pb-10 text-center text-xs font-bold text-slate-400">
+            Feito com 💛 para crianças brasileiras · v0.1
+          </footer>
+        </main>
+      </div>
+
+      {/* ─── popup de instalação (gate) ─── */}
+      {gate ? (
+        <div
+          role="alertdialog"
+          aria-live="polite"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/70 p-4"
+        >
+          <div className="w-full max-w-md rounded-3xl border-2 border-slate-100 bg-white p-6 text-center shadow-2xl">
+            <p className="text-xl font-black text-slate-800">📲 Para jogar sem travar!</p>
+            <p className="mt-1 text-sm font-bold text-slate-500">
+              Instale o jogo na tela de início para abrir com um toque — e continuar jogando até
+              sem internet.
+            </p>
+            <div className="text-left">
+              <InstallHint />
+            </div>
+            <div className="mt-3 flex flex-wrap items-center justify-center gap-3">
+              <button
+                type="button"
+                onClick={() => setGate(null)}
+                className="ui-press rounded-full bg-slate-100 px-5 py-2 text-sm font-black text-slate-600"
+              >
+                Agora não
+              </button>
+              <button
+                type="button"
+                onClick={playAnyway}
+                className="ui-press rounded-full bg-amber-400 px-5 py-2 text-sm font-black text-amber-950 shadow"
+              >
+                Jogar mesmo assim ▶
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

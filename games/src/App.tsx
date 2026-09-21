@@ -83,14 +83,14 @@ export default function App() {
   }, []);
 
   const activeGame = games.find((g) => g.id === activeGameId);
+  const GameComponent = activeGame?.component;
 
-  if (activeGame) {
-    const GameComponent = activeGame.component;
+  if (GameComponent) {
     // key força a remontagem do jogo a cada entrada → estado sempre limpo.
     // O wrapper dá a transição de entrada (sem `fill-mode`, para não virar um
     // containing block dos elementos `fixed` do jogo).
     return (
-      <div key={activeGame.id} className="screen-in">
+      <div key={activeGameId} className="screen-in">
         <GameComponent onExit={closeGame} />
       </div>
     );
