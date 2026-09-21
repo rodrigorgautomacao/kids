@@ -193,18 +193,23 @@ export default function Backdrop({ id }: { id: BackdropId }) {
           </defs>
           <rect width="400" height="300" fill={`url(#${g.sky})`} />
           <path d="M0 262 Q 120 226 400 260 L 400 300 L 0 300 Z" fill="#b45309" />
-          <ellipse cx="200" cy="222" rx="58" ry="10" fill="#fbbf24" opacity={0.55} />
-          <g transform="translate(200 196)">
-            <path d="M0 4 q -18 -14 -6 -30 q 4 10 12 8 q 6 -14 22 -4 q 2 10 -6 14 q 12 4 4 18 q -12 -2 -12 -8 q -4 10 -14 6 q -4 -3 0 -4 Z" fill="#166534" />
-            <path d="M0 12 q -8 -6 -2 -16 q 3 8 8 6 q 4 -10 14 -2 q 1 8 -4 10 q 8 4 2 12 q -8 -2 -8 -6 q -2 7 -8 4 q -3 -3 -2 -4 Z" fill="#14532d" />
+          <ellipse cx="200" cy="214" rx="96" ry="30" fill="#fbbf24" opacity={0.4} />
+          {/* a sarça: moita de folhas verdes */}
+          <g transform="translate(200 198)">
+            <ellipse cx="0" cy="4" rx="48" ry="28" fill="#166534" />
+            <circle cx="-30" cy="-6" r="20" fill="#15803d" />
+            <circle cx="28" cy="-4" r="22" fill="#14532d" />
+            <circle cx="0" cy="-20" r="23" fill="#16a34a" />
+            <path d="M-48 8 q 10 -14 22 -6 M40 12 q -10 -16 -22 -6" stroke="#065f46" strokeWidth="2" fill="none" opacity="0.6" />
+            {/* chamas que não consomem a moita */}
             <g fill="#fb923c">
-              <path d="M-16 -16 q -6 -12 2 -22 q 4 10 10 8 q 2 12 -12 14 Z" />
-              <path d="M10 -22 q -2 -12 8 -18 q 2 10 10 4 q 4 12 -18 14 Z" />
-              <path d="M2 -34 q -2 -10 6 -14 q 2 7 9 2 q 1 10 -15 12 Z" />
+              <path d="M-26 -20 q -6 -16 4 -28 q 4 12 10 10 q 4 14 -14 18 Z" />
+              <path d="M6 -30 q -4 -16 8 -26 q 2 12 12 8 q 6 16 -20 18 Z" />
+              <path d="M-6 -6 q -6 -14 2 -24 q 4 10 10 8 q 4 12 -12 16 Z" />
             </g>
-            <ellipse cx="0" cy="-12" rx="26" ry="20" fill="#fdba74" opacity={0.5} />
-            <g fill="#f97316" opacity={0.7}>
-              <path d="M-22 -18 q -3 -6 3 -10 q 2 5 7 1 q 1 7 -10 9 Z" />
+            <g fill="#fde047">
+              <path d="M-14 -22 q -3 -9 2 -16 q 2 7 7 5 q 2 8 -9 11 Z" />
+              <path d="M10 -26 q -2 -9 4 -14 q 1 7 7 4 q 2 8 -11 10 Z" />
             </g>
           </g>
         </svg>
@@ -215,7 +220,7 @@ export default function Backdrop({ id }: { id: BackdropId }) {
         <svg viewBox="0 0 400 300" preserveAspectRatio="xMidYMid slice" className="h-full w-full" aria-hidden>
           <defs>
             <linearGradient id={g.sky} x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0" stopColor="#38bdf8" />
+              <stop offset="0" stopColor="#7dd3fc" />
               <stop offset="1" stopColor="#bae6fd" />
             </linearGradient>
             <linearGradient id={g.sea} x1="0" y1="0" x2="0" y2="1">
@@ -224,17 +229,22 @@ export default function Backdrop({ id }: { id: BackdropId }) {
             </linearGradient>
           </defs>
           <rect width="400" height="300" fill={`url(#${g.sky})`} />
-          <path d="M30 96 q 22 -14 44 0 t 44 0 t 44 0 t 44 0 t 44 0 t 44 0 t 44 0 t 44 0 t 44 0" stroke="#fff" strokeWidth={5} fill="none" opacity={0.55} />
+          <path d="M0 84 q 22 -12 44 0 t 44 0 t 44 0 t 44 0 t 44 0 t 44 0 t 44 0 t 44 0 t 44 0 t 44 0" stroke="#fff" strokeWidth={5} fill="none" opacity={0.5} />
           <rect y="120" width="400" height="180" fill={`url(#${g.sea})`} />
           <Waves y={150} color="#60a5fa" />
           <Waves y={196} color="#3b82f6" />
           <Waves y={242} color="#2563eb" />
-          <g transform="translate(56 132)" opacity={0.95}>
-            <path d="M0 0 L 46 0 L 40 -26 L 30 -26 L 28 -12 L 8 -12 L 6 -26 L -4 -26 Z" fill="#78350f" />
-            <rect x="-2" y="0" width="50" height="5" fill="#92400e" />
-            <path d="M36 -22 L 54 -28 L 52 -24 L 64 -30" stroke="#57534e" strokeWidth={3} fill="none" />
-            <circle cx="34" cy="-15" r="2.4" fill="#fef3c7" />
+          {/* barquinho de Jonas: casco + mastro + velas */}
+          <g transform="translate(150 122)">
+            <path d="M-14 22 L 78 22 L 64 42 L 0 42 Z" fill="#92400e" stroke="#78350f" strokeWidth="1.6" strokeLinejoin="round" />
+            <path d="M-14 22 H78" stroke="#78350f" strokeWidth="2.2" />
+            <path d="M-14 30 H78M-14 37 H72" stroke="#78350f" strokeWidth="1" opacity="0.7" />
+            <rect x="30" y="-36" width="3.4" height="58" fill="#78350f" />
+            <path d="M33 -34 L 66 14 L 33 14 Z" fill="#fef3c7" stroke="#0f172a" strokeWidth="1.3" strokeLinejoin="round" />
+            <path d="M30 -32 L 6 14 L 30 14 Z" fill="#fde68a" stroke="#0f172a" strokeWidth="1.3" strokeLinejoin="round" />
+            <path d="M31.7 -40 l7 4.5 -7 4.5 Z" fill="#dc2626" />
           </g>
+          <Gulls />
         </svg>
       );
 
@@ -242,25 +252,41 @@ export default function Backdrop({ id }: { id: BackdropId }) {
       return (
         <svg viewBox="0 0 400 300" preserveAspectRatio="xMidYMid slice" className="h-full w-full" aria-hidden>
           <defs>
-            <radialGradient id={uid('pelo')} cx="0.5" cy="0.35" r="0.9">
-              <stop offset="0" stopColor="#92400e" />
-              <stop offset="1" stopColor="#450a0a" />
+            <radialGradient id={uid('pelo')} cx="0.5" cy="0.4" r="0.95">
+              <stop offset="0" stopColor="#b45309" />
+              <stop offset="0.6" stopColor="#7c2d12" />
+              <stop offset="1" stopColor="#3f0a0a" />
             </radialGradient>
           </defs>
           <rect width="400" height="300" fill={`url(#${uid('pelo')})`} />
-          <path d="M0 72 Q 200 -18 400 72 L 400 0 L 0 0 Z" fill="#7c2d12" opacity={0.7} />
-          <g stroke="#f59e0b" strokeWidth={5} fill="none" opacity={0.25} strokeLinecap="round">
-            <path d="M40 120 Q 200 60 360 120" />
-            <path d="M20 160 Q 200 100 380 160" />
-            <path d="M50 200 Q 200 140 350 200" />
+          {/* costelas do grande peixe (arcos ao fundo) */}
+          <g stroke="#450a0a" strokeWidth={10} fill="none" opacity={0.55} strokeLinecap="round">
+            <path d="M30 -10 Q 80 150 30 310" />
+            <path d="M120 -10 Q 168 150 120 310" />
+            <path d="M215 -10 Q 258 150 215 310" />
+            <path d="M305 -10 Q 345 150 305 310" />
           </g>
-          <g fill="#fde68a" opacity={0.35}>
-            <circle cx="120" cy="128" r="4" />
-            <circle cx="210" cy="96" r="3" />
-            <circle cx="300" cy="150" r="3.5" />
-            <circle cx="330" cy="212" r="2.5" />
+          <g stroke="#fb923c" strokeWidth={3} fill="none" opacity={0.22} strokeLinecap="round">
+            <path d="M30 -10 Q 80 150 30 310" />
+            <path d="M120 -10 Q 168 150 120 310" />
+            <path d="M215 -10 Q 258 150 215 310" />
+            <path d="M305 -10 Q 345 150 305 310" />
           </g>
-          <path d="M100 300 Q 150 190 230 210 Q 300 250 340 300 Z" fill="#1c1917" opacity={0.6} />
+          {/* abertura da boca, com luz do mar entrando */}
+          <path d="M400 78 Q 322 150 400 222 Z" fill="#fde68a" opacity={0.3} />
+          <path d="M400 96 Q 350 150 400 204 Z" fill="#fef3c7" opacity={0.22} />
+          {/* bolhas e algas */}
+          <g fill="#fde68a" opacity={0.3}>
+            <circle cx="150" cy="120" r="5" />
+            <circle cx="205" cy="96" r="3" />
+            <circle cx="262" cy="140" r="4" />
+            <circle cx="316" cy="176" r="2.6" />
+          </g>
+          <g stroke="#166534" strokeWidth={7} fill="none" opacity={0.55} strokeLinecap="round">
+            <path d="M60 300 Q 48 250 66 216" />
+            <path d="M92 300 Q 106 256 88 224" />
+          </g>
+          <path d="M0 300 Q 200 268 400 300 Z" fill="#1c1917" opacity={0.6} />
         </svg>
       );
 
@@ -313,21 +339,22 @@ export default function Backdrop({ id }: { id: BackdropId }) {
           </defs>
           <rect width="400" height="300" fill={`url(#${g.sky})`} />
           <g fill="#334155">
-            <path d="M-30 200 L 120 30 L 210 160 Z" />
-            <path d="M230 210 L 330 60 L 440 220 Z" />
+            <path d="M-40 210 L 130 40 L 250 190 Z" />
+            <path d="M210 210 L 320 70 L 450 220 Z" />
           </g>
-          <path d="M120 30 L 104 56 L 136 30 Z" fill="#e2e8f0" />
-          <path d="M114 66 L 96 92 L 132 66 Z" fill="#475569" />
-          <path d="M330 60 L 318 80 L 344 60 Z" fill="#e2e8f0" />
-          {/* fogo e fumaça no topo */}
-          <g transform="translate(116 34)">
-            <path d="M0 0 q -8 -10 0 -18 q 8 8 14 0 q 4 10 -4 16 q -6 -6 -10 -8 Z" fill="#f97316" />
-            <ellipse cx="6" cy="-16" rx="12" ry="7" fill="#f59e0b" opacity={0.8} />
+          <path d="M130 40 L 108 70 L 152 70 Z" fill="#e2e8f0" />
+          <path d="M320 70 L 302 96 L 340 96 Z" fill="#e2e8f0" />
+          {/* altar de pedras com o fogo do céu */}
+          <g transform="translate(130 122)">
+            <path d="M-30 46 h60 l-6 -26 h-48 Z" fill="#64748b" stroke="#334155" strokeWidth="1.6" strokeLinejoin="round" />
+            <path d="M-24 20 h48" stroke="#475569" strokeWidth="2" />
+            <path d="M-18 46 l4 -26M0 46 v-26M18 46 l-4 -26" stroke="#475569" strokeWidth="1.4" opacity={0.8} />
+            <path d="M0 -4 q -10 -14 0 -30 q 6 14 12 4 q 8 16 -4 26 q -6 -6 -8 -10 Z" fill="#f97316" />
+            <path d="M2 -10 q -4 -8 0 -16 q 3 8 6 4 q 3 10 -6 12 Z" fill="#fde047" />
+            <ellipse cx="0" cy="-2" rx="22" ry="8" fill="#f59e0b" opacity={0.7} />
           </g>
-          <path d="M96 6 q 12 -14 30 -10 q 10 4 14 16 q -8 6 -16 2 q -12 4 -16 -4 q -8 4 -12 -4 Z" fill="#94a3b8" opacity={0.85} />
-          <g stroke="#fde047" strokeWidth={3.5} fill="none" opacity={0.9}>
-            <path d="M196 24 l -16 30 l 6 4 l 10 -22 l 12 18 l 4 -6 Z" />
-          </g>
+          {/* fumaça subindo */}
+          <path d="M118 76 q 14 -16 34 -10 q 12 6 14 20 q -10 6 -18 0 q -14 6 -20 -4 q -8 4 -10 -6 Z" fill="#94a3b8" opacity={0.8} />
           <path d="M0 250 Q 120 226 400 252 L 400 300 L 0 300 Z" fill="#1e293b" />
         </svg>
       );
@@ -431,20 +458,27 @@ export default function Backdrop({ id }: { id: BackdropId }) {
             </linearGradient>
           </defs>
           <rect width="400" height="300" fill={`url(#${g.sky})`} />
-          <path d="M40 0 Q 200 70 360 0 L 400 0 L 400 300 L 0 300 L 0 0 Z" fill="#fef3c7" opacity={0.7} />
-          <rect y="250" width="400" height="50" fill="#b45309" />
-          <rect y="240" width="400" height="10" fill="#92400e" />
-          {[46, 122, 198, 274, 350].map((x) => (
-            <rect key={x} x={x} y="60" width="22" height="196" fill="#f5d78e" />
+          <rect y="40" width="400" height="210" fill="#f5d78e" opacity={0.55} />
+          {/* arco do trono */}
+          <path d="M148 252 L 148 128 A 52 52 0 0 1 252 128 L 252 252 Z" fill="#eab308" opacity={0.85} />
+          {/* colunas com capitel, fuste canelado e base */}
+          {[36, 116, 284, 364].map((x) => (
+            <g key={x}>
+              <rect x={x - 13} y="44" width="26" height="13" rx="3" fill="#ca8a04" />
+              <rect x={x - 9} y="57" width="18" height="190" fill="#eab308" />
+              <path d={`M${x - 4} 58 V247 M${x + 4} 58 V247`} stroke="#ca8a04" strokeWidth="1.4" opacity={0.7} />
+              <rect x={x - 13} y="247" width="26" height="13" rx="3" fill="#ca8a04" />
+            </g>
           ))}
-          <rect x="166" y="140" width="68" height="116" fill="#eab308" rx="8" />
-          <rect x="184" y="168" width="32" height="88" fill="#facc15" rx="4" />
-          <path d="M196 174 L 208 150 L 220 174 L 208 166 Z" fill="#92400e" />
-          <rect x="128" y="118" width="40" height="34" rx="6" fill="#fde047" stroke="#ca8a04" strokeWidth={4} />
-          <rect x="232" y="118" width="40" height="34" rx="6" fill="#fde047" stroke="#ca8a04" strokeWidth={4} />
-          {/* tapete */}
-          <path d="M120 300 L 280 300 L 264 250 L 136 250 Z" fill="#dc2626" opacity={0.85} />
-          <path d="M160 300 L 182 250 L 218 250 L 240 300 Z" fill="#991b1b" opacity={0.8} />
+          {/* trono */}
+          <rect x="176" y="168" width="48" height="84" rx="6" fill="#b45309" stroke="#78350f" strokeWidth="1.5" />
+          <rect x="182" y="146" width="36" height="34" rx="6" fill="#92400e" stroke="#78350f" strokeWidth="1.5" />
+          <path d="M182 168 h36" stroke="#fcd34d" strokeWidth="2" />
+          {/* piso e tapete */}
+          <rect y="250" width="400" height="50" fill="#b45309" />
+          <rect y="242" width="400" height="8" fill="#92400e" />
+          <path d="M120 300 L 280 300 L 262 252 L 138 252 Z" fill="#dc2626" opacity={0.85} />
+          <path d="M158 300 L 180 252 L 220 252 L 242 300 Z" fill="#991b1b" opacity={0.8} />
         </svg>
       );
 
