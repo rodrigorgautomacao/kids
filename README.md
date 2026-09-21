@@ -9,18 +9,21 @@ Publicado em GitHub Pages: `https://rodrigorgautomacao.github.io/kids/`
 ## Organização: por faixa etária + tipo bíblico
 
 O catálogo é dividido por **faixa** (Pequeninos 3–4 · Exploradores 5–6 ·
-Heróis 7–9), com filtro por tipo bíblico (**AT · NT · AT+NT**) — as faixas
-ficam centralizadas em `data/games.tsx` (`FAIXAS`) para ajuste fácil.
+Íntimos de Deus 7–9), com filtro por tipo bíblico (**AT · NT · AT+NT**) — as
+faixas ficam centralizadas em `data/games.tsx` (`FAIXAS`) para ajuste fácil.
 
 | Faixa | Jogos (com tipo bíblico) |
 |---|---|
-| 🐣 **3–4** | **Encontre a Cena** (AT+NT) · **Pares da Arca** (AT) · **Que Som é Esse?** (AT+NT) · **Quebra-Cabeça Bíblico** (AT+NT) · **Conta na Arca** (AT) · **Ache o Igual** (AT+NT) · **Sim ou Não?** (AT+NT) · **Ache o Escondido** (AT+NT) |
-| 🦊 **5–6** | **Aventura na Bíblia** (AT+NT) · **A História em Ordem** (AT+NT) · **Mostre o Livro** (AT+NT) · **Quebra-Cabeça Bíblico 3×3** (AT+NT) · **Ligue os Pares** (AT+NT) · **Antigo ou Novo?** (AT+NT) · **Quantos na História?** (AT) · **Qual Não Pertence?** (AT+NT) |
-| 🦁 **7–9** | **A Estrada da Luz** (AT+NT) · **Heróis da Bíblia** (AT+NT) · **Linha do Tempo** (AT+NT) · **Caçadores do Versículo** (AT+NT) · **Quem Falou?** (NT) · **Separe por Testamento** (AT+NT) · **Verdadeiro ou Falso?** (AT+NT) · **Complete o Versículo** (AT+NT) · **Sombra do Herói** (AT+NT) |
+| 🌱 **3–4 Pequeninos** | **Encontre a Cena** (AT+NT) · **Pares da Arca** (AT) · **Que Som é Esse?** (AT+NT) · **Quebra-Cabeça Bíblico** (AT+NT) · **Conta na Arca** (AT) · **Ache o Igual** (AT+NT) · **Sim ou Não?** (AT+NT) · **Ache o Escondido** (AT+NT) · **Eu Sou de Deus** (AT+NT) |
+| 🧭 **5–6 Exploradores** | **Aventura na Bíblia** (AT+NT) · **A História em Ordem** (AT+NT) · **Mostre o Livro** (AT+NT) · **Quebra-Cabeça Bíblico 3×3** (AT+NT) · **Ligue os Pares** (AT+NT) · **Antigo ou Novo?** (AT+NT) · **Quantos na História?** (AT) · **Qual Não Pertence?** (AT+NT) · **Meninos e Meninas de Deus** (AT+NT) |
+| 🙏 **7–9 Íntimos de Deus** | **A Estrada da Luz** (AT+NT) · **Heróis da Bíblia** (AT+NT) · **Linha do Tempo** (AT+NT) · **Caçadores do Versículo** (AT+NT) · **Quem Falou?** (NT) · **Separe por Testamento** (AT+NT) · **Verdadeiro ou Falso?** (AT+NT) · **Complete o Versículo** (AT+NT) · **Sombra do Herói** (AT+NT) · **Meu Propósito** (AT+NT) |
 
-**25 jogos** (8 na faixa 3–4 · 8 na 5–6 · 9 na 7–9), todos classificados por
+**28 jogos** (9 na faixa 3–4 · 9 na 5–6 · 10 na 7–9), todos classificados por
 **faixa etária** e por **tipo bíblico** (AT / NT / AT+NT). Os filtros do Hub usam
 esse campo — trocar o tipo de um jogo é uma linha em `data/games.tsx`.
+
+**Toda pergunta e toda opção de resposta têm som** (botão 🔊 ou narração
+automática ao escolher), porque nem toda criança sabe ler.
 
 Cada pergunta/estação cita a **referência bíblica** (`Livro cap.vers (VERSÃO)`).
 A versão é a da fonte quando atestada; caso contrário, **NAA**
@@ -145,6 +148,10 @@ kids/
                 ├── GameVerdadeiroOuFalso.tsx← 7–9: afirmações (ChoiceGame)
                 ├── GameCompleteOVersiculo.tsx ← 7–9: lacuna no versículo (ChoiceGame)
                 ├── GameSombraDoHeroi.tsx    ← 7–9: silhuetas (ChoiceGame)
+                ├── GameEuSouDeDeus.tsx      ← 3–4: identidade em Deus (ChoiceGame)
+                ├── GameMeninosEMeninas.tsx  ← 5–6: criação e valor (ChoiceGame)
+                ├── GameMeuProposito.tsx     ← 7–9: propósitos de Deus (ChoiceGame)
+                ├── MemoryGame.tsx           ← motor de memória (Pares da Arca)
                 ├── OrderGame.tsx            ← motor "toque na ordem"
                 ├── ChoiceGame.tsx           ← motor de escolha (grid/alvo/sombra/bool/quote/verse)
                 ├── PuzzleGame.tsx           ← motor de quebra-cabeça (troca de peças)
@@ -281,6 +288,13 @@ React 18 · TypeScript 5 · Vite 5 · Tailwind CSS 3 · lucide-react · react-co
   (6×6). **Todos os jogos têm ≥5 níveis**: os 7 motores (15 jogos), Encontre a
   Cena, Que Som é Esse?, Mostre o Livro, Caçadores, Pares da Arca (4→10 pares),
   A Estrada da Luz e Heróis da Bíblia (6 trechos cada) e Aventura (12 estações).
+- ✅ **Fase 14** — **identidade, meninos/meninas e propósitos**: 3 jogos novos —
+  **Eu Sou de Deus** (3–4), **Meninos e Meninas de Deus** (5–6) e **Meu
+  Propósito** (7–9) — sobre quem somos aos olhos de Deus, o valor que ele dá a
+  meninos e meninas, e os propósitos individuais (estudar, trabalhar, casar, ir
+  pregar) e da igreja (fazer discípulos, orar, jejuar). Faixas renomeadas
+  (Pequeninos · Exploradores · **Íntimos de Deus**) e mascotes novos
+  (🌱 🧭 🙏), com **som em toda pergunta e opção**.
 - 🟡 **Pendências conhecidas:**
   - **Teste em aparelho real** (iPhone/Android): instalação/offline, FPS da
     Aventura, volume da voz, toque em tela pequena, hit area do chip 🔊.

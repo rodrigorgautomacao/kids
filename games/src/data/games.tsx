@@ -25,6 +25,9 @@ import {
   GameVerdadeiroOuFalso,
   GameCompleteOVersiculo,
   GameSombraDoHeroi,
+  GameEuSouDeDeus,
+  GameMeninosEMeninas,
+  GameMeuProposito,
 } from '../components/games';
 
 export type Faixa = '3-4' | '5-6' | '7-9';
@@ -32,9 +35,9 @@ export type Tipo = 'at' | 'nt' | 'at-nt';
 export type GameStatus = 'pronto' | 'em-breve';
 
 export const FAIXAS: readonly { id: Faixa; nome: string; idade: string; mascote: string; gradient: string; text: string }[] = [
-  { id: '3-4', nome: 'Pequeninos',  idade: '3 e 4 anos',  mascote: '🐣', gradient: 'from-amber-200 via-rose-100 to-pink-200', text: 'text-amber-900' },
-  { id: '5-6', nome: 'Exploradores', idade: '5 e 6 anos',  mascote: '🦊', gradient: 'from-sky-200 via-emerald-50 to-teal-200',   text: 'text-sky-900' },
-  { id: '7-9', nome: 'Heróis',       idade: '7 a 9 anos',  mascote: '🦁', gradient: 'from-indigo-200 via-violet-50 to-purple-200', text: 'text-indigo-900' },
+  { id: '3-4', nome: 'Pequeninos',    idade: '3 e 4 anos', mascote: '🌱', gradient: 'from-amber-200 via-rose-100 to-pink-200', text: 'text-amber-900' },
+  { id: '5-6', nome: 'Exploradores',  idade: '5 e 6 anos', mascote: '🧭', gradient: 'from-sky-200 via-emerald-50 to-teal-200',   text: 'text-sky-900' },
+  { id: '7-9', nome: 'Íntimos de Deus', idade: '7 a 9 anos', mascote: '🙏', gradient: 'from-indigo-200 via-violet-50 to-purple-200', text: 'text-indigo-900' },
 ];
 
 export const TIPOS: readonly { id: Tipo; nome: string; emoji: string; badge: string; bg: string; text: string }[] = [
@@ -135,6 +138,11 @@ const GAMES: GameDefinition[] = [
   { id: 'verdadeiro-ou-falso', title: 'Verdadeiro ou Falso?', subtitle: 'Afirmações', sinopse: 'Decida se a afirmação está certa!', faixa: '7-9', tipo: 'at-nt', status: 'pronto', habilidades: ['conhecimento bíblico', 'atenção'], icon: CrownIcon, color: 'bg-slate-200 text-slate-800', component: GameVerdadeiroOuFalso },
   { id: 'complete-o-versiculo', title: 'Complete o Versículo', subtitle: 'Desafio de leitura', sinopse: 'Escolha a palavra que completa o versículo!', faixa: '7-9', tipo: 'at-nt', status: 'pronto', habilidades: ['leitura', 'conhecimento bíblico'], icon: CrownIcon, color: 'bg-violet-200 text-violet-900', component: GameCompleteOVersiculo },
   { id: 'sombra-do-heroi', title: 'Sombra do Herói', subtitle: 'Silhuetas', sinopse: 'Descubra o personagem pela silhueta!', faixa: '7-9', tipo: 'at-nt', status: 'pronto', habilidades: ['reconhecimento', 'memória'], icon: CrownIcon, color: 'bg-slate-200 text-slate-800', component: GameSombraDoHeroi },
+
+  // ─── Fase 14 — identidade, meninos/meninas e propósitos ────────
+  { id: 'eu-sou-de-deus', title: 'Eu Sou de Deus', subtitle: 'Identidade em Deus', sinopse: 'Quem eu sou aos olhos de Deus? Amado, conhecido e filho dele!', faixa: '3-4', tipo: 'at-nt', status: 'pronto', habilidades: ['identidade', 'fé'], icon: StarIcon, color: 'bg-rose-200 text-rose-900', component: GameEuSouDeDeus },
+  { id: 'meninos-e-meninas', title: 'Meninos e Meninas de Deus', subtitle: 'Criação e valor', sinopse: 'Deus criou meninos e meninas à sua imagem — cada um com dons e chamado!', faixa: '5-6', tipo: 'at-nt', status: 'pronto', habilidades: ['identidade', 'valor', 'fé'], icon: CompassIcon, color: 'bg-sky-200 text-sky-900', component: GameMeninosEMeninas },
+  { id: 'meu-proposito', title: 'Meu Propósito', subtitle: 'Planos de Deus', sinopse: 'Deus tem propósitos para cada pessoa e para toda a igreja!', faixa: '7-9', tipo: 'at-nt', status: 'pronto', habilidades: ['propósito', 'discipulado', 'conhecimento bíblico'], icon: CrownIcon, color: 'bg-indigo-200 text-indigo-900', component: GameMeuProposito },
 ];
 
 // ─── Ícones simples (evita importar lucide em games.ts) ──────────

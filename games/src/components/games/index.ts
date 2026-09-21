@@ -24,3 +24,7 @@ export { default as GameSeparePorTestamento } from './GameSeparePorTestamento';
 export { default as GameVerdadeiroOuFalso } from './GameVerdadeiroOuFalso';
 export { default as GameCompleteOVersiculo } from './GameCompleteOVersiculo';
 export { default as GameSombraDoHeroi } from './GameSombraDoHeroi';
+// Fase 14 — identidade, meninos/meninas e propósitos
+export { default as GameEuSouDeDeus } from './GameEuSouDeDeus';
+export { default as GameMeninosEMeninas } from './GameMeninosEMeninas';
+export { default as GameMeuProposito } from './GameMeuProposito';

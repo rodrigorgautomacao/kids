@@ -14,6 +14,7 @@ import { burst, flyNumber, ring, shake } from '../../lib/fx';
 import { shuffle } from '../../lib/minigame';
 import { chunkLevels, levelMapItems, useLevelState } from '../../lib/levels';
 import { isSmallKidsMode } from '../../lib/prefs';
+import SpeakChip from '../SpeakChip';
 
 interface Round {
   antes: string;
@@ -191,21 +192,23 @@ export default function GameCacadoresDoVersiculo({ onExit }: { onExit: () => voi
 
         <div ref={stageRef} className="relative grid w-full grid-cols-3 gap-3">
           {order.map((word) => (
-            <button
-              key={word}
-              type="button"
-              disabled={won || picked === word}
-              onClick={(ev) => handlePick(word, ev)}
-              className={`ui-press rounded-2xl border-4 px-3 py-5 text-lg font-black shadow-lg transition-transform ${
-                picked === word && word === round.certo
-                  ? 'animate-pop border-emerald-400 bg-emerald-50 text-emerald-800'
-                  : picked === word
-                    ? 'border-rose-200 bg-rose-50 text-rose-300 line-through'
-                    : 'border-slate-200 bg-white text-indigo-800 hover:scale-105'
-              } ${smallKids ? 'text-xl' : ''}`}
-            >
-              {word}
-            </button>
+            <div key={word} className="relative flex">
+              <button
+                type="button"
+                disabled={won || picked === word}
+                onClick={(ev) => handlePick(word, ev)}
+                className={`ui-press flex-1 rounded-2xl border-4 px-3 py-5 text-lg font-black shadow-lg transition-transform ${
+                  picked === word && word === round.certo
+                    ? 'animate-pop border-emerald-400 bg-emerald-50 text-emerald-800'
+                    : picked === word
+                      ? 'border-rose-200 bg-rose-50 text-rose-300 line-through'
+                      : 'border-slate-200 bg-white text-indigo-800 hover:scale-105'
+                } ${smallKids ? 'text-xl' : ''}`}
+              >
+                {word}
+              </button>
+              <SpeakChip text={word} className="absolute right-1.5 top-1.5" />
+            </div>
           ))}
         </div>
 

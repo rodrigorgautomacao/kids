@@ -12,6 +12,7 @@ import { sfx, voice } from '../../lib/audio';
 import { burst, flyNumber, shake } from '../../lib/fx';
 import { shuffle } from '../../lib/minigame';
 import { levelMapItems, useLevelState, type GameLevel } from '../../lib/levels';
+import SpeakChip from '../SpeakChip';
 
 // ── Ligue os Pares (níveis) ──────────────────────────────────────────────
 
@@ -165,28 +166,30 @@ export default function ConnectGame({
     const done = linked.has(p.id);
     const isSel = selected === p.id && side === 'left';
     return (
-      <button
-        key={`${side}-${p.id}`}
-        type="button"
-        disabled={done || (side === 'left' && selected !== null && !isSel)}
-        onClick={(ev) => {
-          if (side === 'left') {
-            if (done) return;
-            sfx.pop();
-            setSelected(p.id);
-            setMsg(null);
-          } else {
-            tapRight(p, ev);
-          }
-        }}
-        className={`ui-press flex min-h-20 items-center gap-2 rounded-2xl border-4 px-3 py-2 shadow ${
-          done ? 'border-emerald-400 bg-emerald-50' : isSel ? 'border-amber-400 bg-amber-50' : 'border-slate-200 bg-white'
-        }`}
-      >
-        {data.motif ? <Motif id={data.motif} size={44} /> : null}
-        {data.emoji ? <span className="text-3xl">{data.emoji}</span> : null}
-        <span className="text-sm font-black text-indigo-800">{data.label}</span>
-      </button>
+      <div key={`${side}-${p.id}`} className="relative flex">
+        <button
+          type="button"
+          disabled={done || (side === 'left' && selected !== null && !isSel)}
+          onClick={(ev) => {
+            if (side === 'left') {
+              if (done) return;
+              sfx.pop();
+              setSelected(p.id);
+              setMsg(null);
+            } else {
+              tapRight(p, ev);
+            }
+          }}
+          className={`ui-press flex min-h-20 flex-1 items-center gap-2 rounded-2xl border-4 px-3 py-2 pr-10 shadow ${
+            done ? 'border-emerald-400 bg-emerald-50' : isSel ? 'border-amber-400 bg-amber-50' : 'border-slate-200 bg-white'
+          }`}
+        >
+          {data.motif ? <Motif id={data.motif} size={44} /> : null}
+          {data.emoji ? <span className="text-3xl">{data.emoji}</span> : null}
+          <span className="text-sm font-black text-indigo-800">{data.label}</span>
+        </button>
+        <SpeakChip text={data.label} className="absolute right-1.5 top-1/2 -translate-y-1/2" />
+      </div>
     );
   };
 

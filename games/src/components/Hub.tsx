@@ -311,19 +311,19 @@ export default function Hub({ onSelectGame, onLogout }: HubProps) {
           {/* ─── herói ─── */}
           <header className="pt-8 text-center">
             <div className="flex items-center justify-center gap-4 text-6xl">
-              <span className="inline-block animate-hero-bob">🐣</span>
+              <span className="inline-block animate-hero-bob">🌱</span>
               <span className="inline-block animate-hero-bob" style={{ animationDelay: '180ms' }}>
-                🦊
+                🧭
               </span>
               <span className="inline-block animate-hero-bob" style={{ animationDelay: '360ms' }}>
-                🦁
+                🙏
               </span>
             </div>
             <h1 className="mt-3 text-5xl font-black tracking-tight text-slate-800 drop-shadow-sm sm:text-6xl">
               Jogos Bíblicos
             </h1>
             <p className="mx-auto mt-2 max-w-md text-base font-bold text-slate-500">
-              Pequeninos, Exploradores e Heróis — a Bíblia é uma aventura para toda criança!
+              Pequeninos, Exploradores e Íntimos de Deus — crescendo como Jesus: em sabedoria, estatura e graça!
             </p>
           </header>
 

@@ -14,6 +14,7 @@ import { burst, flyNumber, ring, shake } from '../../lib/fx';
 import { shuffle } from '../../lib/minigame';
 import { levelMapItems, useLevelState, type GameLevel } from '../../lib/levels';
 import { isSmallKidsMode } from '../../lib/prefs';
+import SpeakChip from '../SpeakChip';
 
 // ── Motor de "escolha uma opção" com variantes visuais e níveis ──────────
 //   'grid' | 'target' | 'shadow' | 'bool' | 'quote' | 'verse'
@@ -142,7 +143,7 @@ export default function ChoiceGame({
       ls.addWrong();
       shake(el);
       setMsg({ text: 'Quase! Tenta de novo! ✊', good: false });
-      voice.speak('Quase! Tenta de novo!');
+      voice.speak(`${opt.label ?? opt.id}. Quase! Tenta de novo!`);
       later(() => setPicked(null), 900);
     }
   }
@@ -305,19 +306,21 @@ export default function ChoiceGame({
           }`}
         >
           {order.map((opt) => (
-            <button
-              key={opt.id}
-              type="button"
-              disabled={won || picked === opt.id}
-              onClick={(ev) => handlePick(opt, ev)}
-              className={`${optionClass(opt)} ${isBool ? 'min-h-40' : smallKids ? 'min-h-36 px-3 py-4' : 'min-h-28 px-3 py-4'}`}
-            >
-              {isBool ? (
-                <span className="text-7xl">{opt.emoji ?? (opt.id === 'sim' ? '✅' : '❌')}</span>
-              ) : (
-                optionContent(opt, smallKids)
-              )}
-            </button>
+            <div key={opt.id} className="relative flex">
+              <button
+                type="button"
+                disabled={won || picked === opt.id}
+                onClick={(ev) => handlePick(opt, ev)}
+                className={`${optionClass(opt)} flex-1 ${isBool ? 'min-h-40' : smallKids ? 'min-h-36 px-3 py-4' : 'min-h-28 px-3 py-4'}`}
+              >
+                {isBool ? (
+                  <span className="text-7xl">{opt.emoji ?? (opt.id === 'sim' ? '✅' : '❌')}</span>
+                ) : (
+                  optionContent(opt, smallKids)
+                )}
+              </button>
+              <SpeakChip text={opt.label ?? opt.id} className="absolute right-1.5 top-1.5" />
+            </div>
           ))}
         </div>
 

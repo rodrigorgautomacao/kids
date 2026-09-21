@@ -13,6 +13,7 @@ import { burst, flyNumber, shake } from '../../lib/fx';
 import { shuffle } from '../../lib/minigame';
 import { levelMapItems, useLevelState, type GameLevel } from '../../lib/levels';
 import { isSmallKidsMode } from '../../lib/prefs';
+import SpeakChip from '../SpeakChip';
 
 // ── Motor "coloque na ordem" (níveis) ────────────────────────────────────
 
@@ -207,12 +208,12 @@ export default function OrderGame({
             const pos = placed.indexOf(step.id);
             const done = pos >= 0;
             return (
+              <div key={step.id} className="relative flex">
               <button
-                key={step.id}
                 type="button"
                 onClick={(ev) => handleTap(step, ev)}
                 disabled={done}
-                className={`ui-press relative flex flex-col items-center gap-2 rounded-3xl border-4 bg-white px-3 py-4 shadow-lg ${
+                className={`ui-press relative flex flex-1 flex-col items-center gap-2 rounded-3xl border-4 bg-white px-3 py-4 shadow-lg ${
                   done ? 'animate-pop border-emerald-400 bg-emerald-50' : 'border-slate-200 hover:scale-105'
                 } ${smallKids ? 'min-h-36' : 'min-h-28'}`}
               >
@@ -224,6 +225,8 @@ export default function OrderGame({
                 <span className={smallKids ? 'text-5xl' : 'text-4xl'}>{step.emoji}</span>
                 <span className="text-xs leading-tight font-black text-slate-700">{step.label}</span>
               </button>
+              <SpeakChip text={step.label} className="absolute right-1.5 top-1.5" />
+              </div>
             );
           })}
         </div>

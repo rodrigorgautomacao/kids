@@ -11,6 +11,7 @@ import { confettiGravity, confettiPieces } from '../../lib/confetti';
 import { sfx, voice } from '../../lib/audio';
 import { burst, flyNumber, shake } from '../../lib/fx';
 import { levelMapItems, useLevelState, type GameLevel } from '../../lib/levels';
+import SpeakChip from '../SpeakChip';
 
 // ── Separe por Testamento (níveis) ───────────────────────────────────────
 
@@ -202,22 +203,24 @@ export default function SortGame({
 
           <div className="grid w-full grid-cols-2 gap-3">
             {round.buckets.map((b) => (
-              <button
-                key={b.id}
-                type="button"
-                onClick={(ev) => place(b.id, ev)}
-                className="ui-press flex min-h-36 flex-col items-center justify-between gap-2 rounded-3xl border-4 border-slate-200 bg-white p-3 shadow-lg hover:scale-[1.02]"
-              >
-                <span className="text-3xl">{b.emoji}</span>
-                <span className="text-base font-black text-indigo-800">{b.label}</span>
-                <span className="flex min-h-8 flex-wrap items-center justify-center gap-1">
-                  {(placed[b.id] ?? []).map((p) => (
-                    <span key={p.id} className="text-2xl">
-                      {p.emoji}
-                    </span>
-                  ))}
-                </span>
-              </button>
+              <div key={b.id} className="relative flex">
+                <button
+                  type="button"
+                  onClick={(ev) => place(b.id, ev)}
+                  className="ui-press flex min-h-36 flex-1 flex-col items-center justify-between gap-2 rounded-3xl border-4 border-slate-200 bg-white p-3 pr-10 shadow-lg hover:scale-[1.02]"
+                >
+                  <span className="text-3xl">{b.emoji}</span>
+                  <span className="text-base font-black text-indigo-800">{b.label}</span>
+                  <span className="flex min-h-8 flex-wrap items-center justify-center gap-1">
+                    {(placed[b.id] ?? []).map((p) => (
+                      <span key={p.id} className="text-2xl">
+                        {p.emoji}
+                      </span>
+                    ))}
+                  </span>
+                </button>
+                <SpeakChip text={b.label} className="absolute right-1.5 top-1.5" />
+              </div>
             ))}
           </div>
         </div>

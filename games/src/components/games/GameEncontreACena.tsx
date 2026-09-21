@@ -14,6 +14,7 @@ import { burst, flyNumber, ring, shake } from '../../lib/fx';
 import { shuffle } from '../../lib/minigame';
 import { chunkLevels, levelMapItems, useLevelState } from '../../lib/levels';
 import { isSmallKidsMode } from '../../lib/prefs';
+import SpeakChip from '../SpeakChip';
 
 interface Tile {
   id: string;
@@ -216,24 +217,24 @@ export default function GameEncontreACena({ onExit }: { onExit: () => void }) {
 
         <div ref={stageRef} className="relative grid w-full grid-cols-3 gap-4">
           {tileOrder.map((tile) => (
-            <button
-              key={tile.id}
-              type="button"
-              disabled={won}
-              onClick={(ev) => handlePick(tile, ev)}
-              className={`ui-press flex flex-col items-center gap-3 rounded-3xl border-4 bg-white px-4 py-6 shadow-lg transition-transform ${
-                picked === tile.id && tile.id === round.certo
-                  ? 'animate-pop border-emerald-400 bg-emerald-50'
-                  : 'border-slate-200 hover:scale-105'
-              } ${smallKids ? 'min-h-40' : 'min-h-32'}`}
-            >
-              <div className="flex items-center justify-center">
-                <Motif id={tile.id} size={smallKids ? 110 : 90} />
-              </div>
-              {smallKids ? (
+            <div key={tile.id} className="relative flex">
+              <button
+                type="button"
+                disabled={won}
+                onClick={(ev) => handlePick(tile, ev)}
+                className={`ui-press flex flex-1 flex-col items-center gap-3 rounded-3xl border-4 bg-white px-4 py-6 shadow-lg transition-transform ${
+                  picked === tile.id && tile.id === round.certo
+                    ? 'animate-pop border-emerald-400 bg-emerald-50'
+                    : 'border-slate-200 hover:scale-105'
+                } ${smallKids ? 'min-h-40' : 'min-h-32'}`}
+              >
+                <div className="flex items-center justify-center">
+                  <Motif id={tile.id} size={smallKids ? 110 : 90} />
+                </div>
                 <span className="rounded-full bg-indigo-100 px-3 py-1 text-xs font-black text-indigo-700">{tile.label}</span>
-              ) : null}
-            </button>
+              </button>
+              <SpeakChip text={tile.label} className="absolute right-1.5 top-1.5" />
+            </div>
           ))}
         </div>
 

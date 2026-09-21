@@ -14,6 +14,7 @@ import { burst, flyNumber, ring, shake } from '../../lib/fx';
 import { shuffle } from '../../lib/minigame';
 import { chunkLevels, levelMapItems, useLevelState } from '../../lib/levels';
 import { isSmallKidsMode } from '../../lib/prefs';
+import SpeakChip from '../SpeakChip';
 
 interface Round {
   pista: string;
@@ -174,18 +175,20 @@ export default function GameMostreOLivro({ onExit }: { onExit: () => void }) {
 
         <div ref={stageRef} className="relative grid w-full grid-cols-3 gap-3">
           {order.map((book) => (
-            <button
-              key={book}
-              type="button"
-              disabled={won}
-              onClick={(ev) => handlePick(book, ev)}
-              className={`ui-press flex flex-col items-center gap-2 rounded-3xl border-4 bg-white px-3 py-6 shadow-lg transition-transform ${
-                picked === book && book === round.certo ? 'animate-pop border-emerald-400 bg-emerald-50' : 'border-slate-200 hover:scale-105'
-              } ${smallKids ? 'min-h-40' : 'min-h-32'}`}
-            >
-              <span className={smallKids ? 'text-6xl' : 'text-5xl'}>📖</span>
-              <span className="text-center text-base font-black text-indigo-800">{book}</span>
-            </button>
+            <div key={book} className="relative flex">
+              <button
+                type="button"
+                disabled={won}
+                onClick={(ev) => handlePick(book, ev)}
+                className={`ui-press flex flex-1 flex-col items-center gap-2 rounded-3xl border-4 bg-white px-3 py-6 shadow-lg transition-transform ${
+                  picked === book && book === round.certo ? 'animate-pop border-emerald-400 bg-emerald-50' : 'border-slate-200 hover:scale-105'
+                } ${smallKids ? 'min-h-40' : 'min-h-32'}`}
+              >
+                <span className={smallKids ? 'text-6xl' : 'text-5xl'}>📖</span>
+                <span className="text-center text-base font-black text-indigo-800">{book}</span>
+              </button>
+              <SpeakChip text={book} className="absolute right-1.5 top-1.5" />
+            </div>
           ))}
         </div>
 

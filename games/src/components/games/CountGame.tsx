@@ -13,6 +13,7 @@ import { sfx, voice } from '../../lib/audio';
 import { burst, flyNumber, ring, shake } from '../../lib/fx';
 import { shuffle } from '../../lib/minigame';
 import { levelMapItems, useLevelState, type GameLevel } from '../../lib/levels';
+import SpeakChip from '../SpeakChip';
 
 // ── Conte com a Bíblia (níveis) ──────────────────────────────────────────
 // Contagem e soma/subtração com os elementos da história.
@@ -113,7 +114,7 @@ export default function CountGame({
       ls.addWrong();
       shake(el);
       setMsg({ text: 'Quase! Conta de novo com calma. ✊', good: false });
-      voice.speak('Quase! Conta de novo!');
+      voice.speak(`${num}. Quase! Conta de novo!`);
       later(() => setPicked(null), 900);
     }
   }
@@ -211,21 +212,23 @@ export default function CountGame({
 
         <div ref={stageRef} className="relative grid w-full grid-cols-3 gap-3">
           {order.map((num) => (
-            <button
-              key={num}
-              type="button"
-              disabled={won || picked === num}
-              onClick={(ev) => handlePick(num, ev)}
-              className={`ui-press flex min-h-24 items-center justify-center rounded-3xl border-4 text-5xl font-black shadow-lg transition-transform ${
-                picked === num && num === round.correct
-                  ? 'animate-pop border-emerald-400 bg-emerald-50 text-emerald-700'
-                  : picked === num
-                    ? 'border-rose-200 bg-rose-50 text-rose-300'
-                    : 'border-slate-200 bg-white text-indigo-800 hover:scale-105'
-              }`}
-            >
-              {num}
-            </button>
+            <div key={num} className="relative flex">
+              <button
+                type="button"
+                disabled={won || picked === num}
+                onClick={(ev) => handlePick(num, ev)}
+                className={`ui-press flex min-h-24 flex-1 items-center justify-center rounded-3xl border-4 text-5xl font-black shadow-lg transition-transform ${
+                  picked === num && num === round.correct
+                    ? 'animate-pop border-emerald-400 bg-emerald-50 text-emerald-700'
+                    : picked === num
+                      ? 'border-rose-200 bg-rose-50 text-rose-300'
+                      : 'border-slate-200 bg-white text-indigo-800 hover:scale-105'
+                }`}
+              >
+                {num}
+              </button>
+              <SpeakChip text={String(num)} className="absolute right-1.5 top-1.5" />
+            </div>
           ))}
         </div>
 
