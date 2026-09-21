@@ -1,7 +1,8 @@
 import type { ComponentType } from 'react';
-import { BookHeart, Crown } from 'lucide-react';
+import { BookHeart, Crown, Map } from 'lucide-react';
 import GameEstradaDaLuz from '../components/games/GameEstradaDaLuz';
 import GameHeroisDaBiblia from '../components/games/GameHeroisDaBiblia';
+import GameAventuraBiblia from '../components/games/GameAventuraBiblia';
 
 export interface GameDefinition {
   id: string;
@@ -44,5 +45,16 @@ export const games: GameDefinition[] = [
     color: 'bg-gradient-to-b from-emerald-700 via-teal-600 to-amber-500',
     totalLevels: 3,
     component: GameHeroisDaBiblia,
+  },
+  {
+    id: 'aventura-biblia',
+    title: 'Aventura na Bíblia',
+    subtitle: 'Mundo 2D: ande e converse com os heróis',
+    sinopse:
+      'Ande pelo mundo e fale com Noé, o Anjo, Elias, Jonas, Eliseu, Daniel, Maria, Moisés, Josué, Davi, Salomão e Paulo! Colecione estrelas e complete as 12 histórias. Cada estação mostra o livro da Bíblia da história.',
+    icon: Map,
+    color: 'bg-gradient-to-b from-sky-700 via-teal-600 to-emerald-500',
+    totalLevels: 12,
+    component: GameAventuraBiblia,
   },
 ];
