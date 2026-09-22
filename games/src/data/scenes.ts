@@ -299,7 +299,7 @@ export const SCENES: Scene[] = [
     title: 'O fogo que respondeu a oração',
     ref: '1 Reis 18.30-39 (NAA)',
     backdrop: 'monte',
-    props: ['🔥', '🗿'],
+    props: ['🔥', '🪨'],
     acts: [
       'No monte Carmelo, Elias orou ao Deus verdadeiro.',
       'E mandou molhar o altar com muita água…',
@@ -798,7 +798,7 @@ export const SCENES: Scene[] = [
     title: 'O rio que se abriu',
     ref: 'Josué 3.14-17 (NAA)',
     backdrop: 'rio',
-    props: ['💧', '🗿'],
+    props: ['💧', '🪨'],
     acts: [
       'O rio Jordão estava cheio, na frente do povo de Deus.',
       'Os sacerdotes levaram a arca até a água…',

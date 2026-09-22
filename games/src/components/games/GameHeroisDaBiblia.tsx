@@ -65,26 +65,26 @@ const TRECHOS = [
 // 30 perguntas da lição: 6 trechos × 5 (cada uma com 5 opções parecidas)
 const QUESTIONS: Question[] = [
   // ------- Trecho 1: grandes histórias do Antigo Testamento -------
-  { q: 'Quem construiu a arca para salvar os animais do dilúvio?', right: { t: 'Noé', e: '🕊️' }, wrongs: [{ t: 'Moisés', e: '🗿' }, { t: 'Abraão', e: '🏕️' }, { t: 'Davi', e: '🎯' }, { t: 'Elias', e: '⚡' }], ref: 'Gênesis 6.14 (NAA)' },
+  { q: 'Quem construiu a arca para salvar os animais do dilúvio?', right: { t: 'Noé', e: '🕊️' }, wrongs: [{ t: 'Moisés', e: '📜' }, { t: 'Abraão', e: '🏕️' }, { t: 'Davi', e: '👑' }, { t: 'Elias', e: '⚡' }], ref: 'Gênesis 6.14 (NAA)' },
   { q: 'Depois do dilúvio, Deus mostrou um arco-íris. Em qual livro está essa história?', right: { t: 'Gênesis', e: '🌈' }, wrongs: [{ t: 'Êxodo', e: '🏜️' }, { t: 'Levítico', e: '📜' }, { t: 'Números', e: '🔢' }, { t: 'Deuteronômio', e: '📖' }], ref: 'Gênesis 9.13 (NAA)' },
   { q: 'Quem foi chamado por Deus para sair da sua terra e virar pai de uma grande nação?', right: { t: 'Abraão', e: '🌟' }, wrongs: [{ t: 'Isaque', e: '🐑' }, { t: 'Jacó', e: '🪜' }, { t: 'José', e: '🌾' }, { t: 'Noé', e: '🕊️' }], ref: 'Gênesis 12.1 (NAA)' },
-  { q: 'Quem foi vendido pelos irmãos e depois salvou o Egito da fome?', right: { t: 'José', e: '🌾' }, wrongs: [{ t: 'Moisés', e: '🗿' }, { t: 'Samuel', e: '📜' }, { t: 'Davi', e: '🎯' }, { t: 'Josué', e: '⚔️' }], ref: 'Gênesis 37.28 (NAA)' },
+  { q: 'Quem foi vendido pelos irmãos e depois salvou o Egito da fome?', right: { t: 'José', e: '🌾' }, wrongs: [{ t: 'Moisés', e: '📜' }, { t: 'Samuel', e: '🪔' }, { t: 'Davi', e: '👑' }, { t: 'Josué', e: '⚔️' }], ref: 'Gênesis 37.28 (NAA)' },
   { q: 'A história de José do Egito está em qual livro?', right: { t: 'Gênesis', e: '📖' }, wrongs: [{ t: 'Êxodo', e: '🏜️' }, { t: 'Números', e: '🔢' }, { t: 'Josué', e: '⚔️' }, { t: 'Juízes', e: '🎗️' }], ref: 'Gênesis 37.28 (NAA)' },
-  { q: 'Quem foi colocado num cesto no rio e depois libertou Israel do Egito?', right: { t: 'Moisés', e: '🗿' }, wrongs: [{ t: 'Arão', e: '🪔' }, { t: 'José', e: '🌾' }, { t: 'Josué', e: '⚔️' }, { t: 'Gideão', e: '🌿' }], ref: 'Êxodo 2.3 (NAA)' },
+  { q: 'Quem foi colocado num cesto no rio e depois libertou Israel do Egito?', right: { t: 'Moisés', e: '📜' }, wrongs: [{ t: 'Arão', e: '🪔' }, { t: 'José', e: '🌾' }, { t: 'Josué', e: '⚔️' }, { t: 'Gideão', e: '🌿' }], ref: 'Êxodo 2.3 (NAA)' },
   { q: 'Em qual livro a Bíblia conta a saída do Egito?', right: { t: 'Êxodo', e: '🏜️' }, wrongs: [{ t: 'Gênesis', e: '🌀' }, { t: 'Levítico', e: '📜' }, { t: 'Deuteronômio', e: '📖' }, { t: 'Josué', e: '⚔️' }], ref: 'Êxodo 12.41 (NAA)' },
-  { q: 'Quem tocou as trombetas e as muralhas de Jericó caíram?', right: { t: 'Josué', e: '⚔️' }, wrongs: [{ t: 'Moisés', e: '🗿' }, { t: 'Sansão', e: '💪' }, { t: 'Gideão', e: '🌿' }, { t: 'Samuel', e: '📜' }], ref: 'Josué 6.20 (NAA)' },
-  { q: 'Quem derrubou o gigante Golias com uma pedra e uma funda?', right: { t: 'Davi', e: '🎯' }, wrongs: [{ t: 'Saul', e: '👑' }, { t: 'Salomão', e: '🦉' }, { t: 'Sansão', e: '💪' }, { t: 'Josué', e: '⚔️' }], ref: '1 Samuel 17.49 (NAA)' },
+  { q: 'Quem tocou as trombetas e as muralhas de Jericó caíram?', right: { t: 'Josué', e: '⚔️' }, wrongs: [{ t: 'Moisés', e: '📜' }, { t: 'Sansão', e: '💪' }, { t: 'Gideão', e: '🌿' }, { t: 'Samuel', e: '🪔' }], ref: 'Josué 6.20 (NAA)' },
+  { q: 'Quem derrubou o gigante Golias com uma pedra e uma funda?', right: { t: 'Davi', e: '🪨' }, wrongs: [{ t: 'Saul', e: '🗡️' }, { t: 'Salomão', e: '🏛️' }, { t: 'Sansão', e: '💪' }, { t: 'Josué', e: '⚔️' }], ref: '1 Samuel 17.49 (NAA)' },
   { q: 'A história de Davi e Golias está em qual livro?', right: { t: '1 Samuel', e: '📖' }, wrongs: [{ t: '2 Samuel', e: '📜' }, { t: '1 Reis', e: '👑' }, { t: '2 Reis', e: '🏰' }, { t: '1 Crônicas', e: '📚' }], ref: '1 Samuel 17.49 (NAA)' },
   // ------- Trecho 2: profetas, reis e escolhidos -------
-  { q: 'Quem foi engolido por um grande peixe quando fugiu de Deus?', right: { t: 'Jonas', e: '🐋' }, wrongs: [{ t: 'Elias', e: '⚡' }, { t: 'Eliseu', e: '🐻' }, { t: 'Daniel', e: '🦁' }, { t: 'Jeremias', e: '😢' }], ref: 'Jonas 1.17 (NAA)' },
+  { q: 'Quem foi engolido por um grande peixe quando fugiu de Deus?', right: { t: 'Jonas', e: '🐋' }, wrongs: [{ t: 'Elias', e: '⚡' }, { t: 'Eliseu', e: '🧥' }, { t: 'Daniel', e: '🦁' }, { t: 'Jeremias', e: '😢' }], ref: 'Jonas 1.17 (NAA)' },
   { q: 'A história de Jonas dentro do grande peixe está em qual livro?', right: { t: 'Jonas', e: '🐋' }, wrongs: [{ t: 'Oseias', e: '🤍' }, { t: 'Joel', e: '🌾' }, { t: 'Amós', e: '🐑' }, { t: 'Miqueias', e: '🏔️' }], ref: 'Jonas 1.17 (NAA)' },
-  { q: 'Quem subiu ao céu num carro de fogo?', right: { t: 'Elias', e: '⚡' }, wrongs: [{ t: 'Eliseu', e: '🐻' }, { t: 'Moisés', e: '🗿' }, { t: 'Samuel', e: '📜' }, { t: 'Davi', e: '🎯' }], ref: '2 Reis 2.11 (NAA)' },
+  { q: 'Quem subiu ao céu num carro de fogo?', right: { t: 'Elias', e: '⚡' }, wrongs: [{ t: 'Eliseu', e: '🧥' }, { t: 'Moisés', e: '📜' }, { t: 'Samuel', e: '🪔' }, { t: 'Davi', e: '👑' }], ref: '2 Reis 2.11 (NAA)' },
   { q: 'Depois que Elias subiu ao céu, quem recebeu o seu manto?', right: { t: 'Eliseu', e: '🧥' }, wrongs: [{ t: 'Isaías', e: '📖' }, { t: 'Samuel', e: '📜' }, { t: 'Jeremias', e: '😢' }, { t: 'Ezequiel', e: '👁️' }], ref: '2 Reis 2.13 (NAA)' },
   { q: 'As histórias de Elias e Eliseu estão em qual livro?', right: { t: '2 Reis', e: '🏰' }, wrongs: [{ t: '1 Reis', e: '👑' }, { t: '2 Samuel', e: '📖' }, { t: '1 Crônicas', e: '📚' }, { t: '2 Crônicas', e: '🗞️' }], ref: '2 Reis 2.11 (NAA)' },
-  { q: 'Quem mandou uma ursa atacar os garotos que zombavam dele?', right: { t: 'Eliseu', e: '🐻' }, wrongs: [{ t: 'Elias', e: '⚡' }, { t: 'Josué', e: '⚔️' }, { t: 'Sansão', e: '💪' }, { t: 'Gideão', e: '🌿' }], ref: '2 Reis 2.24 (NAA)' },
-  { q: 'Quem foi lançado na cova dos leões e saiu vivo porque confiou em Deus?', right: { t: 'Daniel', e: '🦁' }, wrongs: [{ t: 'Jonas', e: '🐋' }, { t: 'Sadraque', e: '🔥' }, { t: 'José', e: '🌾' }, { t: 'Davi', e: '🎯' }], ref: 'Daniel 6.22 (NAA)' },
+  { q: 'Quem foi curado ao mergulhar sete vezes no rio Jordão a pedido de Eliseu?', right: { t: 'Naamã', e: '💧' }, wrongs: [{ t: 'Elias', e: '⚡' }, { t: 'Josué', e: '⚔️' }, { t: 'Sansão', e: '💪' }, { t: 'Gideão', e: '🌿' }], ref: '2 Reis 5.14 (NAA)' },
+  { q: 'Quem foi lançado na cova dos leões e saiu vivo porque confiou em Deus?', right: { t: 'Daniel', e: '🦁' }, wrongs: [{ t: 'Jonas', e: '🐋' }, { t: 'Sadraque', e: '🔥' }, { t: 'José', e: '🌾' }, { t: 'Davi', e: '👑' }], ref: 'Daniel 6.22 (NAA)' },
   { q: 'A história de Daniel na cova dos leões está em qual livro?', right: { t: 'Daniel', e: '🦁' }, wrongs: [{ t: 'Ezequiel', e: '👁️' }, { t: 'Jeremias', e: '😢' }, { t: 'Jonas', e: '🐋' }, { t: 'Oseias', e: '🤍' }], ref: 'Daniel 6.22 (NAA)' },
-  { q: 'Quem foi o rei mais sábio de Israel, filho de Davi?', right: { t: 'Salomão', e: '🦉' }, wrongs: [{ t: 'Saul', e: '👑' }, { t: 'Josias', e: '📖' }, { t: 'Ezequias', e: '🙏' }, { t: 'Davi', e: '🎯' }], ref: '1 Reis 3.12 (NAA)' },
+  { q: 'Quem foi o rei mais sábio de Israel, filho de Davi?', right: { t: 'Salomão', e: '🏛️' }, wrongs: [{ t: 'Saul', e: '🗡️' }, { t: 'Josias', e: '📖' }, { t: 'Ezequias', e: '🙏' }, { t: 'Davi', e: '👑' }], ref: '1 Reis 3.12 (NAA)' },
   { q: 'Qual livro traz os conselhos sábios de Salomão?', right: { t: 'Provérbios', e: '📜' }, wrongs: [{ t: 'Salmos', e: '🎵' }, { t: 'Eclesiastes', e: '🍃' }, { t: 'Cantares', e: '💕' }, { t: 'Jó', e: '🤔' }], ref: 'Provérbios 1.7 (NAA)' },
   // ------- Trecho 3: Jesus, apóstolos e o Novo Testamento -------
   { q: 'Quem nasceu numa manjedoura em Belém?', right: { t: 'Jesus', e: '🎄' }, wrongs: [{ t: 'João Batista', e: '🐫' }, { t: 'Pedro', e: '🎣' }, { t: 'Paulo', e: '📜' }, { t: 'José', e: '🪚' }], ref: 'Lucas 2.7 (NAA)' },
@@ -618,6 +618,7 @@ export default function GameHeroisDaBiblia({ onExit }: GameProps) {
               </span>
             </p>
             <LevelDone
+              celebrate={false}
               stars={starsFrom(wrongCount)}
               onNext={isLast ? undefined : () => goToTrecho(trecho + 1)}
               onExit={onExit}

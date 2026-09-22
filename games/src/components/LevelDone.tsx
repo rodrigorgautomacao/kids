@@ -1,4 +1,6 @@
+import { useEffect, useRef } from 'react';
 import { PartyPopper, Star } from 'lucide-react';
+import { music, sfx } from '../lib/audio';
 
 interface LevelDoneProps {
   /** Estrelas ganhas no nível (1-3) */
@@ -15,6 +17,9 @@ interface LevelDoneProps {
   wrong?: number;
   /** Abre o mapa de trechos */
   onOpenMap?: () => void;
+  /** Toca fanfarra + música de vitória ao montar (padrão: true). Desligue em
+   *  jogos que já tocam a própria vitória (Estrada, Heróis, Aventura). */
+  celebrate?: boolean;
 }
 
 /** Explicação curta das estrelas (G5): a criança entende o que ganhou. */
@@ -38,9 +43,28 @@ export default function LevelDone({
   lesson,
   wrong,
   onOpenMap,
+  celebrate = true,
 }: LevelDoneProps) {
   const isChapterEnd = !onNext;
   const reason = starReason(stars, wrong);
+  const celebrated = useRef(false);
+
+  // Fanfarra + música de vitória centralizada (G4/Áudio): os motores de jogo
+  // (Puzzle, Memory, Choice, Sort, Connect, Count, Order e os wrappers) não
+  // tocavam nenhuma comemoração ao fechar nível. Guard de StrictMode (dev
+  // monta efeito 2x) com ref que sobreiye à remontagem só no primeiro frame.
+  useEffect(() => {
+    if (!celebrate || celebrated.current) return;
+    celebrated.current = true;
+    if (isChapterEnd) {
+      sfx.withDuck(sfx.chapter, 1.9);
+      music.playVictory('game', 8);
+    } else {
+      sfx.withDuck(sfx.win, 1.3);
+      music.playVictory('game', 5);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div className="animate-pop flex flex-col items-center gap-4">

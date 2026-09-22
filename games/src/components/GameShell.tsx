@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { ArrowLeft, Pause, Volume2, VolumeX } from 'lucide-react';
-import { isAllMuted, setAllMuted, subscribeSoundPrefs } from '../lib/audio';
+import { isAllMuted, setAllMuted, sfx, subscribeSoundPrefs } from '../lib/audio';
 
 interface GameShellProps {
   title: string;
@@ -37,19 +37,16 @@ export default function GameShell({
   // Se o mudo mudar em outra tela (Hub), este botão acompanha.
   useEffect(() => subscribeSoundPrefs(() => setMuted(isAllMuted())), []);
 
-  function toggleMute() {
-    const next = !muted;
-    setMuted(next);
-    setAllMuted(next);
-  }
-
   return (
     <div
       className={`safe-area-pad relative flex min-h-screen-safe w-full flex-col overflow-hidden select-none ${bg}`}
     >
       <button
         type="button"
-        onClick={onExit}
+        onClick={() => {
+          sfx.click();
+          onExit();
+        }}
         aria-label="Voltar ao menu de jogos"
         className="ui-press absolute top-4 left-4 z-50 flex items-center gap-2 rounded-full bg-white/95 px-4 py-2 text-sm font-bold text-slate-700 shadow-lg"
       >
@@ -59,8 +56,11 @@ export default function GameShell({
       {onPause ? (
         <button
           type="button"
-          onClick={onPause}
-          aria-label="Pausar o jogo"
+onClick={() => {
+          sfx.click();
+          onPause();
+        }}
+        aria-label="Pausar o jogo"
           className="ui-press absolute top-4 right-16 z-50 flex h-10 w-10 items-center justify-center rounded-full bg-white/95 text-slate-700 shadow-lg"
         >
           <Pause className="h-5 w-5" />
@@ -69,7 +69,12 @@ export default function GameShell({
 
       <button
         type="button"
-        onClick={toggleMute}
+        onClick={() => {
+          const next = !muted;
+          if (!next) sfx.click();
+          setMuted(next);
+          setAllMuted(next);
+        }}
         aria-pressed={muted}
         aria-label={muted ? 'Ligar o som' : 'Desligar o som'}
         className="ui-press absolute top-4 right-4 z-50 flex h-10 w-10 items-center justify-center rounded-full bg-white/95 text-slate-700 shadow-lg"

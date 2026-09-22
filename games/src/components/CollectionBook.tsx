@@ -33,11 +33,11 @@ const CHARACTER_EMOJI: Record<string, string> = {
   eliseu: '🧥',
   daniel: '🧑',
   natal: '👩',
-  moises: '🗿',
+  moises: '📜',
   josue: '📯',
-  davi: '🎯',
-  salomao: '🦉',
-  paulo: '📜',
+  davi: '🎼',
+  salomao: '👑',
+  paulo: '✉️',
 };
 
 interface CollectionBookProps {
@@ -111,8 +111,7 @@ export default function CollectionBook({ open, onClose }: CollectionBookProps) {
                     </span>
                   </h3>
                   <div
-                    className="grid gap-2"
-                    style={{ gridTemplateColumns: `repeat(${Math.min(scenes.length, 3)}, minmax(0, 1fr))` }}
+                    className="grid grid-cols-2 gap-2 sm:grid-cols-4"
                   >
                     {scenes.map((s) => {
                       const has = collected.has(s.id);

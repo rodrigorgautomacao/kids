@@ -4,6 +4,7 @@ import GameShell from '../GameShell';
 import LevelHUD from '../LevelHUD';
 import LevelDone from '../LevelDone';
 import LevelMap from '../LevelMap';
+import SpeakChip from '../SpeakChip';
 import { StarItem } from '../art';
 import { bestScore } from '../../lib/progress';
 import { usePrefersReducedMotion } from '../../lib/motion';
@@ -115,6 +116,7 @@ export default function MemoryGame({ levels, onExit }: Props) {
       flyNumber(stage, x, y, `+${PTS_PAR}`);
       setMatched((m) => new Set([...m, a.key, b.key]));
       setScore((s) => s + PTS_PAR);
+      voice.speak(`É um par! ${a.name}!`);
       later(() => setFlipped([]), 480);
     } else {
       sfx.wrong();
@@ -181,7 +183,10 @@ export default function MemoryGame({ levels, onExit }: Props) {
           </div>
         </div>
 
-        <p className="text-center text-lg font-black text-teal-900">Os animais entraram na arca de dois em dois! 🚢</p>
+        <p className="flex items-center gap-2 text-center text-lg font-black text-teal-900">
+          <span>Os animais entraram na arca de dois em dois! 🚢</span>
+          <SpeakChip text="Os animais entraram na arca de dois em dois!" className="relative -top-0.5" />
+        </p>
 
         <div ref={stageRef} className="relative grid w-full grid-cols-4 gap-2 sm:gap-3">
           {deck.map((card) => {

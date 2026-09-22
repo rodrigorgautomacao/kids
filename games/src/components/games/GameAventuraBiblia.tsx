@@ -13,7 +13,7 @@ import RotateHint from '../RotateHint';
 import LevelMap from '../LevelMap';
 import PauseOverlay from '../PauseOverlay';
 import HandHint from '../HandHint';
-import { Hero, Npc, StarItem } from '../art';
+import { Hero, Npc, StarItem, Motif } from '../art';
 import SceneStage from '../SceneStage';
 import { scenesForCharacter, type Scene } from '../../data/scenes';
 import { hasSticker } from '../../lib/stickers';
@@ -217,22 +217,22 @@ const STORIES: Story[] = [
   },
   {
     id: 'eliseu',
-    title: 'Eliseu e a ursa',
+    title: 'Eliseu e o manto',
     npc: 'Eliseu',
     emoji: '🧥',
-    scene: '🐻',
-    ref: '2 Reis 2.24 (NAA)',
+    scene: '🧥',
+    ref: '2 Reis 2.13-14 (NAA)',
     pos: { x: 1600, y: 660 },
     speak: [
-      'Eu sou o profeta que recebeu o manto de Elias.',
-      'Um dia, uns garotos zombavam de mim no caminho.',
-      'Então uma ursa apareceu e os fez correr!',
+      'Eu sou Eliseu, o profeta de Deus.',
+      'Recebi o manto de Elias e atravessei o rio Jordão.',
+      'Deus fez milagres de cura e cuidado através de mim!',
     ],
-    q: 'Quem mandou a ursa afastar os garotos zombadores?',
-    right: { t: 'Eliseu', e: '🐻' },
+    q: 'O que Eliseu pegou quando Elias subiu ao céu?',
+    right: { t: 'O manto de Elias', e: '🧥' },
     wrongs: [
       { t: 'Elias', e: '⚡' },
-      { t: 'Moisés', e: '🗿' },
+      { t: 'Moisés', e: '📜' },
       { t: 'Samuel', e: '📜' },
       { t: 'Daniel', e: '🦁' },
     ],
@@ -285,7 +285,7 @@ const STORIES: Story[] = [
     id: 'moises',
     title: 'Moisés e o Mar Vermelho',
     npc: 'Moisés',
-    emoji: '🗿',
+    emoji: '📜',
     scene: '🌊',
     ref: 'Êxodo 14.21 (NAA)',
     pos: { x: 700, y: 1180 },
@@ -329,7 +329,7 @@ const STORIES: Story[] = [
     id: 'davi',
     title: 'Davi e o gigante Golias',
     npc: 'Davi',
-    emoji: '🎯',
+    emoji: '🪨',
     scene: '🪨',
     ref: '1 Samuel 17.49 (NAA)',
     pos: { x: 1360, y: 1195 },
@@ -339,7 +339,7 @@ const STORIES: Story[] = [
       'Com uma pedra e a ajuda de Deus, venci o gigante!',
     ],
     q: 'Qual gigante Davi venceu com uma pedra?',
-    right: { t: 'Golias', e: '🎯' },
+    right: { t: 'Golias', e: '🪨' },
     wrongs: [
       { t: 'O forte Sansão', e: '💪' },
       { t: 'O rei Saul', e: '👑' },
@@ -351,7 +351,7 @@ const STORIES: Story[] = [
     id: 'salomao',
     title: 'Salomão pede sabedoria',
     npc: 'Salomão',
-    emoji: '🦉',
+    emoji: '👑',
     scene: '🏛️',
     ref: '1 Reis 3.9-12 (NAA)',
     pos: { x: 1960, y: 700 },
@@ -373,7 +373,7 @@ const STORIES: Story[] = [
     id: 'paulo',
     title: 'Paulo no caminho de Damasco',
     npc: 'Paulo',
-    emoji: '📜',
+    emoji: '✉️',
     scene: '🛤️',
     ref: 'Atos 9.3-6 (NAA)',
     pos: { x: 2250, y: 450 },
@@ -1279,8 +1279,8 @@ export default function GameAventuraBiblia({ onExit }: GameProps) {
           ))}
 
           {/* mar da arca */}
-          <div className="absolute rounded-b-3xl bg-gradient-to-b from-sky-400 to-blue-500" style={{ left: 70, top: 140, width: 340, height: 230 }}>
-            <span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-7xl drop-shadow-lg">🚢</span>
+          <div className="absolute flex items-center justify-center rounded-b-3xl bg-gradient-to-b from-sky-400 to-blue-500" style={{ left: 70, top: 140, width: 340, height: 230 }}>
+            <span className="drop-shadow-lg"><Motif id="noe" size={72} /></span>
           </div>
 
           {/* lago de Jonas */}
@@ -1298,9 +1298,9 @@ export default function GameAventuraBiblia({ onExit }: GameProps) {
             <span className="text-5xl">🏠</span>
           </div>
 
-          {/* toca dos ursos */}
-          <div className="absolute flex items-center justify-center rounded-full bg-gradient-to-b from-lime-700 to-green-800" style={{ left: 1450, top: 720, width: 260, height: 100 }}>
-            <span className="text-5xl">🐻</span>
+          {/* retiro de Eliseu */}
+          <div className="absolute flex items-center justify-center rounded-full bg-gradient-to-b from-emerald-700 to-green-800" style={{ left: 1450, top: 720, width: 260, height: 100 }}>
+            <span className="drop-shadow"><Motif id="eliseu" size={56} /></span>
           </div>
 
           {/* cova dos leões */}

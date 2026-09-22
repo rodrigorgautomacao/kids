@@ -556,6 +556,7 @@ export default function GameEstradaDaLuz({ onExit }: GameProps) {
               </span>
             </p>
             <LevelDone
+              celebrate={false}
               stars={starsFrom(wrongCount)}
               onNext={isLast ? undefined : () => goToTrecho(trecho + 1)}
               onExit={onExit}

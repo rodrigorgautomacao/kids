@@ -6,6 +6,7 @@ import LevelDone from '../LevelDone';
 import LevelMap from '../LevelMap';
 import { Backdrop, StarItem } from '../art';
 import type { BackdropId } from '../../data/scenes';
+import SpeakChip from '../SpeakChip';
 import { bestScore, submitScore } from '../../lib/progress';
 import { usePrefersReducedMotion } from '../../lib/motion';
 import { confettiGravity, confettiPieces } from '../../lib/confetti';
@@ -184,12 +185,15 @@ export default function PuzzleGame({
           </div>
         </div>
 
-        <div className="flex w-full items-center gap-4 rounded-3xl bg-white/95 px-4 py-3 shadow-xl">
+        <div className="relative flex w-full items-center gap-4 rounded-3xl bg-white/95 px-4 py-3 shadow-xl">
           <div className="h-16 w-20 shrink-0 overflow-hidden rounded-xl border-2 border-slate-200">
             <Backdrop id={puzzle.backdrop} />
           </div>
-          <div>
-            <p className="text-lg font-black text-indigo-900">Monte a cena: {puzzle.label}</p>
+          <div className="flex-1">
+            <p className="text-lg font-black text-indigo-900">
+              Monte a cena: {puzzle.label}
+              <SpeakChip text={`${puzzle.label}. Monte a cena!`} className="relative -top-1 ml-2 inline-flex" />
+            </p>
             <p className="text-xs font-bold text-slate-400">
               {puzzle.rows * puzzle.cols} peças · toque em duas para trocá-las de lugar
             </p>
