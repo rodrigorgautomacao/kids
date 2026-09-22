@@ -70,6 +70,7 @@ export default function ChoiceGame({
   const [picked, setPicked] = useState<string | null>(null);
   const [won, setWon] = useState(false);
   const [score, setScore] = useState(0);
+  const [combo, setCombo] = useState(0);
   const [msg, setMsg] = useState<{ text: string; good: boolean; ref?: string } | null>(null);
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
   const stageRef = useRef<HTMLDivElement>(null);
@@ -85,6 +86,7 @@ export default function ChoiceGame({
     setPicked(null);
     setWon(false);
     setMsg(null);
+    setCombo(0);
   }, [ls.levelIdx, ls.roundIdx, ls.phase]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const narrate = () => {
@@ -126,7 +128,10 @@ export default function ChoiceGame({
     setPicked(opt.id);
 
     if (opt.id === round.correct) {
-      sfx.correct();
+      const nextCombo = combo + 1;
+      setCombo(nextCombo);
+      sfx.correct(Math.max(0, nextCombo - 1));
+      if (nextCombo > 1 && nextCombo % 3 === 0) sfx.streak(nextCombo - 1);
       setWon(true);
       setScore((s) => s + PTS_ACERTO);
       burst(stageRef.current, x, y, { kind: 'spark', count: 18 });
@@ -140,6 +145,7 @@ export default function ChoiceGame({
       }, 2400);
     } else {
       sfx.wrong();
+      setCombo(0);
       ls.addWrong();
       shake(el);
       setMsg({ text: 'Quase! Tenta de novo! ✊', good: false });
@@ -223,6 +229,11 @@ export default function ChoiceGame({
             steps={ls.level.rounds.length}
           />
           <div className="flex items-center gap-2">
+            {combo >= 3 ? (
+              <span className="ui-press animate-pop flex items-center gap-1.5 rounded-full bg-orange-100 px-4 py-2 text-sm font-black text-orange-900 shadow">
+                🔥 x{combo}
+              </span>
+            ) : null}
             {score > 0 ? (
               <span className="ui-press flex items-center gap-1.5 rounded-full bg-amber-100 px-4 py-2 text-sm font-black text-amber-900 shadow">
                 <StarItem size={18} /> {score}

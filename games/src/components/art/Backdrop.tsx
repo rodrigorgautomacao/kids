@@ -798,8 +798,8 @@ export default function Backdrop({ id }: { id: BackdropId }) {
         <svg viewBox="0 0 400 300" preserveAspectRatio="xMidYMid slice" className="h-full w-full" aria-hidden>
           <defs>
             <linearGradient id={g.sky} x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0" stopColor="#d97706" />
-              <stop offset="1" stopColor="#fbbf24" />
+              <stop offset="0" stopColor="#f59e0b" />
+              <stop offset="1" stopColor="#fde68a" />
             </linearGradient>
             <linearGradient id={uid('feixo')} x1="0" y1="0" x2="0" y2="1">
               <stop offset="0" stopColor="#fef9c3" stopOpacity="0.95" />
@@ -807,8 +807,17 @@ export default function Backdrop({ id }: { id: BackdropId }) {
             </linearGradient>
           </defs>
           <rect width="400" height="300" fill={`url(#${g.sky})`} />
+          {/* morros distantes */}
+          <path d="M-20 176 Q 120 108 260 164 Q 380 120 420 176 L 420 200 L -20 200 Z" fill="#b45309" opacity={0.45} />
           <path d="M120 0 L 280 0 L 260 40 L 140 40 Z" fill="#fff7ed" opacity={0.6} />
           <polygon points="118,0 282,0 262,140 138,140" fill={`url(#${uid('feixo')})`} />
+          {/* árvore ao lado da estrada */}
+          <g transform="translate(336 150)">
+            <rect x="-6" y="22" width="12" height="52" rx="3" fill="#7c2d12" />
+            <circle cx="0" cy="6" r="26" fill="#15803d" />
+            <circle cx="-18" cy="16" r="16" fill="#166534" opacity={0.9} />
+            <circle cx="18" cy="14" r="17" fill="#16a34a" opacity={0.9} />
+          </g>
           <path d="M0 210 Q 200 176 400 210 L 400 300 L 0 300 Z" fill="#b45309" />
           <path d="M0 240 Q 200 206 400 240 L 400 300 L 0 300 Z" fill="#92400e" />
           <path d="M168 300 L 156 226 L 244 226 L 232 300 Z" fill="#78350f" />
