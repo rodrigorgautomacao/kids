@@ -28,3 +28,7 @@ export { default as GameSombraDoHeroi } from './GameSombraDoHeroi';
 export { default as GameEuSouDeDeus } from './GameEuSouDeDeus';
 export { default as GameMeninosEMeninas } from './GameMeninosEMeninas';
 export { default as GameMeuProposito } from './GameMeuProposito';
+// Fase 18 — A Grande Jornada (platformer bíblico, ADR-010)
+export { default as GameAGrandeJornada } from './GameAGrandeJornada';
+// Fase 18 — A Palavra Certa (plataforma + duelos de Palavra)
+export { default as GameAPalavraCerta } from './GameAPalavraCerta';

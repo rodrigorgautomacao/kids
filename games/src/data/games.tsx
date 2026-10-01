@@ -28,6 +28,8 @@ import {
   GameEuSouDeDeus,
   GameMeninosEMeninas,
   GameMeuProposito,
+  GameAGrandeJornada,
+  GameAPalavraCerta,
 } from '../components/games';
 
 export type Faixa = '3-4' | '5-6' | '7-9';
@@ -143,6 +145,32 @@ const GAMES: GameDefinition[] = [
   { id: 'eu-sou-de-deus', title: 'Eu Sou de Deus', subtitle: 'Identidade em Deus', sinopse: 'Quem eu sou aos olhos de Deus? Amado, conhecido e filho dele!', faixa: '3-4', tipo: 'at-nt', status: 'pronto', habilidades: ['identidade', 'fé'], icon: StarIcon, color: 'bg-rose-200 text-rose-900', component: GameEuSouDeDeus },
   { id: 'meninos-e-meninas', title: 'Meninos e Meninas de Deus', subtitle: 'Criação e valor', sinopse: 'Deus criou meninos e meninas à sua imagem — cada um com dons e chamado!', faixa: '5-6', tipo: 'at-nt', status: 'pronto', habilidades: ['identidade', 'valor', 'fé'], icon: CompassIcon, color: 'bg-sky-200 text-sky-900', component: GameMeninosEMeninas },
   { id: 'meu-proposito', title: 'Meu Propósito', subtitle: 'Planos de Deus', sinopse: 'Deus tem propósitos para cada pessoa e para toda a igreja!', faixa: '7-9', tipo: 'at-nt', status: 'pronto', habilidades: ['propósito', 'discipulado', 'conhecimento bíblico'], icon: CrownIcon, color: 'bg-indigo-200 text-indigo-900', component: GameMeuProposito },
+
+  // ─── Fase 18 — A Palavra Certa (plataforma lateral + duelos) ──
+  {
+    id: 'palavra-certa',
+    title: 'A Palavra Certa',
+    subtitle: 'Plataforma + Palavra',
+    sinopse: 'Corra, pule e declare a Palavra certa para passar! 10 fases, 50 encontros e um guardião em cada fase.',
+    faixa: '7-9', tipo: 'at-nt', status: 'pronto', totalLevels: 10,
+    habilidades: ['leitura', 'decisão', 'conhecimento bíblico', 'coordenação motora'],
+    icon: CrownIcon,
+    color: 'bg-emerald-200 text-emerald-900',
+    component: GameAPalavraCerta,
+  },
+
+  // ─── Fase 18 — A Grande Jornada (platformer bíblico, ADR-010) ─
+  {
+    id: 'a-grande-jornada',
+    title: 'A Grande Jornada',
+    subtitle: 'Platformer bíblico',
+    sinopse: 'Caminhe, corra e pule do Jardim à Cidade Celeste! 12 etapas, sementes de luz e o Portão no fim do caminho.',
+    faixa: '7-9', tipo: 'at-nt', status: 'pronto', totalLevels: 12,
+    habilidades: ['coordenação motora', 'persistência', 'conhecimento bíblico'],
+    icon: FlagIcon,
+    color: 'bg-amber-200 text-amber-900',
+    component: GameAGrandeJornada,
+  },
 ];
 
 // ─── Ícones simples (evita importar lucide em games.ts) ──────────
@@ -157,6 +185,9 @@ function CrownIcon({ size = 28 }: { size?: number }) {
 }
 function CompassIcon({ size = 28 }: { size?: number }) {
   return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M16.24 7.76l-2.12 6.36-6.36 2.12 2.12-6.36 6.36-2.12z"/></svg>;
+}
+function FlagIcon({ size = 28 }: { size?: number }) {
+  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 21V4"/><path d="M5 4h11l-2 4 2 4H5"/></svg>;
 }
 
 // Backward compat — jogos antigos importam MAX_LEVELS_PER_GAME do aqui
