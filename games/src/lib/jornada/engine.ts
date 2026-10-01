@@ -23,6 +23,7 @@ import {
   VIEW_W,
 } from './constants';
 import { createPlayer, stepPlayer } from './physics';
+import type { EfeitoEncontro, Encontro } from './encontros';
 import { isSolid, parseMap, type TileMap } from './tiles';
 import type { EngineEvent, EnemyState, InputState, PlatformerLevel, PlayerState } from './types';
 import { drawScene, type Scene } from './render';
@@ -39,6 +40,12 @@ export interface EngineOptions {
   smallKids: boolean;
   reducedMotion: boolean;
   onEvent: (e: EngineEvent) => void;
+  /**
+   * Encontros com escolhas desta etapa (`data/jornadaEncontros.ts`). O NPC
+   * espera num ponto da estrada (fração da largura) e o motor PAUSA sozinho:
+   * a casca mostra o cartão e devolve o controle com `resumeEncontro()`.
+   */
+  encontros?: readonly Encontro[];
 }
 
 export class JornadaEngine {
@@ -66,6 +73,8 @@ export class JornadaEngine {
   private flash = 0;
   private hitStop = 0;
   private camKick = 0;
+  private encontrosPendentes: Encontro[] = [];
+  private encontrosFeitos = new Set<string>();
   private readonly opts: EngineOptions;
   readonly level: PlatformerLevel;
   /** A casca React cola o canvas aqui (sem re-render por frame). */
@@ -75,6 +84,7 @@ export class JornadaEngine {
     this.level = level;
     this.opts = opts;
     this.map = parseMap(level.map);
+    this.encontrosPendentes = [...(opts.encontros ?? [])].sort((a, b) => a.at - b.at);
     this.checkpoint = this.map.checkpoints[0]
       ? { x: this.map.checkpoints[0].x, y: this.map.checkpoints[0].y }
       : { x: TILE * 2, y: TILE * 2 };
@@ -139,6 +149,8 @@ export class JornadaEngine {
     this.lightLevel = 1;
     this.finished = false;
     this.flash = 0;
+    this.encontrosPendentes = fresh.encontrosPendentes;
+    this.encontrosFeitos = new Set();
     this.camX = fresh.camX;
     this.camY = fresh.camY;
     this.emit({ type: 'message', text: 'De novo, sem pressa — cada passo conta!' });
@@ -192,6 +204,37 @@ export class JornadaEngine {
 
   getSeedCount() {
     return this.seedCount;
+  }
+
+  /**
+   * A criança respondeu certo: aplica a bênção do NPC e devolve o controle.
+   * Errar NÃO chega aqui — a carta fica aberta para nova escolha (graça).
+   */
+  resolverEncontro(acerto: string, ref: string, efeito: EfeitoEncontro) {
+    this.aplicarEfeito(efeito);
+    this.emit({ type: 'bencao', text: `${acerto} ${ref}` });
+    this.resume();
+  }
+
+  private aplicarEfeito(efeito: EfeitoEncontro) {
+    if (efeito === 'semente') {
+      this.seedCount += 2;
+      this.emit({ type: 'seed', total: this.seedCount });
+      this.emit({ type: 'message', text: 'A semente que o Peregrino ganhou brilha mais forte.' });
+    } else if (efeito === 'escudo') {
+      this.player.shield = true;
+      this.emit({ type: 'shield' });
+      this.emit({ type: 'message', text: 'O Escudo da Fé te acompanha um passo maior. (Ef 6.16)' });
+    } else if (efeito === 'luz') {
+      this.comunhao = 1;
+      this.lightLevel = 1;
+      this.emit({ type: 'pray' });
+      this.emit({ type: 'message', text: 'A luz acendeu: o caminho à frente ficou claro.' });
+    } else {
+      this.comunhao = 1;
+      this.emit({ type: 'pray' });
+      this.emit({ type: 'message', text: 'A comunhão está cheia de novo — segue tranquilo.' });
+    }
   }
 
   /* --------------------------------- laço --------------------------------- */
@@ -423,6 +466,17 @@ export class JornadaEngine {
           break;
         }
       }
+    }
+
+    // O NPC espera na estrada: o jogo para e a escolha acontece (Bunyan).
+    while (this.encontrosPendentes.length) {
+      const e = this.encontrosPendentes[0];
+      if (this.encontrosFeitos.has(e.id) || p.x < this.pixelWidth() * e.at) break;
+      this.encontrosFeitos.add(e.id);
+      this.encontrosPendentes.shift();
+      this.paused = true;
+      this.emit({ type: 'encontro', id: e.id, npc: e.npc });
+      return;
     }
 
     // O Portão — fim de etapa.

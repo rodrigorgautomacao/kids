@@ -7,6 +7,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Confetti from 'react-confetti';
 import GameShell from '../GameShell';
+import JornadaEncontro from './JornadaEncontro';
 import HandHint from '../HandHint';
 import LevelDone from '../LevelDone';
 import LevelHUD from '../LevelHUD';
@@ -14,8 +15,10 @@ import LevelMap from '../LevelMap';
 import PauseOverlay from '../PauseOverlay';
 import RotateHint from '../RotateHint';
 import { JORNADA_CREDITO, JORNADA_GAME_LEVELS, JORNADA_LEVELS } from '../../data/jornada';
+import { ENCONTROS } from '../../data/jornadaEncontros';
 import { useIsPortraitPhone } from '../../lib/device';
 import { JornadaEngine, type EngineEvent } from '../../lib/jornada';
+import type { Encontro } from '../../lib/jornada/encontros';
 import { levelMapItems, useLevelState } from '../../lib/levels';
 import { confettiGravity, confettiPieces } from '../../lib/confetti';
 import { music, sfx, voice } from '../../lib/audio';
@@ -42,6 +45,8 @@ export default function GameAGrandeJornada({ onExit }: { onExit: () => void }) {
   // A narrativa de entrada aparece uma vez por etapa, sobre o cenário novo —
   // é onde a criança sabe ONDE está e COMO é o lugar antes de correr (ADR-010).
   const [intro, setIntro] = useState(true);
+  // O NPC da etapa: o motor pausa sozinho e a carta assume a tela.
+  const [encontro, setEncontro] = useState<Encontro | null>(null);
   const reducedMotion = usePrefersReducedMotion();
   const portraitPhone = useIsPortraitPhone();
 
@@ -100,6 +105,17 @@ export default function GameAGrandeJornada({ onExit }: { onExit: () => void }) {
         // Referência da etapa como prêmio (a lição aparece na tela de fim).
         ls.completeRound();
         break;
+      case 'encontro': {
+        // Pausa já veio do motor; a carta mostra o personagem do livro.
+        sfx.streak(1);
+        const achado = ENCONTROS.find((x) => x.id === e.id);
+        if (achado) setEncontro(achado);
+        break;
+      }
+      case 'bencao':
+        sfx.badge();
+        showMessage(e.text);
+        break;
       case 'message':
         showMessage(e.text);
         break;
@@ -116,6 +132,7 @@ export default function GameAGrandeJornada({ onExit }: { onExit: () => void }) {
       smallKids: isSmallKidsMode(),
       reducedMotion: prefersReducedMotion(),
       onEvent: (e) => onEventRef.current(e),
+      encontros: ENCONTROS.filter((x) => x.nivel === level.id),
     });
     engine.canvas = canvas;
     engineRef.current = engine;
@@ -151,6 +168,23 @@ export default function GameAGrandeJornada({ onExit }: { onExit: () => void }) {
       window.clearTimeout(msgTimer.current);
     };
   }, []);
+
+  // A carta do encontro tem a palavra: a música recolhe (skill `jogos-audio` §3).
+  useEffect(() => {
+    if (encontro) {
+      voice.stopSpeaking();
+      music.pause();
+    }
+  }, [encontro]);
+
+  const resolverEncontro = useCallback(
+    (acerto: string, ref: string, efeito: Encontro['efeito']) => {
+      engineRef.current?.resolverEncontro(acerto, ref, efeito);
+      setEncontro(null);
+      music.play('game');
+    },
+    [],
+  );
 
   /* --------------------------------- entrada ------------------------------ */
 
@@ -274,6 +308,7 @@ export default function GameAGrandeJornada({ onExit }: { onExit: () => void }) {
   // Ao trocar de etapa, a narrativa de entrada volta a aparecer.
   useEffect(() => {
     setIntro(true);
+    setEncontro(null);
   }, [ls.levelIdx]);
 
   const mapItems = levelMapItems(
@@ -376,6 +411,15 @@ export default function GameAGrandeJornada({ onExit }: { onExit: () => void }) {
                 Vamos seguir ➜
               </button>
             </div>
+          ) : null}
+
+          {/* O NPC de Bunyan pede uma escolha antes de deixar a criança seguir. */}
+          {encontro ? (
+            <JornadaEncontro
+              encontro={encontro}
+              smallKids={isSmallKidsMode()}
+              onResolver={resolverEncontro}
+            />
           ) : null}
 
           {msg ? (

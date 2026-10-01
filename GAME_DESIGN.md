@@ -485,6 +485,43 @@ Cada etapa **declara seu marco do livro** e sua **referência NAA**.
 > (`Mt 28.19`; `1 Pe 4.10`) — não "você venceu". E o jardim final é o sinal da
 > **criação restaurada**, não da conquista da criança.
 
+### 2.6.1 🆕 Os ENCONTROS — o coração de *O Peregrino* (implementado)
+
+> **Lacuna corrigida:** o livro não é um traversal, é uma sequência de
+> encontros. Cada personagem de Bunyan para o Peregrino na estrada e **propõe
+> uma escolha**. O jogo tinha mecânica (pular, semente, escudo, oração) sem
+> essa alma. Agora **cada uma das 12 etapas tem um NPC com 2–3 escolhas**.
+
+| # | Etapa | NPC (o que ele é no livro) | A escolha |
+|---|---|---|---|
+| 1 | Cidade da Escuridão | **O Evangelista** — acordou o Peregrino e apontou o caminho | O que te fez sair: o Chamado, o cansaço ou a curiosidade? |
+| 2 | O Portão Estreito | **A Boa Vontade** — o guarda que pergunta o motivo de cada um | O que te traz ao Portão? |
+| 3 | A Casa do Intérprete | **O Intérprete** — mostrou a lanterna e a espada | Para que serve a luz que Ele deu? |
+| 4 | A Colina da Dificuldade | **Pliável** — o companheiro que achou a subida apertada e voltou | Segue, volta ou sobe sozinho? |
+| 5 | A Casa Bela | **As Quatro Companheiras** — Discrição, Piedade, Prudência, Caridade | O que sustenta o coração cansado? |
+| 6 | O Vale da Sombra | **A Voz que Orienta** — no vale, foi a voz que mandou seguir | Escuro: o que você faz agora? |
+| 7 | A Feira das Vaidades | **O Mercador da Feira** — todos queriam comprar brilho | A alegria dele está à venda? |
+| 8 | O Castelo da Dúvida | **O Grande Desespero** — sentou na estrada para desistir | Senta com ele ou levanta? |
+| 9 | As Montanhas Deliciosas | **A Ignorância** — achava que chegaria só com boas maneiras | Chegar é por mérito ou por Ele? |
+| 10 | O Terreno Encantado | **O Senhor do Mundo** — conhecia um atalho bonito | Aceita o atalho ou fica na estrada? |
+| 11 | O Rio da Morte | **A Esperança** — entrou no rio com o Peregrino | Confia, se poura ou nada sozinho? |
+| 12 | A Cidade Celeste | **Os Dois Seres Brilhantes** — anunciaram a obra do portão | Chegou: e agora? |
+
+**Regras da tela do encontro** (travas da casa, `ADR-010` + `jogos-biblicos`):
+
+- **Bunyan é inspiração, não autoridade**: toda fala é original, **zero citação**
+  de tradução; Jesus nunca é portrayal (a Voz que Orienta e a Boa Vontade cobrem
+  esse papel), e nenhum confessional aparece.
+- **Erro não pune**: a opção errada é riscada e **corrigida com doçura pela
+  própria personagem**; a criança escolhe de novo. Sem game over, sem perder
+  semente, selo ou estrela. A escolha certa dá uma **bênção** (2 sementes, o
+  Escudo, a luz ou a comunhão) — nunca "nota" ou "recompensa" por mérito
+  (§5, Risco 6).
+- **A referência NAA vem DEPOIS do acerto** (regra de ouro), com a fala do NPC.
+- **Modo Pequeninos**: o NPC e cada opção são falados em voz alta (`🔊`).
+- Gatilho **posicional** (fração da largura da estrada) — funciona nos mapas
+  procedurais; teste garante que **nenhum NPC fica para trás do Portão**.
+
 ### 2.7 Chefes e Consumação
 
 > ❌ **Nenhum chefe em lugar nenhum.** A "grande prova" de cada ato é **o terreno

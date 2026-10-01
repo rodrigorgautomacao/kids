@@ -1,0 +1,238 @@
+// Conteúdo dos encontros — *O Peregrino* (John Bunyan, 1678), versão original.
+//
+// Um personagem por etapa, na ordem em que Bunyan encontra cada um. As falas
+// são escritas do zero (nenhuma citação de tradução) e o tom é o da casa:
+// graça, sem medo, sem culpa, erro corrigido com doçura.
+
+import type { Encontro } from '../lib/jornada/encontros';
+
+export const ENCONTROS: readonly Encontro[] = [
+  {
+    id: 'en-e1',
+    nivel: 'e1',
+    npc: 'O Evangelista',
+    papel: 'Ele acordou o Peregrino e apontou o caminho',
+    fala: 'Por que você está saindo da sua cidade?',
+    opcoes: [
+      {
+        texto: 'Ele me chamou',
+        certa: true,
+      },
+      { texto: 'Eu estava cansado', eco: 'Cansaço passa. O chamado fica.' },
+      { texto: 'Quero ver o que tem lá', eco: 'Ver não é o motivo. Ouvir o Chamado, sim.' },
+    ],
+    acerto: 'É bem isso: a decisão não foi sua. Quem chamou é quem sustenta o passo.',
+    ref: 'Jo 14.6 (NAA)',
+    efeito: 'semente',
+    at: 0.22,
+  },
+  {
+    id: 'en-e2',
+    nivel: 'e2',
+    npc: 'A Boa Vontade',
+    papel: 'O guarda do Portão, que pergunta o motivo de cada um',
+    fala: 'Pare. O que te traz ao Portão?',
+    opcoes: [
+      {
+        texto: 'A vida que Ele promete',
+        certa: true,
+      },
+      { texto: 'Só curiosidade', eco: 'Curiosidade passa pela porta. Fica, mas não sustenta.' },
+      { texto: 'Ninguém me guiou', eco: 'Mesmo sem quem te guie, o Chamado chegou até você.' },
+    ],
+    acerto: 'O Portão é estreito, mas a promessa é larga: quem entra, entra vivo.',
+    ref: 'Jo 10.9 (NAA)',
+    efeito: 'escudo',
+    at: 0.2,
+  },
+  {
+    id: 'en-e3',
+    nivel: 'e3',
+    npc: 'O Intérprete',
+    papel: 'Mostrou ao Peregrino o significado da lanterna e da espada',
+    fala: 'Mostrei-te a lanterna. Para que ela serve?',
+    opcoes: [
+      {
+        texto: 'Para iluminar o caminho',
+        certa: true,
+      },
+      { texto: 'Para impressionar os outros', eco: 'Luz que impressiona é tocha de palha.' },
+      { texto: 'Para guardar no bolso', eco: 'Guardada no bolso, ela não ilumina nada.' },
+    ],
+    acerto: 'Assim é a Palavra: luz que mostra o caminho e alimenta quem caminha.',
+    ref: 'Sl 119.105 (NAA)',
+    efeito: 'luz',
+    at: 0.26,
+  },
+  {
+    id: 'en-e4',
+    nivel: 'e4',
+    npc: 'Pliável',
+    papel: 'O companheiro que achou a subida apertada e voltou',
+    fala: 'Aqui é apertado demais. Vamos voltar?',
+    opcoes: [
+      {
+        texto: 'Continuo. Com Deus dá',
+        certa: true,
+      },
+      { texto: 'Vamos voltar', eco: 'Você pode voltar, sim. Quem continua não se perde por isso.' },
+      { texto: 'Subo sozinho, sem ajuda', eco: 'Sozinho o passo fica curto. A ajuda é dada.' },
+    ],
+    acerto: 'Ninguém chega sozinho. Pliável voltou com o coração leve — e isso também é graça.',
+    ref: 'Hb 12.1-2 (NAA)',
+    efeito: 'semente',
+    at: 0.18,
+  },
+  {
+    id: 'en-e5',
+    nivel: 'e5',
+    npc: 'As Quatro Companheiras',
+    papel: 'Discrição, Piedade, Prudência e Caridade acenderam a sala',
+    fala: 'Somos quatro. O que sustenta o coração cansado?',
+    opcoes: [
+      {
+        texto: 'A graça que me sustenta',
+        certa: true,
+      },
+      { texto: 'Só a minha força', eco: 'A força acaba na subida. A graça não.' },
+      { texto: 'Depois eu descanso', eco: 'Descanso é bom. Mas é a graça que dá o tom hoje.' },
+    ],
+    acerto: 'Onde elas pisaram, a casa ficou acesa. Graça também ilumina.',
+    ref: '1 Co 10.13 (NAA)',
+    efeito: 'comunhao',
+    at: 0.3,
+  },
+  {
+    id: 'en-e6',
+    nivel: 'e6',
+    npc: 'A Voz que Orienta',
+    papel: 'No vale escuro, foi a voz que mandou seguir e não temer',
+    fala: 'Está escuro aqui. E agora?',
+    opcoes: [
+      {
+        texto: 'Oro e continuo',
+        certa: true,
+      },
+      { texto: 'Espero a luz clarear', eco: 'Esperar parado é escuro à toa. Um passo já clareia.' },
+      { texto: 'Corro para sair', eco: 'Correr cansa e tropeça. No vale, o passo é doado.' },
+    ],
+    acerto: 'No vale mora o medo — e Ele não fica nele. Você também não precisa.',
+    ref: 'Sl 23.4 (NAA)',
+    efeito: 'escudo',
+    at: 0.24,
+  },
+  {
+    id: 'en-e7',
+    nivel: 'e7',
+    npc: 'O Mercador da Feira',
+    papel: 'Na Feira das Vaidades, todos queriam comprar brilho e festa',
+    fala: 'Olha o brilho! Todo mundo está comprando. E você?',
+    opcoes: [
+      {
+        texto: 'Minha alegria não está à venda',
+        certa: true,
+      },
+      { texto: 'Quero o brilho também', eco: 'O brilho se mostra e some. Sem dói, mas some.' },
+      { texto: 'Vou só olhar', eco: 'Olhar é perigoso: a feira é feita de um olhar só.' },
+    ],
+    acerto: 'Você passou pela feira sem comprar. A alegria que vem de Deus não tem preço de feira.',
+    ref: '1 Jo 2.15-17 (NAA)',
+    efeito: 'luz',
+    at: 0.28,
+  },
+  {
+    id: 'en-e8',
+    nivel: 'e8',
+    npc: 'O Grande Desespero',
+    papel: 'Sentou-se na estrada para dizer que a espera não valia a pena',
+    fala: 'Toda essa espera foi em vão. Senta comigo.',
+    opcoes: [
+      {
+        texto: 'Levanto. Deus me socorre',
+        certa: true,
+      },
+      { texto: 'Vou sentar com você', eco: 'Sentar é tentador. Mas levantar é o que cura.' },
+      { texto: 'Não acredito mais em nada', eco: 'Isso é o despairo falando. Você ainda espera — e isso é a prova.' },
+    ],
+    acerto: 'Você levantou. O desespero sempre aventa: a hora de levantar é sempre agora.',
+    ref: 'Tg 1.6-8 (NAA)',
+    efeito: 'escudo',
+    at: 0.2,
+  },
+  {
+    id: 'en-e9',
+    nivel: 'e9',
+    npc: 'A Ignorância',
+    papel: 'Achava que chegaria à Cidade só com as próprias boas maneiras',
+    fala: 'Eu chego lá sozinho. Você precisa se esforçar mais.',
+    opcoes: [
+      {
+        texto: 'É por Ele, não por mim',
+        certa: true,
+      },
+      { texto: 'Talvez eu me esforce mais', eco: 'Esforço é bom, mas não é o que abre o Portão.' },
+      { texto: 'Você está certo', eco: 'Não está. A ajuda é dada — aceita e siga.' },
+    ],
+    acerto: 'Boas maneiras não compram o céu. Receber é o caminho — e Ele deu o Seu.',
+    ref: 'Jo 15.5 (NAA)',
+    efeito: 'semente',
+    at: 0.26,
+  },
+  {
+    id: 'en-e10',
+    nivel: 'e10',
+    npc: 'O Senhor do Mundo',
+    papel: 'Conhecia um atalho bonito, longe da estrada principal',
+    fala: 'Por que lida com o ingreme? Eu tenho um atalho.',
+    opcoes: [
+      {
+        texto: 'Não preciso de atalho',
+        certa: true,
+      },
+      { texto: 'Me mostra o atalho', eco: 'O atalho leva onde não tem cidade. Fico na estrada.' },
+      { texto: 'Qual atalho?', eco: 'Perguntar já é tropeçar. A estrada é o caminho conhecido.' },
+    ],
+    acerto: 'Atalho nenhum encurta a obediência. A estrada longa leva à cidade.',
+    ref: 'Pv 14.12 (NAA)',
+    efeito: 'semente',
+    at: 0.22,
+  },
+  {
+    id: 'en-e11',
+    nivel: 'e11',
+    npc: 'A Esperança',
+    papel: 'Entrou no rio com o Peregrino e sustentou a travessia',
+    fala: 'O rio é fundo. Ainda bem que não vamos sozinhos.',
+    opcoes: [
+      {
+        texto: 'Confio nEle até o outro lado',
+        certa: true,
+      },
+      { texto: 'Vou me poupar para depois', eco: 'Poupar-se no rio é afogar com calma.' },
+      { texto: 'Nadar sozinho é mais rápido', eco: 'Sozinho é mais rápido e mais fundo. Junto, dá.' },
+    ],
+    acerto: 'O rio não te afogou porque Ele atravessou primeiro. Coragem de quem já foilevado.',
+    ref: '1 Co 15.55-57 (NAA)',
+    efeito: 'luz',
+    at: 0.24,
+  },
+  {
+    id: 'en-e12',
+    nivel: 'e12',
+    npc: 'Os Dois Seres Brilhantes',
+    papel: 'No portão da Cidade, anunciaram a grande obra que começa depois da chegada',
+    fala: 'Sua jornada terminou. Agora o mundo precisa de você.',
+    opcoes: [
+      {
+        texto: 'Vou cuidar dos outros e contar',
+        certa: true,
+      },
+      { texto: 'Quero descansar', eco: 'Descanso é bom. Descanso eterno é melhor — e a obra te espera logo ali.' },
+      { texto: 'Ainda não, só mais um pouco', eco: 'Sempre tem mais um pouco. Ele chama: é hora de responder.' },
+    ],
+    acerto: 'Você chegou e foi mandado de volta — agora para levar o que recebeu. É assim que começa a cidade nova.',
+    ref: 'Mt 28.19-20 (NAA)',
+    efeito: 'escudo',
+    at: 0.3,
+  },
+];

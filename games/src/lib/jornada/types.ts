@@ -73,6 +73,8 @@ export type EngineEvent =
   | { type: 'canto' }
   | { type: 'pray' }
   | { type: 'detour' }
+  | { type: 'encontro'; id: string; npc: string }
+  | { type: 'bencao'; text: string }
   | { type: 'gate' }
   | { type: 'message'; text: string };
 
