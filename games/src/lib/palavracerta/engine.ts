@@ -74,6 +74,11 @@ function rectsOverlap(a: Rect, b: Rect): boolean {
   return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
 }
 
+/** Existe chão firme (não plataforma) cobrindo este x? Serve de rede de retomada. */
+function hasFirmGround(geom: LevelGeom, x: number): boolean {
+  return geom.solids.some((s) => s.y >= geom.groundY - 2 && x >= s.x && x <= s.x + s.w);
+}
+
 export function createPlatformer(canvas: HTMLCanvasElement, opts: PlatformerOptions): PlatformerHandle {
   const ctx = canvas.getContext('2d');
   if (!ctx) return noopHandle();
@@ -83,7 +88,7 @@ export function createPlatformer(canvas: HTMLCanvasElement, opts: PlatformerOpti
 
   const hero: HeroRuntime = {
     x: 120,
-    y: geom.groundY - HERO_H,
+    y: geom.groundY,
     vx: 0,
     vy: 0,
     onGround: true,
@@ -219,6 +224,7 @@ export function createPlatformer(canvas: HTMLCanvasElement, opts: PlatformerOpti
     const prevVy = hero.vy;
     hero.y += hero.vy * dt;
     hero.onGround = false;
+    let landedOnFirmGround = false;
     box = { x: hero.x - boxW / 2, y: hero.y - boxH, w: boxW, h: boxH };
     for (const s of geom.solids) {
       if (Math.abs(s.x + s.w / 2 - hero.x) > 260) continue;
@@ -227,6 +233,8 @@ export function createPlatformer(canvas: HTMLCanvasElement, opts: PlatformerOpti
         hero.y = s.y;
         hero.vy = 0;
         hero.onGround = true;
+        // Só o CHÃO FIRME vira ponto de retomada — nunca plataforma sobre o vazio.
+        if (s.y >= geom.groundY - 2) landedOnFirmGround = true;
       } else if (hero.vy < 0) {
         hero.y = s.y + s.h + boxH;
         hero.vy = 0;
@@ -239,7 +247,7 @@ export function createPlatformer(canvas: HTMLCanvasElement, opts: PlatformerOpti
         opts.events?.onLand?.();
         emitDust(hero.x, hero.y, 7);
       }
-      safeX = hero.x;
+      if (landedOnFirmGround) safeX = hero.x;
       coyote = COYOTE;
     } else if (wasGround) {
       coyote = COYOTE;
@@ -259,11 +267,11 @@ export function createPlatformer(canvas: HTMLCanvasElement, opts: PlatformerOpti
       stepTimer = 0;
     }
 
-    // Queda no buraco: volta ao último ponto seguro, SEM punição.
+    // Queda no buraco: volta ao último ponto SEM punição e sem loop de retomada.
     if (hero.y > geom.groundY + 220) {
       opts.events?.onFall?.();
-      hero.x = safeX;
-      hero.y = geom.groundY - 140;
+      hero.x = hasFirmGround(geom, safeX) ? safeX : 120;
+      hero.y = geom.groundY - HERO_H - 24;
       hero.vx = 0;
       hero.vy = 0;
       emitDust(hero.x, geom.groundY, 8);
@@ -428,7 +436,7 @@ export function createPlatformer(canvas: HTMLCanvasElement, opts: PlatformerOpti
     reset() {
       geom = buildLevel(opts.levelIndex, opts.easy);
       hero.x = 120;
-      hero.y = geom.groundY - HERO_H;
+      hero.y = geom.groundY;
       hero.vx = 0;
       hero.vy = 0;
       hero.state = 'idle';

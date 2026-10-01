@@ -508,130 +508,159 @@ function drawGate(ctx: Ctx, gateX: number, groundY: number, open: boolean, t: nu
 
 function drawHero(ctx: Ctx, hero: HeroRuntime, camX: number, t: number) {
   const x = hero.x - camX;
-  const y = hero.y;
-  const s = 1;
+  const feetY = hero.y;
   const facing = hero.facing;
+  const walking = hero.state === 'walk';
   const walk = hero.walkPhase;
-  const swing = hero.state === 'walk' ? Math.sin(walk) : 0;
+  const swing = walking ? Math.sin(walk) : 0;
 
   // Sombra de contato.
   ctx.fillStyle = 'rgba(15,23,42,0.22)';
   ctx.beginPath();
-  ctx.ellipse(x, y + 2, 20 * s, 6 * s, 0, 0, Math.PI * 2);
+  ctx.ellipse(x, feetY + 2, 17, 5, 0, 0, Math.PI * 2);
   ctx.fill();
 
-  ctx.save();
-  ctx.translate(x, y);
-  ctx.scale(facing, 1);
+  const bob = walking ? Math.abs(Math.sin(walk)) * 1.8 : Math.sin(t * 2.1) * 1.1;
+  const topY = feetY - 52 - bob;
 
-  // Pernas.
-  const legLift = hero.state === 'jump' ? -10 : hero.state === 'fall' ? -6 : 0;
-  const legA = hero.state === 'walk' ? swing * 0.7 : hero.state === 'jump' ? -0.5 : 0;
-  const legB = hero.state === 'walk' ? -swing * 0.7 : hero.state === 'jump' ? 0.35 : 0;
-  for (const [dx, ang] of [[-6, legA], [6, legB]] as const) {
+  ctx.save();
+  ctx.translate(x, 0);
+
+  // Pernas (jeans + sapatos).
+  const legLift = hero.state === 'jump' ? -6 : hero.state === 'fall' ? -3 : 0;
+  const legA = hero.state === 'walk' ? swing * 0.62 : hero.state === 'jump' ? -0.5 : 0;
+  const legB = hero.state === 'walk' ? -swing * 0.62 : hero.state === 'jump' ? 0.32 : 0;
+  for (const [dx, ang] of [[-5, legA], [5, legB]] as const) {
     ctx.save();
-    ctx.translate(dx, -20);
+    ctx.translate(dx, feetY - 22);
     ctx.rotate(ang);
-    ctx.fillStyle = '#1e3a8a';
-    roundRect(ctx, -4.5, 0, 9, 18 + legLift * 0.3, 4);
+    ctx.fillStyle = '#1d4ed8';
+    roundRect(ctx, -4.2, 0, 8.4, 18 + legLift * 0.3, 4);
     ctx.fill();
-    ctx.fillStyle = '#78350f';
-    roundRect(ctx, -5, 15 + legLift * 0.3, 11, 5, 2.5);
+    ctx.fillStyle = '#7c3f1d';
+    roundRect(ctx, -4.8, 15 + legLift * 0.3, 10, 5, 2.5);
     ctx.fill();
     ctx.restore();
   }
 
-  // Túnica (com leve respiração).
-  const breathe = 1 + Math.sin(t * 2.1) * (hero.state === 'idle' ? 0.03 : 0.012);
+  // Túnica (limpa, sem sombra pesada) + faixa + pergaminho.
+  const breathe = 1 + Math.sin(t * 2.1) * (hero.state === 'idle' ? 0.025 : 0.012);
   ctx.save();
-  ctx.translate(0, -30);
+  ctx.translate(0, feetY - 33);
   ctx.scale(1, breathe);
-  const tg = ctx.createLinearGradient(0, -16, 0, 16);
+  const tg = ctx.createLinearGradient(0, -15, 0, 16);
   tg.addColorStop(0, '#38bdf8');
-  tg.addColorStop(1, '#4338ca');
+  tg.addColorStop(1, '#0e7490');
   ctx.fillStyle = tg;
-  ctx.strokeStyle = '#0f172a';
-  ctx.lineWidth = 2;
-  roundRect(ctx, -13, -14, 26, 28, 9);
+  roundRect(ctx, -12, -15, 24, 31, 9);
   ctx.fill();
-  ctx.stroke();
-  // Cinto.
-  ctx.fillStyle = '#f59e0b';
-  roundRect(ctx, -13, 6, 26, 5, 2);
+  // Faixa.
+  ctx.fillStyle = '#fbbf24';
+  roundRect(ctx, -12, 4, 24, 5, 2.2);
   ctx.fill();
+  // Pergaminho no cinto (a Palavra que ele declara).
+  ctx.fillStyle = '#f8e7c4';
+  roundRect(ctx, 4, -2, 9, 12, 3);
+  ctx.fill();
+  ctx.fillStyle = '#c2410c';
+  ctx.fillRect(4, 2.5, 9, 2);
   ctx.restore();
 
   // Braços.
-  const armAngle = hero.state === 'walk' ? -swing * 0.55 : hero.state === 'happy' ? -2.3 : hero.state === 'jump' ? -1.8 : 0.12;
+  const armAngle =
+    hero.state === 'walk' ? -swing * 0.55 : hero.state === 'happy' ? -2.3 : hero.state === 'jump' ? -1.8 : 0.12;
   for (const side of [-1, 1] as const) {
     const ang = side === -1 ? armAngle : -armAngle * 0.85;
     ctx.save();
-    ctx.translate(side * 13, -38);
+    ctx.translate(side * 12.5, feetY - 43);
     ctx.rotate(ang * side);
-    ctx.fillStyle = '#38bdf8';
-    roundRect(ctx, -4, -2, 8, 17, 4);
+    ctx.fillStyle = side === -1 ? '#0e7490' : '#38bdf8';
+    roundRect(ctx, -3.8, -2, 7.6, 17, 3.8);
     ctx.fill();
-    ctx.fillStyle = '#f0c194';
+    ctx.fillStyle = '#f3c196';
     ctx.beginPath();
-    ctx.arc(0, 16, 4.2, 0, Math.PI * 2);
+    ctx.arc(0, 15.5, 4, 0, Math.PI * 2);
     ctx.fill();
     ctx.restore();
   }
 
   // Cabeça.
-  const headY = -52 + (hero.state === 'fall' ? 1 : 0);
+  const headY = topY + 11;
+  const look = facing > 0 ? 1.1 : -1.1;
   const hg = ctx.createRadialGradient(-4, headY - 5, 3, 0, headY, 15);
-  hg.addColorStop(0, '#fbd6ad');
-  hg.addColorStop(1, '#e8b184');
+  hg.addColorStop(0, '#fbd8b2');
+  hg.addColorStop(1, '#efb183');
   ctx.fillStyle = hg;
-  ctx.strokeStyle = '#0f172a';
-  ctx.lineWidth = 2;
   ctx.beginPath();
   ctx.arc(0, headY, 13.5, 0, Math.PI * 2);
   ctx.fill();
-  ctx.stroke();
 
   // Cabelo.
   ctx.fillStyle = '#5b3a20';
   ctx.beginPath();
-  ctx.arc(0, headY - 3, 13.5, Math.PI * 1.05, Math.PI * 1.95);
+  ctx.arc(0, headY - 3, 13.5, Math.PI * 1.02, Math.PI * 1.98);
   ctx.fill();
   ctx.beginPath();
-  ctx.arc(-10, headY - 4, 5, 0, Math.PI * 2);
-  ctx.arc(9, headY - 5, 5.5, 0, Math.PI * 2);
+  ctx.arc(-10, headY - 5, 5, 0, Math.PI * 2);
+  ctx.arc(9.5, headY - 5.5, 5.2, 0, Math.PI * 2);
   ctx.fill();
 
-  // Rosto.
+  // Orelhas.
+  ctx.fillStyle = '#efb183';
+  ctx.beginPath();
+  ctx.arc(-13, headY + 1, 2.4, 0, Math.PI * 2);
+  ctx.arc(13, headY + 1, 2.4, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Rosto: olhos brancos com pupilas e brilho, sobrancelhas, sorriso e bochechas.
+  const eyeY = headY - 0.5;
+  ctx.fillStyle = '#fff';
+  ctx.beginPath();
+  ctx.ellipse(-4.6 + look * 0.5, eyeY, 3.1, 3.6, 0, 0, Math.PI * 2);
+  ctx.ellipse(5.2 + look * 0.5, eyeY, 3.1, 3.6, 0, 0, Math.PI * 2);
+  ctx.fill();
   const happy = hero.state === 'happy';
-  const sad = hero.state === 'sad';
-  ctx.strokeStyle = '#0f172a';
-  ctx.fillStyle = '#0f172a';
-  ctx.lineWidth = 1.8;
   if (happy) {
+    ctx.strokeStyle = '#3b2412';
+    ctx.lineWidth = 1.8;
+    ctx.lineCap = 'round';
     ctx.beginPath();
-    ctx.arc(-5, headY - 1, 3, Math.PI, 0);
-    ctx.arc(6, headY - 1, 3, Math.PI, 0);
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.arc(1, headY + 5, 4.4, 0.15 * Math.PI, 0.85 * Math.PI);
+    ctx.arc(-4.4, eyeY + 0.6, 2.6, Math.PI * 1.1, Math.PI * 1.9);
+    ctx.arc(5.4, eyeY + 0.6, 2.6, Math.PI * 1.1, Math.PI * 1.9);
     ctx.stroke();
   } else {
-    const lookX = facing * 1.6;
+    ctx.fillStyle = '#3b2412';
     ctx.beginPath();
-    ctx.ellipse(-5 + lookX, headY - 1 + (sad ? 1.5 : 0), 2.3, 2.8, 0, 0, Math.PI * 2);
-    ctx.ellipse(6 + lookX, headY - 1 + (sad ? 1.5 : 0), 2.3, 2.8, 0, 0, Math.PI * 2);
+    ctx.arc(-4.2 + look, eyeY + 0.5, 1.8, 0, Math.PI * 2);
+    ctx.arc(5.6 + look, eyeY + 0.5, 1.8, 0, Math.PI * 2);
     ctx.fill();
+    ctx.fillStyle = '#fff';
     ctx.beginPath();
-    if (sad) ctx.arc(1, headY + 8, 3.4, Math.PI * 1.15, Math.PI * 1.85);
-    else ctx.arc(1, headY + 4.6, 3.6, 0.15 * Math.PI, 0.85 * Math.PI);
-    ctx.stroke();
+    ctx.arc(-3.6 + look, eyeY - 0.7, 0.75, 0, Math.PI * 2);
+    ctx.arc(6.2 + look, eyeY - 0.7, 0.75, 0, Math.PI * 2);
+    ctx.fill();
   }
-  // Bochechas.
-  ctx.fillStyle = 'rgba(244,114,182,0.45)';
+  ctx.strokeStyle = '#5b3a20';
+  ctx.lineWidth = 1.5;
+  ctx.lineCap = 'round';
   ctx.beginPath();
-  ctx.arc(-8.5, headY + 3.5, 2.6, 0, Math.PI * 2);
-  ctx.arc(9.5, headY + 3.5, 2.6, 0, Math.PI * 2);
+  ctx.moveTo(-7.2 + look * 0.5, eyeY - 5);
+  ctx.quadraticCurveTo(-4.6 + look * 0.5, eyeY - 6.4, -2 + look * 0.5, eyeY - 5.2);
+  ctx.moveTo(2.6 + look * 0.5, eyeY - 5.2);
+  ctx.quadraticCurveTo(5.2 + look * 0.5, eyeY - 6.4, 7.8 + look * 0.5, eyeY - 5);
+  ctx.stroke();
+
+  ctx.fillStyle = 'rgba(244,114,182,0.42)';
+  ctx.beginPath();
+  ctx.arc(-8, headY + 4.5, 2.8, 0, Math.PI * 2);
+  ctx.arc(8.6, headY + 4.5, 2.8, 0, Math.PI * 2);
   ctx.fill();
+  ctx.strokeStyle = '#8a4b2a';
+  ctx.lineWidth = 1.6;
+  ctx.beginPath();
+  if (hero.state === 'sad') ctx.arc(0.5 + look * 0.3, headY + 8.5, 3.2, Math.PI * 1.15, Math.PI * 1.85);
+  else ctx.arc(0.5 + look * 0.3, headY + 5, 3.8, 0.15 * Math.PI, 0.85 * Math.PI);
+  ctx.stroke();
 
   ctx.restore();
 }
@@ -690,9 +719,9 @@ function drawNpcFigure(
   // Corpo/túnica.
   const rg = ctx.createLinearGradient(0, -46 * s, 0, -12 * s);
   rg.addColorStop(0, look.robe);
-  rg.addColorStop(1, 'rgba(15,23,42,0.55)');
+  rg.addColorStop(1, 'rgba(15,23,42,0.22)');
   ctx.fillStyle = rg;
-  ctx.strokeStyle = 'rgba(15,23,42,0.55)';
+  ctx.strokeStyle = 'rgba(91,58,32,0.45)';
   ctx.lineWidth = 2;
   roundRect(ctx, -15 * s, -46 * s, 30 * s, 32 * s, 10 * s);
   ctx.fill();
@@ -718,10 +747,10 @@ function drawNpcFigure(
   const headY = -58 * s;
   const hg = ctx.createRadialGradient(-4 * s, headY - 5 * s, 3 * s, 0, headY, 15 * s);
   hg.addColorStop(0, look.skin);
-  hg.addColorStop(1, 'rgba(15,23,42,0.18)');
+  hg.addColorStop(1, 'rgba(15,23,42,0.12)');
   ctx.fillStyle = hg;
-  ctx.strokeStyle = '#0f172a';
-  ctx.lineWidth = 2;
+  ctx.strokeStyle = '#5b3a20';
+  ctx.lineWidth = 1.6;
   ctx.beginPath();
   ctx.arc(0, headY, 13.5 * s, 0, Math.PI * 2);
   ctx.fill();
@@ -790,32 +819,59 @@ function drawNpcFigure(
     ctx.fill();
   }
 
-  // Rosto.
+  // Rosto: olhos brancos com pupilas e brilho (feição acolhedora).
   const happy = anim === 'happy';
   const think = anim === 'thinking';
-  ctx.fillStyle = '#0f172a';
-  ctx.strokeStyle = '#0f172a';
-  ctx.lineWidth = 1.8;
+  const eyeY = headY - 1 * s;
+  ctx.fillStyle = '#fff';
+  ctx.beginPath();
+  ctx.ellipse(-5 * s, eyeY, 3.1 * s, 3.5 * s, 0, 0, Math.PI * 2);
+  ctx.ellipse(5.8 * s, eyeY, 3.1 * s, 3.5 * s, 0, 0, Math.PI * 2);
+  ctx.fill();
   if (happy) {
+    ctx.strokeStyle = '#3b2412';
+    ctx.lineWidth = 1.8 * s;
+    ctx.lineCap = 'round';
     ctx.beginPath();
-    ctx.arc(-5 * s, headY - 1 * s, 3 * s, Math.PI, 0);
-    ctx.arc(6 * s, headY - 1 * s, 3 * s, Math.PI, 0);
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.arc(1 * s, headY + 5 * s, 4.6 * s, 0.12 * Math.PI, 0.88 * Math.PI);
+    ctx.arc(-5 * s, eyeY + 0.5 * s, 2.4 * s, Math.PI * 1.1, Math.PI * 1.9);
+    ctx.arc(5.8 * s, eyeY + 0.5 * s, 2.4 * s, Math.PI * 1.1, Math.PI * 1.9);
     ctx.stroke();
   } else {
+    ctx.fillStyle = '#3b2412';
     ctx.beginPath();
-    ctx.ellipse(-5 * s, headY - 1 * s, 2.3 * s, 2.9 * s, 0, 0, Math.PI * 2);
-    ctx.ellipse(6 * s, headY - 1 * s, 2.3 * s, 2.9 * s, 0, 0, Math.PI * 2);
+    ctx.arc(-4.6 * s, eyeY + 0.5 * s, 1.7 * s, 0, Math.PI * 2);
+    ctx.arc(6.2 * s, eyeY + 0.5 * s, 1.7 * s, 0, Math.PI * 2);
     ctx.fill();
+    ctx.fillStyle = '#fff';
     ctx.beginPath();
-    if (think) {
-      ctx.moveTo(-2 * s, headY + 7 * s);
-      ctx.lineTo(5 * s, headY + 7 * s);
-    } else {
-      ctx.arc(1 * s, headY + 4.6 * s, 3.8 * s, 0.15 * Math.PI, 0.85 * Math.PI);
-    }
+    ctx.arc(-4 * s, eyeY - 0.7 * s, 0.7 * s, 0, Math.PI * 2);
+    ctx.arc(6.8 * s, eyeY - 0.7 * s, 0.7 * s, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.strokeStyle = '#5b3a20';
+  ctx.lineWidth = 1.4 * s;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(-7.6 * s, eyeY - 4.8 * s);
+  ctx.quadraticCurveTo(-5 * s, eyeY - 6 * s, -2.4 * s, eyeY - 5 * s);
+  ctx.moveTo(3 * s, eyeY - 5 * s);
+  ctx.quadraticCurveTo(5.6 * s, eyeY - 6 * s, 8.2 * s, eyeY - 4.8 * s);
+  ctx.stroke();
+  // Bochechas.
+  ctx.fillStyle = 'rgba(244,114,182,0.38)';
+  ctx.beginPath();
+  ctx.arc(-8.2 * s, headY + 3.6 * s, 2.5 * s, 0, Math.PI * 2);
+  ctx.arc(8.8 * s, headY + 3.6 * s, 2.5 * s, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = '#8a4b2a';
+  ctx.lineWidth = 1.5 * s;
+  ctx.beginPath();
+  if (think) {
+    ctx.moveTo(-2 * s, headY + 7 * s);
+    ctx.lineTo(5 * s, headY + 7 * s);
+    ctx.stroke();
+  } else {
+    ctx.arc(0.5 * s, headY + 4.4 * s, 3.6 * s, 0.15 * Math.PI, 0.85 * Math.PI);
     ctx.stroke();
   }
   ctx.fillStyle = 'rgba(244,114,182,0.4)';

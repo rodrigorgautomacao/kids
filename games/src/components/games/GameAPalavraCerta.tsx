@@ -398,12 +398,19 @@ export default function GameAPalavraCerta({ onExit }: GameProps) {
           </div>
         </div>
 
-        {/* Palco do jogo */}
-        <div
-          ref={canvasRef}
-          className="relative w-full flex-1 overflow-hidden rounded-2xl border-2 border-white/15 bg-sky-300"
-          style={{ minHeight: 260, maxHeight: 430 }}
-        />
+        {/* Palco do jogo (o canvas é anexado imperativamente num nó folha) */}
+        <div className="relative w-full flex-1" style={{ minHeight: 260, maxHeight: 430 }}>
+          <div
+            ref={canvasRef}
+            className="absolute inset-0 overflow-hidden rounded-2xl border-2 border-white/15 bg-sky-300"
+          />
+          {/* Onboarding sem texto (dentro do palco, nunca solto na página) */}
+          {showHand && !duelo && !won ? (
+            <div className="pointer-events-none absolute bottom-6 left-1/2 z-10 -translate-x-1/2">
+              <HandHint />
+            </div>
+          ) : null}
+        </div>
 
         {/* Controles de toque */}
         {jogando ? (
@@ -464,13 +471,6 @@ export default function GameAPalavraCerta({ onExit }: GameProps) {
             >
               <MapIcon className="h-6 w-6" />
             </button>
-          </div>
-        ) : null}
-
-        {/* Onboarding sem texto */}
-        {showHand && !duelo && !won ? (
-          <div className="pointer-events-none absolute bottom-24 left-1/2 -translate-x-1/2">
-            <HandHint />
           </div>
         ) : null}
 
