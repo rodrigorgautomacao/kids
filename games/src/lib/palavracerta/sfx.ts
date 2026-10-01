@@ -117,3 +117,18 @@ export function gateOpen() {
   );
   note({ midi: 84, at: 0.34, dur: 0.5, type: 'sine', vol: 0.07, filter: 4200 });
 }
+
+/**
+ * Vibração sutil (haptics) — só quando o som está ativo e o aparelho vibra.
+ * iOS não expõe `navigator.vibrate`: degrada em silêncio, sem erro.
+ */
+export function buzz(pattern: number | number[]) {
+  if (isSfxMuted()) return;
+  try {
+    if (typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function') {
+      navigator.vibrate(pattern);
+    }
+  } catch {
+    /* aparelho sem vibração */
+  }
+}

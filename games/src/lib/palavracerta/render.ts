@@ -1020,6 +1020,66 @@ function drawThinkBubble(ctx: Ctx, x: number, baseY: number, t: number) {
   ctx.fillText('?', x, y + 1);
 }
 
+
+/* ------------------------------ seta de guia ------------------------------ */
+
+/**
+ * Seta dourada que aponta o próximo alvo (NPC não resolvido ou o Portão).
+ * Se o alvo está na tela, a seta flutua acima dele; se está fora, fica na
+ * borda apontando o lado. Pulsa devagar — nunca pisca rápido (acessibilidade).
+ */
+export function drawGuideArrow(
+  ctx: Ctx,
+  camX: number,
+  w: number,
+  t: number,
+  target: { x: number; y: number } | null,
+  accent: string,
+  reducedMotion: boolean,
+) {
+  if (!target) return;
+  const pulse = reducedMotion ? 1 : 1 + Math.sin(t * 3.2) * 0.12;
+  const bob = reducedMotion ? 0 : Math.sin(t * 2.4) * 4;
+  const sx = target.x - camX;
+  const onScreen = sx > 56 && sx < w - 56;
+
+  const x = onScreen ? sx : sx <= 56 ? 34 : w - 34;
+  const y = onScreen ? target.y - 26 + bob : 96 + bob;
+  const pointDown = onScreen;
+  const flip = sx <= 56 ? 1 : -1;
+
+  ctx.save();
+  ctx.translate(x, y);
+  if (!pointDown) ctx.scale(flip, 1);
+  else ctx.rotate(Math.PI);
+  ctx.scale(pulse, pulse);
+
+  // halo
+  const glow = ctx.createRadialGradient(0, 0, 2, 0, 0, 30);
+  glow.addColorStop(0, 'rgba(253,224,71,0.5)');
+  glow.addColorStop(1, 'rgba(253,224,71,0)');
+  ctx.fillStyle = glow;
+  ctx.fillRect(-30, -30, 60, 60);
+
+  // seta (aponta para baixo na origem; rotacionada para os lados quando na borda)
+  if (!pointDown) ctx.rotate(-Math.PI / 2);
+  ctx.fillStyle = accent;
+  ctx.strokeStyle = 'rgba(15,23,42,0.65)';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(0, 16);
+  ctx.lineTo(-11, -6);
+  ctx.lineTo(-4, -6);
+  ctx.lineTo(-4, -18);
+  ctx.lineTo(4, -18);
+  ctx.lineTo(4, -6);
+  ctx.lineTo(11, -6);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+  ctx.restore();
+}
+
 /* -------------------------------- partículas ------------------------------- */
 
 export function drawParticles(ctx: Ctx, particles: Particle[], camX: number, pal: Palette, t: number) {
@@ -1091,11 +1151,13 @@ export interface DrawFrameArgs {
   particles: Particle[];
   finishOpen: boolean;
   reducedMotion: boolean;
+  /** próximo alvo da jornada (NPC ou portão) — seta de guia */
+  guide: { x: number; y: number } | null;
 }
 
 /** Desenha um quadro completo do mundo (ordem de z explicitada). */
 export function drawFrame(a: DrawFrameArgs) {
-  const { ctx, w, h, t, camX, geom, pal, hero, npcs, particles, finishOpen, reducedMotion } = a;
+  const { ctx, w, h, t, camX, geom, pal, hero, npcs, particles, finishOpen, reducedMotion, guide } = a;
   const wind = reducedMotion ? 0 : 1;
   void wind;
 
@@ -1154,5 +1216,6 @@ export function drawFrame(a: DrawFrameArgs) {
   }
 
   drawHero(ctx, hero, camX, t);
+  drawGuideArrow(ctx, camX, w, t, guide, pal.accent, reducedMotion);
   drawParticles(ctx, particles, camX, pal, t);
 }

@@ -267,11 +267,11 @@ export function createPlatformer(canvas: HTMLCanvasElement, opts: PlatformerOpti
       stepTimer = 0;
     }
 
-    // Queda no buraco: volta ao último ponto SEM punição e sem loop de retomada.
+    // Queda no buraco: volta ao último ponto SEM punição, sem queda e sem loop.
     if (hero.y > geom.groundY + 220) {
       opts.events?.onFall?.();
       hero.x = hasFirmGround(geom, safeX) ? safeX : 120;
-      hero.y = geom.groundY - HERO_H - 24;
+      hero.y = geom.groundY;
       hero.vx = 0;
       hero.vy = 0;
       emitDust(hero.x, geom.groundY, 8);
@@ -303,6 +303,23 @@ export function createPlatformer(canvas: HTMLCanvasElement, opts: PlatformerOpti
       hero.state = 'happy';
       opts.events?.onReachFinish?.();
     }
+  }
+
+  /** Próximo alvo da jornada: NPC mais perto ainda não resolvido, senão o portão. */
+  function nextTarget(): { x: number; y: number } | null {
+    let best: NpcRuntime | null = null;
+    let bestD = Infinity;
+    for (const n of npcs) {
+      if (n.defeated) continue;
+      const d = Math.abs(n.x - hero.x);
+      if (d < bestD) {
+        bestD = d;
+        best = n;
+      }
+    }
+    if (best) return { x: best.x, y: geom.groundY - 132 };
+    if (finishOpen) return { x: geom.gateX, y: geom.groundY - 158 };
+    return null;
   }
 
   function emitDust(x: number, y: number, count: number) {
@@ -399,6 +416,7 @@ export function createPlatformer(canvas: HTMLCanvasElement, opts: PlatformerOpti
       particles,
       finishOpen,
       reducedMotion: opts.reducedMotion,
+      guide: suspended ? null : nextTarget(),
     });
   }
   raf = requestAnimationFrame(frame);

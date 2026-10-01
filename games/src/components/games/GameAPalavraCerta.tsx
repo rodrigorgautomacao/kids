@@ -38,6 +38,7 @@ import {
   escolherVariante,
   FASES,
   marcarUso,
+  TOTAL_ENCONTROS_POR_FASE,
   type Carta,
   type Encontro,
 } from '../../data/palavraCerta';
@@ -113,6 +114,9 @@ export default function GameAPalavraCerta({ onExit }: GameProps) {
   const [levels, setLevels] = useState<ProgressMap>(loadLevels);
   const [showHand, setShowHand] = useState(isFirstTime);
   const [size, setSize] = useState({ w: 0, h: 0 });
+  const [introFase, setIntroFase] = useState(true);
+  const [vitoriaGuardiao, setVitoriaGuardiao] = useState<Encontro | null>(null);
+  const [phaseFade, setPhaseFade] = useState(true);
 
   const fase = FASES[faseN - 1] ?? FASES[0];
 
@@ -152,7 +156,10 @@ export default function GameAPalavraCerta({ onExit }: GameProps) {
           voice.speak(`Você atravessou ${fase.nome} declarando a Palavra!`);
         },
         onFall: () => sfx.gentle(),
-        onJump: () => pfx.jump(),
+        onJump: () => {
+          pfx.jump();
+          pfx.buzz(8);
+        },
         onLand: () => pfx.land(),
         onStep: () => pfx.step(),
       },
@@ -175,15 +182,51 @@ export default function GameAPalavraCerta({ onExit }: GameProps) {
   }, [faseN, won]);
 
   useEffect(() => {
-    if (paused) {
+    const bloqueado = paused || !!duelo || mapOpen || won || introFase || !!vitoriaGuardiao;
+    if (bloqueado) {
       engineRef.current?.pause();
-      voice.stopSpeaking();
-      music.pause();
-    } else if (!duelo && !mapOpen && !won) {
+      if (paused) {
+        voice.stopSpeaking();
+        music.pause();
+      }
+    } else {
       engineRef.current?.resume();
       music.play('game');
     }
-  }, [paused, duelo, mapOpen, won]);
+  }, [paused, duelo, mapOpen, won, introFase, vitoriaGuardiao]);
+
+  // Abertura da fase: cartão narrado + fade de transição (screen-in, sem fill-mode).
+  useEffect(() => {
+    setIntroFase(true);
+    setPhaseFade(true);
+    voice.stopSpeaking();
+    const fala = window.setTimeout(() => {
+      voice.speak(`Fase ${faseN}. ${fase.nome}. ${fase.sub}`);
+    }, 350);
+    const fade = window.setTimeout(() => setPhaseFade(false), 400);
+    return () => {
+      window.clearTimeout(fala);
+      window.clearTimeout(fade);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [faseN]);
+
+  // Música adaptativa: sobe com os encontros vencidos e chega ao máximo no guardião.
+  useEffect(() => {
+    if (won) return;
+    const pertoDoGuardiao = !!duelo?.encontro.guardiao || vencidos.size >= TOTAL_ENCONTROS_POR_FASE - 1;
+    music.setIntensity(pertoDoGuardiao ? 3 : vencidos.size >= 3 ? 2 : vencidos.size >= 1 ? 1 : 0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [vencidos.size, duelo?.encontro.guardiao, won]);
+
+  // Fala de vitória do guardião (a palavra que abre o caminho).
+  useEffect(() => {
+    if (!vitoriaGuardiao?.vitoria) return;
+    const id = window.setTimeout(() => {
+      if (vitoriaGuardiao.vitoria) voice.speak(vitoriaGuardiao.vitoria);
+    }, 320);
+    return () => window.clearTimeout(id);
+  }, [vitoriaGuardiao]);
 
   useEffect(() => () => voice.stopSpeaking(), []);
 
@@ -218,6 +261,7 @@ export default function GameAPalavraCerta({ onExit }: GameProps) {
 
     if (idx === duelo.certa) {
       pfx.declare();
+      pfx.buzz(18);
       burst(stage, x, y, { kind: 'spark', count: 16 });
       setConexao((c) => Math.min(CONEXAO_MAX, c + 1));
       const texto = duelo.carta.msg;
@@ -225,18 +269,23 @@ export default function GameAPalavraCerta({ onExit }: GameProps) {
       voice.speak(`${texto} ${duelo.carta.ref}`);
     } else {
       sfx.wrong();
+      pfx.buzz([28, 40, 28]);
       shake(stage);
       burst(stage, x, y, { kind: 'puff', count: 8, spread: 24 });
       setWrongCount((w) => w + 1);
       setConexao((c) => Math.max(1, c - 1));
+      const errosAgora = duelo.removidas.length + 1;
       setDuelo({ ...duelo, removidas: [...duelo.removidas, idx] });
-      setFeedback({
-        good: false,
-        text: 'Quase! Esse erro esfriou um pouquinho a sua conexão. Mas Deus continua com você — declare a Palavra certa! 🙏',
-      });
-      voice.speak(
-        'Quase! Esse erro esfriou um pouquinho a sua conexão. Mas Deus continua com você! Declare a Palavra certa!',
-      );
+      const texto =
+        errosAgora >= 2
+          ? 'Essa também não era… Só resta uma opção — é ela a Palavra certa! 🙏'
+          : 'Quase! Esse erro esfriou um pouquinho a sua conexão. Mas Deus continua com você — declare a Palavra certa! 🙏';
+      const fala =
+        errosAgora >= 2
+          ? 'Essa também não era. Só resta uma opção: é ela a Palavra certa!'
+          : 'Quase! Esse erro esfriou um pouquinho a sua conexão. Mas Deus continua com você! Declare a Palavra certa!';
+      setFeedback({ good: false, text: texto });
+      voice.speak(fala);
     }
     if (showHand) {
       setShowHand(false);
@@ -270,14 +319,32 @@ export default function GameAPalavraCerta({ onExit }: GameProps) {
     // Encontro vencido.
     pfx.gateOpen();
     engineRef.current?.setDefeated(encontro.id);
-    if (encontro.guardiao) {
-      engineRef.current?.setFinishOpen(true);
-      voice.speak('O portão abriu! Caminhe até a luz!');
-    }
     setVencidos((v) => new Set(v).add(encontro.id));
     setDuelo(null);
     setFeedback(null);
+    if (encontro.guardiao) {
+      // A fala do guardião é o prêmio: painel + voz antes de abrir o portão.
+      pfx.buzz(40);
+      engineRef.current?.setFinishOpen(true);
+      setVitoriaGuardiao(encontro);
+      return;
+    }
     engineRef.current?.resume();
+  }
+
+  function fecharVitoriaGuardiao() {
+    sfx.click();
+    setVitoriaGuardiao(null);
+    engineRef.current?.resume();
+    voice.speak('O portão abriu! Caminhe até a luz!');
+  }
+
+  function comecarFase() {
+    sfx.click();
+    setIntroFase(false);
+    voice.stopSpeaking();
+    engineRef.current?.resume();
+    music.play('game');
   }
 
   /* ------------------------------- vitória ------------------------------- */
@@ -376,7 +443,10 @@ export default function GameAPalavraCerta({ onExit }: GameProps) {
       bg="bg-gradient-to-b from-sky-950 via-indigo-900 to-emerald-900"
       titleClass="text-yellow-300"
     >
-      <div ref={stageRef} className="relative flex w-full max-w-4xl flex-1 flex-col gap-2">
+      <div
+        ref={stageRef}
+        className={`relative flex w-full max-w-4xl flex-1 flex-col gap-2 ${phaseFade ? 'screen-in' : ''}`}
+      >
         {/* HUD: nível + conexão */}
         <div className="flex items-start justify-between gap-2 px-1">
           <LevelHUD
@@ -471,6 +541,60 @@ export default function GameAPalavraCerta({ onExit }: GameProps) {
             >
               <MapIcon className="h-6 w-6" />
             </button>
+          </div>
+        ) : null}
+
+        {/* Abertura da fase */}
+        {introFase && !won ? (
+          <div className="absolute inset-0 z-[68] flex items-center justify-center bg-slate-950/75 p-4">
+            <div className="animate-pop flex w-full max-w-sm flex-col items-center gap-3 rounded-3xl bg-slate-900/95 p-6 text-center shadow-2xl ring-2 ring-white/15">
+              <span className="text-5xl">{BIOME_EMOJI[fase.biome]}</span>
+              <span className="hud-pill px-4 py-1 text-sm font-black text-white">
+                Fase {faseN} de {TOTAL_FASES}
+              </span>
+              <h3 className="text-2xl font-black text-yellow-300">{fase.nome}</h3>
+              <p className="text-sm font-bold text-white/80">{fase.sub}</p>
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={comecarFase}
+                  className="ui-press flex items-center gap-2 rounded-full bg-emerald-500 px-8 py-3.5 text-lg font-black text-white shadow-[0_6px_0_rgba(5,150,105,0.9)]"
+                >
+                  Começar ▶
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : null}
+
+        {/* Fala de vitória do guardião */}
+        {vitoriaGuardiao ? (
+          <div className="absolute inset-0 z-[66] flex items-center justify-center bg-slate-950/75 p-4">
+            <div className="animate-pop flex w-full max-w-sm flex-col items-center gap-3 rounded-3xl bg-slate-900/95 p-5 text-center shadow-2xl ring-2 ring-white/15">
+              <Npc
+                motif="palavra"
+                look={toNpcLook(vitoriaGuardiao.look)}
+                state="happy"
+                size={84}
+              />
+              <span className="hud-pill px-4 py-1 text-sm font-black text-white">
+                👑 {vitoriaGuardiao.nome}
+              </span>
+              <div className="relative w-full rounded-2xl bg-white/10 p-3">
+                <SpeakChip text={vitoriaGuardiao.vitoria ?? ''} className="absolute -top-2 -right-2" />
+                <p className="pr-6 text-base font-black text-yellow-200">
+                  {vitoriaGuardiao.vitoria}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={fecharVitoriaGuardiao}
+                className="ui-press flex w-full items-center justify-center gap-2 rounded-full bg-yellow-400 px-6 py-3 text-lg font-black text-amber-950 shadow-[0_5px_0_rgba(202,138,4,0.9)]"
+              >
+                Até o portão!
+                <ChevronRight className="h-5 w-5" />
+              </button>
+            </div>
           </div>
         ) : null}
 
