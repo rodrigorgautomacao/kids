@@ -396,6 +396,247 @@ function drawFlower(ctx: Ctx, x: number, baseY: number, kind: number, pal: Palet
   ctx.fill();
 }
 
+
+/* ------------------------- cenário-âncora por bioma ------------------------- */
+
+/**
+ * "Cartão-postal" de cada bioma (skill `jogos-cenarios`): silhuetas únicas
+ * reconhecíveis de longe — moinho, macieiras, barracas, escola, ponte,
+ * pinheiros, degraus, cidade, ponte suspensa, colunas douradas. Camada média
+ * (parallax 0.62), com vento/movimento leves.
+ */
+function drawStageProps(
+  ctx: Ctx,
+  camX: number,
+  w: number,
+  groundY: number,
+  biome: BiomeId,
+  t: number,
+  pal: Palette,
+) {
+  const off = camX * 0.62;
+  const slots = [420, 1180, 1960, 2720];
+  for (let i = 0; i < slots.length; i++) {
+    const x = slots[i] - off + (i % 2 === 0 ? 40 : -60);
+    if (x < -220 || x > w + 220) continue;
+    const baseY = groundY - 6;
+
+    if (biome === 'amanhecer') {
+      // Moinho de vento com pás girando + cerca.
+      if (i === 0) {
+        ctx.fillStyle = '#d6c4a3';
+        ctx.strokeStyle = 'rgba(15,23,42,0.35)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(x - 26, baseY);
+        ctx.lineTo(x - 14, baseY - 92);
+        ctx.lineTo(x + 14, baseY - 92);
+        ctx.lineTo(x + 26, baseY);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = '#8b5e34';
+        ctx.fillRect(x - 16, baseY - 98, 32, 12);
+        ctx.save();
+        ctx.translate(x, baseY - 86);
+        ctx.rotate(reduced(t) ? 0 : t * 0.7);
+        for (let b = 0; b < 4; b++) {
+          ctx.rotate(Math.PI / 2);
+          ctx.fillStyle = '#fff7ed';
+          ctx.strokeStyle = 'rgba(15,23,42,0.3)';
+          ctx.fillRect(-3, -52, 6, 52);
+          ctx.strokeRect(-3, -52, 6, 52);
+        }
+        ctx.restore();
+      } else {
+        drawFence(ctx, x, baseY, 64, '#c9a06a');
+      }
+    } else if (biome === 'pomar') {
+      // Macieira com frutas.
+      ctx.fillStyle = '#7c4a24';
+      roundRect(ctx, x - 7, baseY - 54, 14, 54, 5);
+      ctx.fill();
+      const g = ctx.createRadialGradient(x - 10, baseY - 78, 8, x, baseY - 66, 46);
+      g.addColorStop(0, pal.leaf2);
+      g.addColorStop(1, pal.leaf1);
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.arc(x, baseY - 72, 34, 0, Math.PI * 2);
+      ctx.arc(x - 22, baseY - 58, 22, 0, Math.PI * 2);
+      ctx.arc(x + 22, baseY - 58, 22, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#ef4444';
+      for (const [fx, fy] of [[-16, -78], [8, -84], [20, -64], [-6, -60], [-24, -62]] as const) {
+        ctx.beginPath();
+        ctx.arc(x + fx, baseY + fy, 5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    } else if (biome === 'mercado') {
+      // Barraca com toldo listrado.
+      ctx.fillStyle = '#92400e';
+      ctx.fillRect(x - 34, baseY - 52, 6, 52);
+      ctx.fillRect(x + 28, baseY - 52, 6, 52);
+      for (let k = 0; k < 6; k++) {
+        ctx.fillStyle = k % 2 ? '#f8fafc' : '#f43f5e';
+        ctx.beginPath();
+        ctx.moveTo(x - 38 + k * 13, baseY - 52);
+        ctx.lineTo(x - 25 + k * 13, baseY - 52);
+        ctx.lineTo(x - 28 + k * 13, baseY - 64);
+        ctx.lineTo(x - 41 + k * 13, baseY - 64);
+        ctx.closePath();
+        ctx.fill();
+      }
+      ctx.fillStyle = '#d6a05c';
+      ctx.fillRect(x - 34, baseY - 22, 68, 10);
+    } else if (biome === 'escola') {
+      // Prédio da escola com sino.
+      ctx.fillStyle = '#e2c290';
+      ctx.strokeStyle = 'rgba(15,23,42,0.35)';
+      ctx.lineWidth = 2;
+      roundRect(ctx, x - 52, baseY - 84, 104, 84, 6);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = '#b45309';
+      ctx.beginPath();
+      ctx.moveTo(x - 58, baseY - 84);
+      ctx.lineTo(x, baseY - 118);
+      ctx.lineTo(x + 58, baseY - 84);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      // Torre do sino.
+      ctx.fillStyle = '#e2c290';
+      roundRect(ctx, x - 12, baseY - 132, 24, 22, 4);
+      ctx.fill();
+      ctx.fillStyle = '#fbbf24';
+      ctx.beginPath();
+      ctx.arc(x, baseY - 118, 7, 0, Math.PI * 2);
+      ctx.fill();
+      // Janelas.
+      ctx.fillStyle = '#38bdf8';
+      for (const wx of [-36, -12, 12, 36]) ctx.fillRect(x + wx - 8, baseY - 66, 16, 18);
+    } else if (biome === 'rio') {
+      // Ponte de madeira em arco.
+      ctx.strokeStyle = '#8b5e34';
+      ctx.lineWidth = 8;
+      ctx.beginPath();
+      ctx.moveTo(x - 70, baseY);
+      ctx.quadraticCurveTo(x, baseY - 46, x + 70, baseY);
+      ctx.stroke();
+      ctx.lineWidth = 3;
+      for (let k = -3; k <= 3; k++) {
+        ctx.beginPath();
+        ctx.moveTo(x + k * 20, baseY - 12);
+        ctx.lineTo(x + k * 20, baseY - 30 + Math.abs(k) * 5);
+        ctx.stroke();
+      }
+    } else if (biome === 'floresta') {
+      // Pinheiro alto (silhueta triangular única).
+      ctx.fillStyle = '#6b4423';
+      ctx.fillRect(x - 6, baseY - 46, 12, 46);
+      ctx.fillStyle = pal.leaf1;
+      for (let k = 0; k < 3; k++) {
+        const ty = baseY - 46 - k * 26;
+        const rw = 44 - k * 10;
+        ctx.beginPath();
+        ctx.moveTo(x - rw, ty);
+        ctx.lineTo(x, ty - 42);
+        ctx.lineTo(x + rw, ty);
+        ctx.closePath();
+        ctx.fill();
+      }
+      ctx.fillStyle = 'rgba(253,224,71,0.8)';
+      for (const [fx, fy] of [[-18, -70], [12, -92], [2, -118]] as const) {
+        ctx.beginPath();
+        ctx.arc(x + fx, baseY + fy, 2.5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    } else if (biome === 'montanha') {
+      // Degraus de pedra com bandeirinha.
+      ctx.fillStyle = '#94a3b8';
+      for (let k = 0; k < 4; k++) {
+        roundRect(ctx, x - 40 + k * 22, baseY - 12 - k * 16, 30, 14 + k * 16, 4);
+        ctx.fill();
+      }
+      ctx.strokeStyle = '#475569';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(x + 28, baseY - 62);
+      ctx.lineTo(x + 28, baseY - 110);
+      ctx.stroke();
+      const wave = reduced(t) ? 0 : Math.sin(t * 2.4) * 4;
+      ctx.fillStyle = pal.accent;
+      ctx.beginPath();
+      ctx.moveTo(x + 28, baseY - 110);
+      ctx.lineTo(x + 62 + wave, baseY - 100);
+      ctx.lineTo(x + 28, baseY - 90);
+      ctx.closePath();
+      ctx.fill();
+    } else if (biome === 'cidade') {
+      // Praça com poste e banco (o skyline já vem da drawCity).
+      ctx.fillStyle = '#334155';
+      ctx.fillRect(x - 3, baseY - 96, 6, 96);
+      const glow = ctx.createRadialGradient(x, baseY - 100, 2, x, baseY - 100, 34);
+      glow.addColorStop(0, 'rgba(253,224,71,0.7)');
+      glow.addColorStop(1, 'rgba(253,224,71,0)');
+      ctx.fillStyle = glow;
+      ctx.fillRect(x - 34, baseY - 134, 68, 68);
+      ctx.fillStyle = '#fbbf24';
+      ctx.beginPath();
+      ctx.arc(x, baseY - 100, 8, 0, Math.PI * 2);
+      ctx.fill();
+      drawFence(ctx, x - 90, baseY, 56, '#78716c');
+    } else if (biome === 'ponte') {
+      // Ponte suspensa: torres + cabos.
+      ctx.fillStyle = '#7c3aed';
+      ctx.fillRect(x - 60, baseY - 130, 14, 130);
+      ctx.fillRect(x + 46, baseY - 130, 14, 130);
+      ctx.strokeStyle = '#a78bfa';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(x - 53, baseY - 122);
+      ctx.quadraticCurveTo(x, baseY - 62, x + 53, baseY - 122);
+      ctx.stroke();
+      for (let k = -2; k <= 2; k++) {
+        ctx.beginPath();
+        ctx.moveTo(x + k * 22, baseY - 84 - Math.abs(k) * 12);
+        ctx.lineTo(x + k * 22, baseY - 12);
+        ctx.stroke();
+      }
+    } else if (biome === 'portao') {
+      // Colunas douradas do caminho do portão.
+      const g = ctx.createLinearGradient(x - 12, baseY - 120, x + 12, baseY);
+      g.addColorStop(0, '#fde68a');
+      g.addColorStop(1, '#b45309');
+      ctx.fillStyle = g;
+      roundRect(ctx, x - 12, baseY - 120, 24, 120, 8);
+      ctx.fill();
+      ctx.fillStyle = '#fbbf24';
+      roundRect(ctx, x - 18, baseY - 132, 36, 16, 6);
+      ctx.fill();
+      const spark = reduced(t) ? 0.5 : 0.5 + Math.sin(t * 2 + i) * 0.5;
+      const glow = ctx.createRadialGradient(x, baseY - 140, 2, x, baseY - 140, 40);
+      glow.addColorStop(0, `rgba(253,224,71,${0.35 * spark})`);
+      glow.addColorStop(1, 'rgba(253,224,71,0)');
+      ctx.fillStyle = glow;
+      ctx.fillRect(x - 40, baseY - 180, 80, 80);
+    }
+  }
+}
+
+/** Cerca rústica de madeira com vento (usada em amanhecer/cidade). */
+function drawFence(ctx: Ctx, x: number, baseY: number, width: number, color: string) {
+  ctx.fillStyle = color;
+  for (let k = 0; k <= width; k += 16) ctx.fillRect(x - width / 2 + k, baseY - 26, 5, 26);
+  ctx.fillRect(x - width / 2, baseY - 20, width, 4);
+  ctx.fillRect(x - width / 2, baseY - 10, width, 4);
+}
+
+/** Tempo congelado quando reduced-motion (o drawFrame já recebe t=0; guarda extra). */
+function reduced(t: number) {
+  return t === 0;
+}
+
 /* --------------------------------- cidade --------------------------------- */
 
 function drawCity(ctx: Ctx, camX: number, w: number, groundY: number, pal: Palette, t: number) {
@@ -1153,11 +1394,13 @@ export interface DrawFrameArgs {
   reducedMotion: boolean;
   /** próximo alvo da jornada (NPC ou portão) — seta de guia */
   guide: { x: number; y: number } | null;
+  /** bioma da fase — define o cartão-postal (moinho, feira, pinheiros…) */
+  biome: BiomeId;
 }
 
 /** Desenha um quadro completo do mundo (ordem de z explicitada). */
 export function drawFrame(a: DrawFrameArgs) {
-  const { ctx, w, h, t, camX, geom, pal, hero, npcs, particles, finishOpen, reducedMotion, guide } = a;
+  const { ctx, w, h, t, camX, geom, pal, hero, npcs, particles, finishOpen, reducedMotion, guide, biome } = a;
   const wind = reducedMotion ? 0 : 1;
   void wind;
 
@@ -1177,6 +1420,8 @@ export function drawFrame(a: DrawFrameArgs) {
     drawTree(ctx, x, geom.groundY - 26, tr.size * 0.8, tr.kind, pal, reducedMotion ? 0 : t);
     ctx.globalAlpha = 1;
   }
+
+  drawStageProps(ctx, camX, w, geom.groundY, biome, t, pal);
 
   // Água (atrás do chão).
   if (pal.water) drawWater(ctx, geom.width, geom.groundY, w, h, camX, t);

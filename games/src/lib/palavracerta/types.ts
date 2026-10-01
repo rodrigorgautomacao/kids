@@ -82,6 +82,8 @@ export interface HeroRuntime {
   walkPhase: number;
   /** respiração/pose parada */
   breathe: number;
+  /** squash & stretch (1 = normal; >1 estica na subida; <1 achata no pouso) */
+  squash: number;
 }
 
 export type NpcAnim = 'idle' | 'thinking' | 'happy';

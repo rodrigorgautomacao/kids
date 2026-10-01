@@ -17,7 +17,15 @@ import {
 import type { BiomeId, HeroRuntime, LevelGeom, NpcLookCanvas, NpcRuntime, Palette, Rect } from './types';
 
 const DT = 1 / 60;
+// ── Feel derivado de sensação (skill `jogos-game-feel` §2) ──────────────
+// Altura do pulo ≈ 161 px; arco ≈ 0,67 s; alcance ≈ 224 px (> maior vão 164 px,
+// com folga ≥ 20% — garantido pelo teste `clearability.test.ts`).
 const GRAVITY = 2350;
+/** Queda mais pesada que a subida (1,5–2×) — fim do pulo flutuante. */
+const FALL_MULT = 1.55;
+/** Perto do ápice a gravidade cai → "hang" para mirar o pouso. */
+const APEX_HANG = 0.62;
+const APEX_SPEED = 95;
 const MAX_FALL = 1250;
 const RUN_ACCEL = 3100;
 const AIR_ACCEL = 1900;
@@ -27,6 +35,8 @@ const JUMP_VEL = 870;
 const JUMP_CUT = 380; // velocidade mínima mantida ao soltar cedo (pulo variável)
 const COYOTE = 0.1;
 const JUMP_BUFFER = 0.12;
+/** Correção de quina: empurra até 8 px para pousar em plataforma quase alcançada. */
+const CORNER_FIX = 8;
 
 export interface InputState {
   left: boolean;
@@ -109,6 +119,7 @@ export function createPlatformer(canvas: HTMLCanvasElement, opts: PlatformerOpti
     state: 'idle',
     walkPhase: 0,
     breathe: 0,
+    squash: 1,
   };
 
   const input: InputState = { left: false, right: false, jump: false };
@@ -116,6 +127,7 @@ export function createPlatformer(canvas: HTMLCanvasElement, opts: PlatformerOpti
   let coyote = 0;
   let stepTimer = 0;
   let camX = 0;
+  let camKick = 0;
   let time = 0;
   let suspended = false;
   let destroyed = false;
@@ -209,13 +221,20 @@ export function createPlatformer(canvas: HTMLCanvasElement, opts: PlatformerOpti
       hero.onGround = false;
       coyote = 0;
       jumpBuffered = 0;
+      hero.squash = 1.16; // stretch na decolagem
       opts.events?.onJump?.();
       emitDust(hero.x, hero.y, 5);
     }
     // Pulo variável: soltar cedo baixa o ápice.
     if (!input.jump && hero.vy < -JUMP_CUT) hero.vy = -JUMP_CUT;
 
-    hero.vy = Math.min(MAX_FALL, hero.vy + GRAVITY * dt);
+    // Gravidade assimétrica + apex hang: cai mais rápido do que sobe e "paira"
+    // um instante no topo para a criança mirar o pouso.
+    const grav =
+      GRAVITY *
+      (hero.vy > 0 ? FALL_MULT : 1) *
+      (Math.abs(hero.vy) < APEX_SPEED ? APEX_HANG : 1);
+    hero.vy = Math.min(MAX_FALL, hero.vy + grav * dt);
 
     // Colisão horizontal.
     hero.x += hero.vx * dt;
@@ -231,6 +250,26 @@ export function createPlatformer(canvas: HTMLCanvasElement, opts: PlatformerOpti
       box = { x: hero.x - boxW / 2, y: hero.y - boxH, w: boxW, h: boxH };
     }
     hero.x = Math.max(30, Math.min(geom.width - 40, hero.x));
+
+    // Corner correction: se o pouso ia falhar por 1–8 px na quina de uma
+    // plataforma, empurra para cima dela ("o jogo entendeu o que eu quis").
+    if (hero.vy > 0) {
+      for (const s of geom.solids) {
+        if (Math.abs(s.x + s.w / 2 - hero.x) > 260) continue;
+        const nearTop = hero.y >= s.y - 4 && hero.y <= s.y + 12;
+        const boxL = hero.x - 13;
+        const boxR = hero.x + 13;
+        const overlaps = boxR > s.x && boxL < s.x + s.w;
+        const almost = boxR > s.x - CORNER_FIX && boxL < s.x + s.w + CORNER_FIX;
+        if (nearTop && almost && !overlaps) {
+          const push = boxR <= s.x + s.w / 2 ? Math.min(CORNER_FIX, s.x - boxL) : -Math.min(CORNER_FIX, boxR - (s.x + s.w));
+          hero.x += push;
+          hero.y = Math.min(hero.y, s.y - 1);
+          hero.vy = Math.max(hero.vy, 20);
+          break;
+        }
+      }
+    }
 
     // Colisão vertical.
     const wasGround = hero.onGround;
@@ -257,6 +296,8 @@ export function createPlatformer(canvas: HTMLCanvasElement, opts: PlatformerOpti
 
     if (hero.onGround) {
       if (!wasGround && prevVy > 320) {
+        hero.squash = prevVy > 820 ? 0.78 : 0.86; // squash no pouso
+        if (prevVy > 700) camKick = 4.5; // kick só em queda grande (proporcional)
         opts.events?.onLand?.();
         emitDust(hero.x, hero.y, 7);
       }
@@ -289,6 +330,10 @@ export function createPlatformer(canvas: HTMLCanvasElement, opts: PlatformerOpti
       hero.vy = 0;
       emitDust(hero.x, geom.groundY, 8);
     }
+
+    // Recuperação elástica do squash (mola amortecida simples).
+    hero.squash += (1 - hero.squash) * Math.min(1, dt * 11);
+    if (Math.abs(hero.squash - 1) < 0.004) hero.squash = 1;
 
     // Pose do herói.
     if (happyOverride) hero.state = 'happy';
@@ -415,6 +460,7 @@ export function createPlatformer(canvas: HTMLCanvasElement, opts: PlatformerOpti
     // Câmera segue com folga, suave e limitada ao mundo.
     const target = Math.max(0, Math.min(geom.width - logicalW, hero.x - logicalW * 0.36));
     camX += (target - camX) * Math.min(1, real * 7);
+    camKick *= 0.86; // kick decai rápido (≤ 250 ms)
 
     const c = ctx as Ctx;
     drawFrame({
@@ -422,7 +468,7 @@ export function createPlatformer(canvas: HTMLCanvasElement, opts: PlatformerOpti
       w: logicalW,
       h: WORLD_H,
       t: time,
-      camX,
+      camX: camX + camKick,
       geom,
       pal,
       hero,
@@ -431,6 +477,7 @@ export function createPlatformer(canvas: HTMLCanvasElement, opts: PlatformerOpti
       finishOpen,
       reducedMotion: opts.reducedMotion,
       guide: suspended ? null : nextTarget(),
+      biome: opts.biome,
     });
   }
   raf = requestAnimationFrame(frame);
