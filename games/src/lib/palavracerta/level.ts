@@ -97,11 +97,22 @@ export function buildLevel(index: number, easy: boolean): LevelGeom {
     flowers.push({ x, kind: Math.floor(rng() * 3) });
   }
 
-  // NPCs: 4 comuns + o guardião, sempre no chão firme.
+  // NPCs: 4 comuns + o guardião, SEMPRE no chão firme (nunca sobre o vazio —
+  // era o "loop de começar caindo": duelo abria com o herói caindo no buraco).
+  const firm = (x: number) =>
+    solids.some((s) => s.y >= groundY - 2 && x >= s.x && x <= s.x + s.w);
+  const snapToFirm = (x: number) => {
+    if (firm(x)) return x;
+    for (let d = 24; d < width; d += 24) {
+      if (firm(x + d)) return Math.min(width - 60, x + d);
+      if (firm(x - d)) return Math.max(60, x - d);
+    }
+    return 120;
+  };
   const fractions = [0.11, 0.29, 0.47, 0.65, 0.87];
   const npcs: NpcSpawn[] = fractions.map((f, i) => ({
     id: `npc-${i + 1}`,
-    x: Math.round(f * width),
+    x: snapToFirm(Math.round(f * width)),
     guardiao: i === 4,
   }));
 

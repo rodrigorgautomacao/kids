@@ -1,9 +1,10 @@
 // Testes do motor puro da "A Grande Jornada" (skill `jogos-platformer` §10).
 
 import { describe, expect, it } from 'vitest';
-import { JUMP_VELOCITY, TILE } from './constants';
+import { JUMP_VELOCITY, PLAYER_H, PLAYER_W, TILE } from './constants';
 import { createPlayer, jumpHeightPx, stepPlayer } from './physics';
 import { parseMap, rectHitsSolid, tileAt } from './tiles';
+import { JORNADA_LEVELS } from '../../data/jornada';
 
 const FLAT = [
   '................',
@@ -119,5 +120,33 @@ describe('regras da casa', () => {
     const map = parseMap(rows);
     expect(map.width).toBe(64);
     expect(map.height).toBe(11);
+  });
+});
+
+describe('regressão: o herói nunca nasce caindo (loop de começo)', () => {
+  it('todas as 12 etapas nascem com os pés no chão, sem queda inicial', () => {
+    const none = { left: false, right: false, jump: false, jumpPressed: false };
+    for (const lv of JORNADA_LEVELS) {
+      const map = parseMap(lv.map);
+      const cp = map.checkpoints[0];
+      expect(cp, lv.id).toBeTruthy();
+      // Mesma conta do motor (`groundTopBelow`): topo do 1º sólido abaixo do Marco.
+      const tx = Math.floor((cp!.x + PLAYER_W / 2) / TILE);
+      let gy = cp!.y;
+      for (let ty = Math.floor(cp!.y / TILE); ty < map.height; ty++) {
+        const ch = map.grid[ty]?.[tx];
+        if (ch === '#' || ch === 'x' || ch === 'w') {
+          gy = ty * TILE;
+          break;
+        }
+      }
+      expect(gy, lv.id).toBeLessThan(map.height * TILE);
+      let p = createPlayer(cp!.x, gy - PLAYER_H);
+      for (let i = 0; i < 90; i++) p = stepPlayer(map, p, none, 1 / 60).player;
+      // Queda inicial ~0 e o herói pousado — nunca caindo em loop.
+      expect(p.y + PLAYER_H, lv.id).toBeCloseTo(gy, 0);
+      expect(p.onGround, lv.id).toBe(true);
+      expect(p.y, lv.id).toBeLessThan(map.height * TILE);
+    }
   });
 });

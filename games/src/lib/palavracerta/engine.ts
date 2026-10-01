@@ -79,6 +79,19 @@ function hasFirmGround(geom: LevelGeom, x: number): boolean {
   return geom.solids.some((s) => s.y >= geom.groundY - 2 && x >= s.x && x <= s.x + s.w);
 }
 
+/**
+ * x com chão firme: o preferido, senão o mais perto.
+ * Garante que o herói NUNCA nasce/respawna sobre o vazio — sem loop de queda.
+ */
+function safeSpawnX(geom: LevelGeom, preferred: number): number {
+  if (hasFirmGround(geom, preferred)) return preferred;
+  for (let d = 24; d < geom.width; d += 24) {
+    if (hasFirmGround(geom, preferred + d)) return Math.min(geom.width - 40, preferred + d);
+    if (hasFirmGround(geom, preferred - d)) return Math.max(30, preferred - d);
+  }
+  return 120;
+}
+
 export function createPlatformer(canvas: HTMLCanvasElement, opts: PlatformerOptions): PlatformerHandle {
   const ctx = canvas.getContext('2d');
   if (!ctx) return noopHandle();
@@ -87,7 +100,7 @@ export function createPlatformer(canvas: HTMLCanvasElement, opts: PlatformerOpti
   let geom: LevelGeom = buildLevel(opts.levelIndex, opts.easy);
 
   const hero: HeroRuntime = {
-    x: 120,
+    x: safeSpawnX(geom, 120),
     y: geom.groundY,
     vx: 0,
     vy: 0,
@@ -270,7 +283,7 @@ export function createPlatformer(canvas: HTMLCanvasElement, opts: PlatformerOpti
     // Queda no buraco: volta ao último ponto SEM punição, sem queda e sem loop.
     if (hero.y > geom.groundY + 220) {
       opts.events?.onFall?.();
-      hero.x = hasFirmGround(geom, safeX) ? safeX : 120;
+      hero.x = safeSpawnX(geom, safeX);
       hero.y = geom.groundY;
       hero.vx = 0;
       hero.vy = 0;
@@ -286,7 +299,8 @@ export function createPlatformer(canvas: HTMLCanvasElement, opts: PlatformerOpti
     // Encontros com NPCs (só quando não resolvidos).
     for (const n of npcs) {
       if (n.defeated) continue;
-      if (Math.abs(n.x - hero.x) < 44 && hero.y > geom.groundY - 110) {
+      // Duelo só com o herói FIRME no chão — nunca com ele caindo no buraco.
+      if (Math.abs(n.x - hero.x) < 44 && hero.onGround && hero.y > geom.groundY - 110) {
         n.anim = 'thinking';
         suspended = true;
         hero.state = 'idle';
@@ -453,7 +467,7 @@ export function createPlatformer(canvas: HTMLCanvasElement, opts: PlatformerOpti
     },
     reset() {
       geom = buildLevel(opts.levelIndex, opts.easy);
-      hero.x = 120;
+      hero.x = safeSpawnX(geom, 120);
       hero.y = geom.groundY;
       hero.vx = 0;
       hero.vy = 0;
