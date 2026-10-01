@@ -4,8 +4,8 @@
 export const TILE = 24;
 
 // ─── Player ───────────────────────────────────────────────────────
-export const PLAYER_W = 16;
-export const PLAYER_H = 22;
+export const PLAYER_W = 18;
+export const PLAYER_H = 28;
 
 // ─── Movimento horizontal ─────────────────────────────────────────
 export const RUN_ACCEL = 1800;
