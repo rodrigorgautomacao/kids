@@ -151,7 +151,9 @@ export default function GameAGrandeJornada({ onExit }: { onExit: () => void }) {
 
   // Pausa de verdade: o laço para, a voz cala e a música recolhe.
   useEffect(() => {
-    if (paused || ls.mapOpen) {
+    // A carta do encontro também segura o laço: pausar por fora e voltar não
+    // pode retomar o jogo por baixo do NPC.
+    if (paused || ls.mapOpen || encontro) {
       engineRef.current?.pause();
       voice.stopSpeaking();
       music.pause();
@@ -159,7 +161,7 @@ export default function GameAGrandeJornada({ onExit }: { onExit: () => void }) {
       engineRef.current?.resume();
       music.play('game');
     }
-  }, [paused, ls.mapOpen]);
+  }, [paused, ls.mapOpen, encontro]);
 
   useEffect(() => {
     music.play('game');
