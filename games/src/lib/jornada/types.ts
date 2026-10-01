@@ -76,6 +76,24 @@ export type EngineEvent =
   | { type: 'gate' }
   | { type: 'message'; text: string };
 
+/**
+ * Marcos de Bunyan desenhados como "cartão-postal" no cenário (skill
+ * `jogos-visual` §6: cada zona precisa de silhueta única, reconhecível de longe).
+ */
+export type SceneryId =
+  | 'ruins'
+  | 'gate'
+  | 'house'
+  | 'cliff'
+  | 'hearth'
+  | 'gloom'
+  | 'market'
+  | 'castle'
+  | 'mountains'
+  | 'enchanted'
+  | 'river'
+  | 'celestial';
+
 export interface PlatformerLevel {
   id: string;
   /** Nome da etapa (HUD/mapa). */
@@ -86,13 +104,17 @@ export interface PlatformerLevel {
   ref: string;
   /** Marco de Bunyan (só informativo, nunca autoridade). */
   marco: string;
+  /** Narração de entrada: quem é o Peregrino aqui e o que ele vai enfrentar. */
+  cenario: string;
   /** Mensagem da tela de conclusão. */
   lesson: string;
+  /** Silhueta do marco desenhada no plano médio. */
+  scenery: SceneryId;
   /** Cores do céu (topo/base) do bioma. */
   sky: [string, string];
   /** Cores do chão (base/detalhe). */
   ground: [string, string];
-  /** Linhas do mapa (64 colunas × 11). */
+  /** Linhas do mapa (192 colunas × 14). */
   map: string[];
   /** Escurecimento do cenário (etapa 6 etc.): 0..1. */
   darkness?: number;

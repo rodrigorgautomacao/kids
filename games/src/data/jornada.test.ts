@@ -1,6 +1,7 @@
 // Valida as 12 etapas da "A Grande Jornada": formato do mapa e refs NAA.
 
 import { describe, expect, it } from 'vitest';
+import { CENARIOS } from '../lib/jornada/scenarios';
 import { parseMap } from '../lib/jornada/tiles';
 import { JORNADA_GAME_LEVELS, JORNADA_LEVELS } from './jornada';
 
@@ -21,12 +22,12 @@ describe('A Grande Jornada — etapas (data/jornada.ts)', () => {
     }
   });
 
-  it('mapas têm 11 linhas × 64 colunas, com chars válidos', () => {
+  it('mapas têm 14 linhas × 192 colunas, com chars válidos', () => {
     const valid = new Set('.#=?xwogE!cS bnd~'.replace(' ', '').split(''));
     for (const lv of JORNADA_LEVELS) {
-      expect(lv.map).toHaveLength(11);
+      expect(lv.map).toHaveLength(14);
       for (const line of lv.map) {
-        expect(line).toHaveLength(64);
+        expect(line).toHaveLength(192);
         for (const ch of line) expect(valid.has(ch)).toBe(true);
       }
     }
@@ -45,6 +46,25 @@ describe('A Grande Jornada — etapas (data/jornada.ts)', () => {
       const gy = map.gate!.y + 24;
       const below = lv.map[Math.floor(gy / 24)][Math.floor(gx / 24)];
       expect(below === '#' || below === '=', lv.id).toBe(true);
+    }
+  });
+
+  it('toda etapa tem cenário desenhado e narrativa de entrada', () => {
+    for (const lv of JORNADA_LEVELS) {
+      expect(CENARIOS[lv.scenery], lv.id).toBeTypeOf('function');
+      expect(lv.cenario.length, lv.id).toBeGreaterThan(60);
+      // o marco do Bunyan aparece na narrativa da etapa
+      expect(lv.cenario.length, lv.id).toBeGreaterThan(0);
+    }
+    // cada marco tem silhueta própria (senão duas etapas viram a mesma imagem)
+    expect(new Set(JORNADA_LEVELS.map((l) => l.scenery)).size).toBe(12);
+  });
+
+  it('o Portão fica no fim da etapa (senão a fase continua curtinha)', () => {
+    for (const lv of JORNADA_LEVELS) {
+      const map = parseMap(lv.map);
+      const fra = map.gate!.x / (map.width * 24);
+      expect(fra, lv.id).toBeGreaterThan(0.8);
     }
   });
 

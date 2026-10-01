@@ -5,6 +5,7 @@
 // herói → luz/sombra → partículas → HUD. Tudo com a paleta de cada etapa.
 
 import { PLAYER_H, PLAYER_W, TILE, VIEW_H, VIEW_W } from './constants';
+import { CENARIOS, type Paleta } from './scenarios';
 import type { TileMap } from './tiles';
 import type { EnemyState, PlatformerLevel, PlayerState } from './types';
 
@@ -53,6 +54,7 @@ export function drawScene(ctx: CanvasRenderingContext2D, w: number, h: number, s
   drawSky(ctx, s, camLeft, t, night);
   drawClouds(ctx, camLeft, t, night);
   drawHills(ctx, camLeft, s);
+  drawScenery(ctx, s, camLeft);
   drawTrees(ctx, s, camLeft, camTop, t);
   drawTiles(ctx, s, camLeft, camTop, t);
   drawPickups(ctx, s, camLeft, camTop);
@@ -211,6 +213,56 @@ function drawHills(ctx: CanvasRenderingContext2D, camLeft: number, s: Scene) {
 }
 
 /* ══════════════════════ árvores, arbustos, flores ═════════════════ */
+
+/** Fator de parallax do plano médio (entre os morros 0.12/0.28 e o mundo 1.0). */
+const SCENERY_PARALLAX = 0.34;
+/** Espaçamento entre repetições, em px de mundo. */
+const SCENERY_SPAN = 300;
+/** Escala base do cartão-postal. */
+const SCENERY_SCALE = 0.62;
+
+/**
+ * Desenha o marco de Bunyan repetido no horizonte: a Feira das Vaidades tem
+ * barracas, o Vale da Sombra tem garganta escura, a Cidade Celeste tem muralha
+ * de luz. É o que faz a criança reconhecer a etapa de longe (skill
+ * `jogos-visual` §6 — "cartão-postal", não "outro emoji").
+ */
+function drawScenery(ctx: CanvasRenderingContext2D, s: Scene, camLeft: number) {
+  const desenhar = CENARIOS[s.level.scenery];
+  if (!desenhar) return;
+  const paleta: Paleta = {
+    silhueta: escurecer(s.level.ground[0], 0.34),
+    destaque: lighten(s.level.ground[1], 0.12),
+    clara: lighten(s.level.sky[1], 0.42),
+  };
+  const baseY = VIEW_H * 0.72;
+  ctx.globalAlpha = 0.9;
+  const primeiro = Math.floor((camLeft * SCENERY_PARALLAX - VIEW_W) / SCENERY_SPAN) - 1;
+  const ultimo = Math.ceil((camLeft * SCENERY_PARALLAX + VIEW_W) / SCENERY_SPAN) + 1;
+  for (let i = primeiro; i <= ultimo; i++) {
+    const x = i * SCENERY_SPAN - camLeft * SCENERY_PARALLAX;
+    // Variação de tamanho por repetição, para não virar papel de parede.
+    const escala = SCENERY_SCALE * (0.88 + hash(i + 13) * 0.26);
+    ctx.save();
+    ctx.translate(x, baseY);
+    ctx.scale(escala, escala);
+    desenhar(ctx, paleta);
+    ctx.restore();
+  }
+  ctx.globalAlpha = 1;
+}
+
+/** Escurece uma cor hex (só para a silhueta do cenário). */
+function escurecer(hex: string, amount: number): string {
+  const h = hex.replace('#', '');
+  const cheio = h.length === 3 ? h[0] + h[0] + h[1] + h[1] + h[2] + h[2] : h;
+  const n = parseInt(cheio, 16);
+  if (Number.isNaN(n)) return hex;
+  const r = Math.round(((n >> 16) & 255) * (1 - amount));
+  const g = Math.round(((n >> 8) & 255) * (1 - amount));
+  const b = Math.round((n & 255) * (1 - amount));
+  return `rgb(${r},${g},${b})`;
+}
 
 function drawTrees(ctx: CanvasRenderingContext2D, s: Scene, camLeft: number, camTop: number, t: number) {
   const { map } = s;

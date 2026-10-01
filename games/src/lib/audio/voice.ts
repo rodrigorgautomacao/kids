@@ -91,28 +91,61 @@ let cachedVoice: SpeechSynthesisVoice | null = null;
 let speaking = false;
 
 /**
- * Ordem de preferência das vozes pt-BR (grátis, sem gravar nada): primeiro as
- * vozes "neurais/naturais" que os sistemas já trazem (Edge/Windows, Google no
- * Android/Chrome, macOS Enhanced), depois as comuns. Cada padrão tem um peso —
- * a melhor pontuação vence.
+ * A narração da jornada é **sempre masculina** (decisão do dono, 2026-09-30):
+ * o narrador é o Peregrino, um homem, e a voz de estúdio Piper
+ * (`pt_BR-faber-medium`) é masculina. O problema: as falas novas não estão no
+ * manifesto Piper e caíam no `speechSynthesis` do aparelho — que escolhia
+ *Francisca/Thalita/Luciana (femininas). Resultado: a mesma fase falava em duas
+ * vozes diferentes. Aqui o fallback passa a preferir **masculino**.
+ *
+ * Nomes pt-BR masculino mais comuns em Synthesis/Web Speech (Edge, Chrome,
+ * macOS, Android). `antonio`/`donato` já eram usados aqui.
+ */
+const MALE_NAMES =
+  /antonio|antônio|donato|daniel|ricardo|felipe|gustavo|henrique|heitor|jorge|lu[ií]s|luis|marcelo|paulo|pedro|rafael|rodrigo|f[áa]bio|fabio|fernando|jo[ãa]o|joao|joaquim|leonardo|leandro|gabriel|tiago|diego|vitor|v[ií]tor|bruno|carlos|eduardo|felix|felix|m[áa]rcio|marcio|m[úu]rcio|murcio|n[íi]colas|ot[áa]vio|otavio|renato|s[ée]rgio|sergio|thiago|wallace|wagner|arnaldo|c[áa]ssio|cassio|em[íi]lio|emilio/i;
+
+/**
+ * Nomes pt-BR feminino conhecidos. Não entram na lista de preferência (o que já
+ * bastava), mas ficam aqui para deixar explícito o motivo e para o teste poder
+ * garantir que nenhum deles seja escolhido mesmo sendo "neural".
+ */
+const FEMALE_NAMES =
+  /francisca|thalita|maria|brenda|elza|luciana|fernanda|joana|in[eê]s|ines|ana|clara|luziana|sabrina|patr[íi]cia|patricia|juliana|adriana|let[íi]cia|leticia|vivian|camila|helena|isabel|rosana|denise|marceline|fabiana|jos[ée]|jose/i;
+
+/** Voz que o sistema já traz como "natural" (o tipo de voz que soa boa). */
+const NATURAL = /natural|neural|online|premium|enhanced/i;
+
+/** Microsoft pt-BR: os nomes é que dizem a qualidade da voz. */
+const MS_PTBR = /microsoft/i;
+
+/**
+ * Ordem de preferência. Regra: **só entra voz masculina** (a neutra do Google
+ * "português/brasil" costuma ser feminina e foi rebaixada). Dentro disso, as
+ * "neurais/naturais" vencem — mesma prioridade de antes, mas entre masculinas.
  */
 const VOICE_PREFERENCES: { re: RegExp; score: number }[] = [
-  { re: /natural|neural|online|premium|enhanced/i, score: 100 },
-  { re: /microsoft.*(francisca|thalita|maria|brenda|elza|antonio|donato)/i, score: 90 },
-  { re: /google.*(portugu|brasil)/i, score: 80 },
-  { re: /luciana|fernanda|francisca|joana|ines|inês|maria|ana|clara/i, score: 60 },
+  { re: /google.*(portugu|brasil)/i, score: 70 },
+  { re: MS_PTBR, score: 80 },
+  { re: MALE_NAMES, score: 85 },
   { re: /^pt[-_]br$/i, score: 40 },
   { re: /^pt/i, score: 20 },
 ];
 
-/** Pontuação de uma voz (0 = não é pt-BR). */
+/**
+ * Pontuação de uma voz (0 = não é pt-BR ou é feminina — nunca narrar com voz de
+ * mulher neste jogo).
+ */
 function scoreVoice(v: SpeechSynthesisVoice): number {
   if (!/^pt/i.test(v.lang)) return 0;
   const label = `${v.name} ${v.voiceURI}`;
+  // Voz feminina conhecida: descartada, mesmo que "neural".
+  if (FEMALE_NAMES.test(label)) return 0;
   let best = 1;
   for (const p of VOICE_PREFERENCES) {
     if (p.re.test(label)) best = Math.max(best, p.score);
   }
+  // Bônus de naturalidade **só** entre vozes masculinas já aprovadas acima.
+  if (NATURAL.test(label) && best >= 40) best += 20;
   return best;
 }
 

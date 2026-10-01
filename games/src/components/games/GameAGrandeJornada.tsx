@@ -39,6 +39,9 @@ export default function GameAGrandeJornada({ onExit }: { onExit: () => void }) {
   const [seeds, setSeeds] = useState(0);
   const [rotateOk, setRotateOk] = useState(false);
   const [showHand, setShowHand] = useState(false);
+  // A narrativa de entrada aparece uma vez por etapa, sobre o cenário novo —
+  // é onde a criança sabe ONDE está e COMO é o lugar antes de correr (ADR-010).
+  const [intro, setIntro] = useState(true);
   const reducedMotion = usePrefersReducedMotion();
   const portraitPhone = useIsPortraitPhone();
 
@@ -268,6 +271,11 @@ export default function GameAGrandeJornada({ onExit }: { onExit: () => void }) {
 
   /* ---------------------------------- telas ------------------------------- */
 
+  // Ao trocar de etapa, a narrativa de entrada volta a aparecer.
+  useEffect(() => {
+    setIntro(true);
+  }, [ls.levelIdx]);
+
   const mapItems = levelMapItems(
     GAME_ID,
     JORNADA_GAME_LEVELS,
@@ -346,6 +354,29 @@ export default function GameAGrandeJornada({ onExit }: { onExit: () => void }) {
 
         <div className="game-surface relative w-full max-w-3xl overflow-hidden rounded-3xl border-4 border-white/20 shadow-2xl">
           <canvas ref={canvasRef} className="block h-[46vh] max-h-[420px] min-h-[240px] w-full" />
+
+          {/* Narrativa de entrada: o marco de Bunyan e onde o Peregrino está. */}
+          {intro ? (
+            <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-slate-950/85 px-4 py-4 text-center">
+              <span className="hud-pill px-4 py-1.5 text-xs font-black text-amber-300">
+                {level.marco}
+              </span>
+              <p className="max-w-lg text-balance text-base font-bold leading-snug text-white sm:text-lg">
+                {level.cenario}
+              </p>
+              <span className="text-xs font-semibold text-white/70">{level.ref}</span>
+              <button
+                type="button"
+                onClick={() => {
+                  setIntro(false);
+                  stopHand();
+                }}
+                className="ui-press rounded-full bg-amber-300 px-7 py-3 text-base font-black text-slate-900 shadow-lg"
+              >
+                Vamos seguir ➜
+              </button>
+            </div>
+          ) : null}
 
           {msg ? (
             <p className="pointer-events-none absolute inset-x-3 top-3 rounded-2xl bg-slate-950/80 px-4 py-2 text-center text-sm font-bold text-white shadow">
