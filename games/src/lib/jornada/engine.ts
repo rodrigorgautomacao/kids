@@ -75,7 +75,8 @@ export class JornadaEngine {
     this.checkpoint = this.map.checkpoints[0]
       ? { x: this.map.checkpoints[0].x, y: this.map.checkpoints[0].y }
       : { x: TILE * 2, y: TILE * 2 };
-    this.player = createPlayer(this.checkpoint.x, this.checkpoint.y - PLAYER_H - 2);
+    // Pés exatamente no chão — o herói NUNCA cai do céu ao nascer.
+    this.player = createPlayer(this.checkpoint.x, groundTopBelow(this.map, this.checkpoint.x, this.checkpoint.y) - PLAYER_H);
     // O primeiro Marco já é o ponto de partida — não dispara evento ao nascer.
     this.checkpointsDone.add(`${this.checkpoint.x},${this.checkpoint.y}`);
     this.enemies = this.map.spawns.map((s) => ({
@@ -431,7 +432,7 @@ export class JornadaEngine {
       return;
     }
     p.x = this.checkpoint.x;
-    p.y = this.checkpoint.y - PLAYER_H - 2;
+    p.y = groundTopBelow(this.map, p.x, this.checkpoint.y) - PLAYER_H;
     p.vx = 0;
     p.vy = 0;
     this.comunhao = Math.max(this.comunhao, 0.35);
@@ -502,4 +503,14 @@ function overlap(
 
 function clamp(v: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, v));
+}
+
+/** Topo do primeiro sólido abaixo de (x, fromY) — para o herói nascer em pé no chão. */
+function groundTopBelow(map: TileMap, x: number, fromY: number): number {
+  const tx = Math.floor((x + PLAYER_W / 2) / TILE);
+  for (let ty = Math.max(0, Math.floor(fromY / TILE)); ty < map.height; ty++) {
+    const ch = map.grid[ty]?.[tx];
+    if (ch === '#' || ch === 'x' || ch === 'w') return ty * TILE;
+  }
+  return fromY;
 }
