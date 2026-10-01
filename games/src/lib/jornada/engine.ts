@@ -7,6 +7,7 @@ import {
   CAMERA_LERP,
   COMUNHAO_DRAIN,
   COMUNHAO_DRAIN_SMALL_KIDS,
+  HIT_STOP,
   LIGHT_BASE,
   LIGHT_MAX,
   LIGHT_PER_SEED,
@@ -63,6 +64,8 @@ export class JornadaEngine {
   private paused = false;
   private finished = false;
   private flash = 0;
+  private hitStop = 0;
+  private camKick = 0;
   private readonly opts: EngineOptions;
   readonly level: PlatformerLevel;
   /** A casca React cola o canvas aqui (sem re-render por frame). */
@@ -224,9 +227,20 @@ export class JornadaEngine {
     // Modo pequeninos: a oração é automática (ninguém é punido por não entender).
     if (this.opts.smallKids && this.comunhao < 0.5) this.pray();
 
+    // Hit-stop: pouso pesado congela ~50 ms e a câmera "chuta" — vende peso
+    // (skill `jogos-game-feel` §4; desligado em prefers-reduced-motion).
+    if (this.hitStop > 0) {
+      this.hitStop = Math.max(0, this.hitStop - dt);
+      return;
+    }
+    const impact = this.player.vy;
     const res = stepPlayer(this.map, this.player, this.input, dt, maxSpeed);
     this.player = res.player;
 
+    if (res.landed && impact > 520 && !this.opts.reducedMotion) {
+      this.hitStop = HIT_STOP;
+      this.camKick = 3.5;
+    }
     if (res.headBonk) this.bumpRock();
 
     // Comunhão esvazia devagar (o "Sono do Coração" apaga a luz, nunca tira nada).
@@ -446,6 +460,12 @@ export class JornadaEngine {
     const k = Math.min(1, CAMERA_LERP * (dt * 60));
     this.camX += (tx - this.camX) * k;
     this.camY += (ty - this.camY) * k;
+    if (this.camKick > 0.05) {
+      this.camY += this.camKick * (Math.random() > 0.5 ? 1 : -1);
+      this.camKick *= 0.82;
+    } else {
+      this.camKick = 0;
+    }
   }
 
   private paint() {

@@ -1,7 +1,16 @@
 // Testes do motor puro da "A Grande Jornada" (skill `jogos-platformer` §10).
 
 import { describe, expect, it } from 'vitest';
-import { JUMP_VELOCITY, PLAYER_H, PLAYER_W, TILE } from './constants';
+import {
+  FALL_GRAVITY,
+  GRAVITY,
+  JUMP_VELOCITY,
+  PLAYER_H,
+  PLAYER_W,
+  RUN_MAX,
+  RUN_MAX_SMALL_KIDS,
+  TILE,
+} from './constants';
 import { createPlayer, jumpHeightPx, stepPlayer } from './physics';
 import { parseMap, rectHitsSolid, tileAt } from './tiles';
 import { JORNADA_LEVELS } from '../../data/jornada';
@@ -148,5 +157,50 @@ describe('regressão: o herói nunca nasce caindo (loop de começo)', () => {
       expect(p.onGround, lv.id).toBe(true);
       expect(p.y, lv.id).toBeLessThan(map.height * TILE);
     }
+  });
+});
+
+describe('regra de ouro do alcance (skill jogos-game-feel §2)', () => {
+  it('todo vão horizontal cabe no alcance do pulo com ≥20% de folga', () => {
+    // Alcance = velocidade máxima × tempo de arco (subida + queda assimétrica).
+    const h = (JUMP_VELOCITY * JUMP_VELOCITY) / (2 * GRAVITY);
+    const up = Math.abs(JUMP_VELOCITY) / GRAVITY;
+    const down = Math.sqrt((2 * h) / FALL_GRAVITY);
+    for (const [speed, label] of [
+      [RUN_MAX, 'normal'],
+      [RUN_MAX_SMALL_KIDS, 'pequeninos'],
+    ] as const) {
+      const reach = speed * (up + down);
+      for (const lv of JORNADA_LEVELS) {
+        const map = parseMap(lv.map);
+        // Linha do chão = a 1ª linha com chão na maior parte do mapa.
+        let groundRow = -1;
+        for (let ty = 0; ty < map.height; ty++) {
+          let solid = 0;
+          for (let tx = 0; tx < map.width; tx++) if (map.grid[ty][tx] === '#') solid++;
+          if (solid > map.width * 0.5) {
+            groundRow = ty;
+            break;
+          }
+        }
+        expect(groundRow, lv.id).toBeGreaterThanOrEqual(0);
+        let cur = 0;
+        let maxGap = 0;
+        for (let tx = 0; tx < map.width; tx++) {
+          const ch = map.grid[groundRow][tx];
+          const solid = ch === '#' || ch === '~' || ch === '=' || ch === 'x' || ch === 'w';
+          if (solid) {
+            maxGap = Math.max(maxGap, cur);
+            cur = 0;
+          } else cur++;
+        }
+        const gapPx = maxGap * TILE;
+        expect(gapPx * 1.2, `${lv.id} (${label}) vão ${maxGap} tiles`).toBeLessThanOrEqual(reach);
+      }
+    }
+  });
+
+  it('queda é mais pesada que a subida (sem pulo flutuante)', () => {
+    expect(FALL_GRAVITY).toBeGreaterThan(GRAVITY * 1.5);
   });
 });

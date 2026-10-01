@@ -4,7 +4,9 @@
 import {
   APEX_HANG,
   APEX_SPEED,
+  CORNER_NUDGE,
   COYOTE_TIME,
+  FALL_GRAVITY,
   GRAVITY,
   JUMP_BUFFER,
   JUMP_CUT,
@@ -79,8 +81,10 @@ export function stepPlayer(
     p.vx = 0;
   }
 
-  // ── Vertical ──────────────────────────────────────────────────
-  const gravity = Math.abs(p.vy) < APEX_SPEED ? GRAVITY * APEX_HANG : GRAVITY;
+  // ── Vertical (queda mais pesada que a subida — skill `jogos-game-feel` §2)
+  const rising = p.vy < 0;
+  const gBase = rising ? GRAVITY : FALL_GRAVITY;
+  const gravity = rising && Math.abs(p.vy) < APEX_SPEED ? gBase * APEX_HANG : gBase;
   p.vy = Math.min(p.vy + gravity * dt, MAX_FALL);
 
   const prevBottom = p.y + PLAYER_H;
@@ -100,10 +104,19 @@ export function stepPlayer(
       p.onGround = false;
     }
   } else if (hitsSolid(map, p.x, p.y)) {
-    p.y = resolveYUp(map, p.x, p.y);
-    p.vy = 0;
-    headBonk = true;
-    p.jumpCut = true;
+    // Corner correction: uma quina de até 4 px não rouba o pulo inteiro.
+    const nudged = p.x - CORNER_NUDGE;
+    const nudgedR = p.x + CORNER_NUDGE;
+    if (!hitsSolid(map, nudged, p.y) && Math.abs(p.vx) < 40) {
+      p.x = nudged;
+    } else if (!hitsSolid(map, nudgedR, p.y) && Math.abs(p.vx) < 40) {
+      p.x = nudgedR;
+    } else {
+      p.y = resolveYUp(map, p.x, p.y);
+      p.vy = 0;
+      headBonk = true;
+      p.jumpCut = true;
+    }
   } else {
     p.onGround = false;
   }
