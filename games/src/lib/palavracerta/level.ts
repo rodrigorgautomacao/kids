@@ -25,19 +25,37 @@ function mulberry32(seed: number) {
  * Constrói a geometria da fase `index` (1–10).
  * `easy` (Modo Pequeninos) estreita os buracos e planta plataformas de apoio.
  */
+/**
+ * Curva de dificuldade em 3 faixas. Antes as 10 fases tinham exatamente a mesma
+ * estrutura (3 vãos de 128–164 px, mesmos apoios) e só mudava a semente do
+ * RNG — a fase 10 era a fase 1 com outro jitter (achado sev 3, revisão `jogos-2d`).
+ *
+ * Regra dura da geração: nenhum vão passa de 80% do alcance parado com a folga
+ * da regra de ouro — o gate `clearability.test.ts` verifica, não confie só aqui.
+ */
+const FAIXAS = [
+  // 1–3: aquecimento. Poucos vãos, largos de sobra, mundo curto.
+  { n: 2, min: 110, max: 132, span: [1180, 2260], width: 3400 },
+  // 4–7: varye o padrão, um apoio extra por fase.
+  { n: 3, min: 128, max: 156, span: [1060, 1980, 2760], width: 3600 },
+  // 8–10: combinação. Vãos largos, mundo longo, dois apoios num deles.
+  { n: 3, min: 146, max: 168, span: [1000, 1900, 2700], width: 4000 },
+] as const;
+
 export function buildLevel(index: number, easy: boolean): LevelGeom {
   const rng = mulberry32(1000 + index * 977);
-  const width = 3400;
+  const faixa = FAIXAS[index <= 3 ? 0 : index <= 7 ? 1 : 2];
+  const width = faixa.width;
   const groundY = WORLD_H - 92;
 
   // Buracos: o primeiro mais tarde (tempo de aprender), depois espaçados.
-  const pitCount = easy ? 2 : 3;
-  const pitSpan = easy ? [1180, 2260] : [1060, 1980, 2760];
+  const pitCount = easy ? Math.max(2, faixa.n - 1) : faixa.n;
+  const pitSpan = easy ? [1180, 2260, 3200] : faixa.span;
   const pits: { x: number; w: number }[] = [];
   for (let i = 0; i < pitCount; i++) {
     const base = pitSpan[i] ?? 900 + i * 700;
     const x = base + rng() * 90;
-    const w = (easy ? 96 : 128) + rng() * (easy ? 22 : 36);
+    const w = easy ? 96 + rng() * 22 : faixa.min + rng() * (faixa.max - faixa.min);
     // nunca encostar no portão nem no início
     if (x + w < width - 420 && x > 420) pits.push({ x, w });
   }
@@ -54,26 +72,36 @@ export function buildLevel(index: number, easy: boolean): LevelGeom {
 
   // Plataformas de apoio sobre cada buraco + plataformas de variação.
   for (const pit of pits) {
+    // Apoio do vão: no Modo Pequeninos ele nunca invade o vão (senão vira teto
+    // no lábio do buraco e engole o pulo de quem chega devagar).
+    const apoioW = easy ? 88 : 104;
+    const apoioX = Math.max(pit.x + 4, pit.x + pit.w / 2 - apoioW / 2);
     solids.push({
-      x: pit.x + pit.w / 2 - (easy ? 62 : 52),
-      y: groundY - (easy ? 86 : 104),
-      w: easy ? 124 : 104,
+      x: apoioX,
+      // No Pequeninos o apoio é baixo de propósito: uma criança que só toca
+      // (pulinho ≈ 68 px) sobe nele e atravessa em dois toques.
+      y: groundY - (easy ? 54 : 104),
+      w: Math.min(apoioW, pit.x + pit.w - 4 - apoioX),
       h: 18,
+      oneWay: true,
     });
     if (!easy && rng() > 0.55) {
+      // Variação: ALTURA ALCANÇÁVEL (ápice ≈ 156 px), não decoração de 190 px.
       solids.push({
         x: pit.x - 150 - rng() * 60,
-        y: groundY - 150 - rng() * 40,
+        y: groundY - 104 - rng() * 26,
         w: 96,
         h: 16,
+        oneWay: true,
       });
     }
   }
-  // Duas plataformas altas decorativas (com flor em cima no render).
+  // Duas plataformas decorativas (com flor em cima no render): agora são
+  // degraus REAIS e alcançáveis (118/140 px < ápice 156 px), sentido único.
   for (let i = 0; i < 2; i++) {
     const x = 620 + i * 1180 + rng() * 120;
     if (!pits.some((p) => x > p.x - 160 && x < p.x + p.w + 160)) {
-      solids.push({ x, y: groundY - 168 - i * 26, w: 110, h: 16 });
+      solids.push({ x, y: groundY - 112 - i * 16, w: 110, h: 16, oneWay: true });
     }
   }
 
@@ -109,7 +137,7 @@ export function buildLevel(index: number, easy: boolean): LevelGeom {
     }
     return 120;
   };
-  const fractions = [0.11, 0.29, 0.47, 0.65, 0.87];
+  const fractions = [0.16, 0.31, 0.47, 0.63, 0.85];
   const npcs: NpcSpawn[] = fractions.map((f, i) => ({
     id: `npc-${i + 1}`,
     x: snapToFirm(Math.round(f * width)),

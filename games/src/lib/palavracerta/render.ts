@@ -397,6 +397,11 @@ function drawFlower(ctx: Ctx, x: number, baseY: number, kind: number, pal: Palet
 }
 
 
+/* ------------------------- contorno da casa ------------------------- */
+
+/** Traço escuro padrão do arquivo (sem blur) — separação de silhueta. */
+const OUTLINE = 'rgba(15,23,42,0.75)';
+
 /* ------------------------- cenário-âncora por bioma ------------------------- */
 
 /**
@@ -747,7 +752,7 @@ function drawGate(ctx: Ctx, gateX: number, groundY: number, open: boolean, t: nu
 
 /* --------------------------------- herói ---------------------------------- */
 
-function drawHero(ctx: Ctx, hero: HeroRuntime, camX: number, t: number) {
+function drawHero(ctx: Ctx, hero: HeroRuntime, camX: number, t: number, groundY: number) {
   const x = hero.x - camX;
   const feetY = hero.y;
   const facing = hero.facing;
@@ -755,10 +760,11 @@ function drawHero(ctx: Ctx, hero: HeroRuntime, camX: number, t: number) {
   const walk = hero.walkPhase;
   const swing = walking ? Math.sin(walk) : 0;
 
-  // Sombra de contato.
-  ctx.fillStyle = 'rgba(15,23,42,0.22)';
+  // Sombra de contato grudada no CHÃO (não nos pés): encolhe e some com a altura.
+  const airK = Math.max(0, 1 - (groundY - feetY) / 220);
+  ctx.fillStyle = `rgba(15,23,42,${(0.22 * airK).toFixed(3)})`;
   ctx.beginPath();
-  ctx.ellipse(x, feetY + 2, 17, 5, 0, 0, Math.PI * 2);
+  ctx.ellipse(x, groundY + 2, 8 + 9 * airK, 2.4 + 2.6 * airK, 0, 0, Math.PI * 2);
   ctx.fill();
 
   const bob = walking ? Math.abs(Math.sin(walk)) * 1.8 : Math.sin(t * 2.1) * 1.1;
@@ -766,6 +772,13 @@ function drawHero(ctx: Ctx, hero: HeroRuntime, camX: number, t: number) {
 
   ctx.save();
   ctx.translate(x, 0);
+
+  // Squash & stretch ancorado nos pés (amplitude pequena: herói tem 54 px).
+  const sq = hero.squash;
+  ctx.save();
+  ctx.translate(0, feetY);
+  ctx.scale(1 / sq, sq);
+  ctx.translate(0, -feetY);
 
   // Pernas (jeans + sapatos).
   const legLift = hero.state === 'jump' ? -6 : hero.state === 'fall' ? -3 : 0;
@@ -778,9 +791,16 @@ function drawHero(ctx: Ctx, hero: HeroRuntime, camX: number, t: number) {
     ctx.fillStyle = '#1d4ed8';
     roundRect(ctx, -4.2, 0, 8.4, 18 + legLift * 0.3, 4);
     ctx.fill();
+    ctx.strokeStyle = OUTLINE;
+    ctx.lineWidth = 1.6;
+    roundRect(ctx, -4.2, 0, 8.4, 18 + legLift * 0.3, 4);
+    ctx.stroke();
     ctx.fillStyle = '#7c3f1d';
     roundRect(ctx, -4.8, 15 + legLift * 0.3, 10, 5, 2.5);
     ctx.fill();
+    ctx.strokeStyle = OUTLINE;
+    roundRect(ctx, -4.8, 15 + legLift * 0.3, 10, 5, 2.5);
+    ctx.stroke();
     ctx.restore();
   }
 
@@ -795,6 +815,12 @@ function drawHero(ctx: Ctx, hero: HeroRuntime, camX: number, t: number) {
   ctx.fillStyle = tg;
   roundRect(ctx, -12, -15, 24, 31, 9);
   ctx.fill();
+  // Contorno da casa (traço escuro, sem blur): a silhueta precisa ler em
+  // qualquer bioma — antes o corpo era só preenchimento (achado visual sev 3).
+  ctx.strokeStyle = OUTLINE;
+  ctx.lineWidth = 2;
+  roundRect(ctx, -12, -15, 24, 31, 9);
+  ctx.stroke();
   // Faixa.
   ctx.fillStyle = '#fbbf24';
   roundRect(ctx, -12, 4, 24, 5, 2.2);
@@ -903,7 +929,7 @@ function drawHero(ctx: Ctx, hero: HeroRuntime, camX: number, t: number) {
   else ctx.arc(0.5 + look * 0.3, headY + 5, 3.8, 0.15 * Math.PI, 0.85 * Math.PI);
   ctx.stroke();
 
-  ctx.restore();
+  ctx.restore(); // fecha o squash & stretch
 }
 
 /* ---------------------------------- NPCs ---------------------------------- */
@@ -1460,7 +1486,7 @@ export function drawFrame(a: DrawFrameArgs) {
     if (npc.anim === 'thinking') drawThinkBubble(ctx, x, geom.groundY, t);
   }
 
-  drawHero(ctx, hero, camX, t);
+  drawHero(ctx, hero, camX, t, geom.groundY);
   drawGuideArrow(ctx, camX, w, t, guide, pal.accent, reducedMotion);
   drawParticles(ctx, particles, camX, pal, t);
 }

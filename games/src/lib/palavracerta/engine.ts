@@ -16,27 +16,23 @@ import {
 } from './render';
 import type { BiomeId, HeroRuntime, LevelGeom, NpcLookCanvas, NpcRuntime, Palette, Rect } from './types';
 
-const DT = 1 / 60;
-// ── Feel derivado de sensação (skill `jogos-game-feel` §2) ──────────────
-// Altura do pulo ≈ 161 px; arco ≈ 0,67 s; alcance ≈ 224 px (> maior vão 164 px,
-// com folga ≥ 20% — garantido pelo teste `clearability.test.ts`).
-const GRAVITY = 2350;
-/** Queda mais pesada que a subida (1,5–2×) — fim do pulo flutuante. */
-const FALL_MULT = 1.55;
-/** Perto do ápice a gravidade cai → "hang" para mirar o pouso. */
-const APEX_HANG = 0.62;
-const APEX_SPEED = 95;
-const MAX_FALL = 1250;
-const RUN_ACCEL = 3100;
-const AIR_ACCEL = 1900;
-const FRICTION = 2700;
-const MAX_SPEED = 335;
-const JUMP_VEL = 870;
-const JUMP_CUT = 380; // velocidade mínima mantida ao soltar cedo (pulo variável)
-const COYOTE = 0.1;
-const JUMP_BUFFER = 0.12;
-/** Correção de quina: empurra até 8 px para pousar em plataforma quase alcançada. */
-const CORNER_FIX = 8;
+// A física mora em `physics.ts` (uma fonte de verdade): o motor e o gate
+// `clearability.test.ts` simulam EXATAMENTE a mesma coisa. Ver aquele arquivo.
+import {
+  AIR_ACCEL,
+  CORNER_FIX,
+  COYOTE,
+  DT,
+  FRICTION,
+  GRAVITY,
+  JUMP_BUFFER,
+  JUMP_CUT,
+  JUMP_VEL,
+  MAX_FALL,
+  MAX_SPEED,
+  RUN_ACCEL,
+  gravityScale,
+} from './physics';
 
 export interface InputState {
   left: boolean;
@@ -128,6 +124,7 @@ export function createPlatformer(canvas: HTMLCanvasElement, opts: PlatformerOpti
   let stepTimer = 0;
   let camX = 0;
   let camKick = 0;
+  let hitStop = 0; // congela só a física: o desenho continua (senão o tremor morre junto)
   let time = 0;
   let suspended = false;
   let destroyed = false;
@@ -148,7 +145,9 @@ export function createPlatformer(canvas: HTMLCanvasElement, opts: PlatformerOpti
     x: geom.npcs[i]?.x ?? n.x,
     guardiao: n.guardiao,
     defeated: false,
-    anim: 'thinking',
+    // Ninguém nasce com o balão: 5 "?" ao mesmo tempo = sinal em lugar nenhum.
+    // A seta de guia já diz quem é o próximo; o balão acende no encontro.
+    anim: 'idle',
     look: n.look,
     phase: i * 1.3,
   }));
@@ -221,7 +220,7 @@ export function createPlatformer(canvas: HTMLCanvasElement, opts: PlatformerOpti
       hero.onGround = false;
       coyote = 0;
       jumpBuffered = 0;
-      hero.squash = 1.16; // stretch na decolagem
+      hero.squash = 1.1; // stretch na decolagem (amplitude curta: herói tem 54 px)
       opts.events?.onJump?.();
       emitDust(hero.x, hero.y, 5);
     }
@@ -230,10 +229,7 @@ export function createPlatformer(canvas: HTMLCanvasElement, opts: PlatformerOpti
 
     // Gravidade assimétrica + apex hang: cai mais rápido do que sobe e "paira"
     // um instante no topo para a criança mirar o pouso.
-    const grav =
-      GRAVITY *
-      (hero.vy > 0 ? FALL_MULT : 1) *
-      (Math.abs(hero.vy) < APEX_SPEED ? APEX_HANG : 1);
+    const grav = GRAVITY * gravityScale(hero.vy);
     hero.vy = Math.min(MAX_FALL, hero.vy + grav * dt);
 
     // Colisão horizontal.
@@ -242,6 +238,7 @@ export function createPlatformer(canvas: HTMLCanvasElement, opts: PlatformerOpti
     const boxH = HERO_H;
     let box: Rect = { x: hero.x - boxW / 2, y: hero.y - boxH, w: boxW, h: boxH };
     for (const s of geom.solids) {
+      if (s.oneWay) continue; // nunca é parede lateral
       if (Math.abs(s.x + s.w / 2 - hero.x) > 260) continue;
       if (!rectsOverlap(box, s)) continue;
       if (hero.vx > 0) hero.x = s.x - boxW / 2;
@@ -265,7 +262,7 @@ export function createPlatformer(canvas: HTMLCanvasElement, opts: PlatformerOpti
           const push = boxR <= s.x + s.w / 2 ? Math.min(CORNER_FIX, s.x - boxL) : -Math.min(CORNER_FIX, boxR - (s.x + s.w));
           hero.x += push;
           hero.y = Math.min(hero.y, s.y - 1);
-          hero.vy = Math.max(hero.vy, 20);
+          if (hero.vy < 40) hero.vy = Math.max(hero.vy, 20);
           break;
         }
       }
@@ -278,10 +275,13 @@ export function createPlatformer(canvas: HTMLCanvasElement, opts: PlatformerOpti
     hero.onGround = false;
     let landedOnFirmGround = false;
     box = { x: hero.x - boxW / 2, y: hero.y - boxH, w: boxW, h: boxH };
+    const feetPrevY = hero.y; // pés antes do passo (para o teste "estava acima"?)
     for (const s of geom.solids) {
       if (Math.abs(s.x + s.w / 2 - hero.x) > 260) continue;
       if (!rectsOverlap(box, s)) continue;
       if (hero.vy > 0) {
+        // Sentido único: só pousa se os pés VINHAM de cima da plataforma.
+        if (s.oneWay && feetPrevY > s.y + 2) continue;
         hero.y = s.y;
         hero.vy = 0;
         hero.onGround = true;
@@ -296,8 +296,9 @@ export function createPlatformer(canvas: HTMLCanvasElement, opts: PlatformerOpti
 
     if (hero.onGround) {
       if (!wasGround && prevVy > 320) {
-        hero.squash = prevVy > 820 ? 0.78 : 0.86; // squash no pouso
-        if (prevVy > 700) camKick = 4.5; // kick só em queda grande (proporcional)
+        hero.squash = prevVy > 820 ? 0.86 : 0.93; // squash no pouso
+        if (prevVy > 820 && !opts.reducedMotion) hitStop = 0.055; // 55 ms de peso no pouso forte
+        if (prevVy > 700 && !opts.reducedMotion) camKick = 4.5; // proporcional, e só se a criança pediu movimento
         opts.events?.onLand?.();
         emitDust(hero.x, hero.y, 7);
       }
@@ -404,6 +405,9 @@ export function createPlatformer(canvas: HTMLCanvasElement, opts: PlatformerOpti
     const t = time;
     for (let i = particles.length - 1; i >= 0; i--) {
       const p = particles[i];
+      // Ambiente para de vagar: com reduced-motion o tempo do jogo é congelado,
+      // mas a senóide continuava escorregando ~12 px/s na vertical.
+      if (opts.reducedMotion && (p.kind === 'leaf' || p.kind === 'firefly')) continue;
       p.life -= dt;
       if (p.life <= 0) {
         if (p.kind === 'leaf' || p.kind === 'firefly') {
@@ -445,7 +449,9 @@ export function createPlatformer(canvas: HTMLCanvasElement, opts: PlatformerOpti
     const real = Math.min(0.1, (ts - lastTs) / 1000);
     lastTs = ts;
 
-    if (!suspended) {
+    if (hitStop > 0) {
+      hitStop = Math.max(0, hitStop - real);
+    } else if (!suspended) {
       acc += real;
       let steps = 0;
       while (acc >= DT && steps < 5) {
@@ -460,7 +466,7 @@ export function createPlatformer(canvas: HTMLCanvasElement, opts: PlatformerOpti
     // Câmera segue com folga, suave e limitada ao mundo.
     const target = Math.max(0, Math.min(geom.width - logicalW, hero.x - logicalW * 0.36));
     camX += (target - camX) * Math.min(1, real * 7);
-    camKick *= 0.86; // kick decai rápido (≤ 250 ms)
+    camKick *= Math.pow(0.86, real * 60); // decai por segundo (igual em 30 e 60 fps)
 
     const c = ctx as Ctx;
     drawFrame({

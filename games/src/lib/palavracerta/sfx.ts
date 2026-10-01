@@ -92,8 +92,8 @@ export function jump() {
 /** Aterrissagem — baque macio de terra. */
 export function land() {
   if (isSfxMuted()) return;
-  note({ freq: 180, dur: 0.1, type: 'sine', vol: 0.07, filter: 900, glide: 90 });
-  note({ midi: 45, at: 0.015, dur: 0.08, type: 'triangle', vol: 0.05, filter: 700 });
+  note({ freq: 180, dur: 0.1, type: 'sine', vol: 0.07, filter: 900, glide: 90, vary: true });
+  note({ midi: 45, at: 0.015, dur: 0.08, type: 'triangle', vol: 0.05, filter: 700, vary: true });
 }
 
 /** Passo no chão (discreto). */
@@ -105,8 +105,8 @@ export function step() {
 /** Declarar a Palavra — quem leve, com corpo (o "soco" virou palavra). */
 export function declare() {
   if (isSfxMuted()) return;
-  note({ midi: 67, dur: 0.18, type: 'triangle', vol: 0.1, filter: 3000, layer: 'fifth' });
-  note({ midi: 74, at: 0.09, dur: 0.22, type: 'triangle', vol: 0.1, filter: 3400, layer: 'octave' });
+  note({ midi: 67, dur: 0.18, type: 'triangle', vol: 0.1, filter: 3000, layer: 'fifth', vary: true });
+  note({ midi: 74, at: 0.09, dur: 0.22, type: 'triangle', vol: 0.1, filter: 3400, layer: 'octave', vary: true });
 }
 
 /** Guardião cedendo à Palavra — brilho ascendente de 3 notas. */

@@ -7,6 +7,12 @@ export interface Rect {
   y: number;
   w: number;
   h: number;
+  /**
+   * Plataforma de sentido único: pode atravessar por baixo, mas pousa em cima.
+   * Sem isso, uma plataforma alta vira "teto" que engole o pulo e teleporta a
+   * criança para baixo sem nenhum aviso (achado sev 3 da revisão jogos-2d).
+   */
+  oneWay?: boolean;
 }
 
 export interface TreeDef {
