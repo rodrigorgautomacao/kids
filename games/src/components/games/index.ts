@@ -30,5 +30,7 @@ export { default as GameMeninosEMeninas } from './GameMeninosEMeninas';
 export { default as GameMeuProposito } from './GameMeuProposito';
 // Fase 18 — A Grande Jornada (platformer bíblico, ADR-010)
 export { default as GameAGrandeJornada } from './GameAGrandeJornada';
-// Fase 18 — A Palavra Certa (plataforma + duelos de Palavra)
-export { default as GameAPalavraCerta } from './GameAPalavraCerta';
+// Estudo da Semana — currículo do mês (leitura, não jogo)
+export { default as GameEstudoDaSemana } from './GameEstudoDaSemana';
+// Fase 19 — Devocional da Semana (tela de LEITURA: histórico em lib/leitura)
+export { default as GameDevocionalDaSemana } from './GameDevocionalDaSemana';

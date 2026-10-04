@@ -29,7 +29,6 @@ import {
   GameMeninosEMeninas,
   GameMeuProposito,
   GameAGrandeJornada,
-  GameAPalavraCerta,
 } from '../components/games';
 
 export type Faixa = '3-4' | '5-6' | '7-9';
@@ -53,15 +52,37 @@ export interface GameDefinition {
   title: string;
   subtitle: string;
   sinopse: string;
-  faixa: Faixa;
+  /**
+   * Faixa(s) em que o jogo aparece. Array = o jogo serve a **todas** as faixas
+   * e entra em cada seção do Hub (é o caso dos jogos de leitura, que têm
+   * trilhos de idade próprios dentro da tela).
+   */
+  faixa: Faixa | Faixa[];
   tipo: Tipo;
   status: GameStatus;
   habilidades: string[];              // tags curtas para o card (ex.: 'memória', 'narrativa')
   emBreveMotivo?: string;             // texto "Em breve!" no card
   totalLevels?: number;               // usado em games que têm fases (Estrada/Heróis) — None = piloto contínuo
+  /**
+   * O Hub mostra "x/y lidos" (de `lib/leitura.ts`) em vez de estrelas quando
+   * `true` — nos jogos de leitura o contador de dias/lições lidas diz mais do
+   * que estrela, porque reler não é erro.
+   */
+  progressoLeitura?: boolean;
   icon: ComponentType<{ size?: number }>;
   color: string;
   component?: ComponentType<{ onExit: () => void }>;
+  /**
+   * Carregamento sob demanda (React.lazy). games de leitura são ~18 kB gzip
+   * juntos e ninguém chega ao Hub querendo them: só quem abre o jogo. Mantém o
+   * primeiro load do PWA dentro do orçamento.
+   */
+  lazy?: () => Promise<{ default: ComponentType<{ onExit: () => void }> }>;
+}
+
+/** O jogo aparece nesta faixa do Hub? */
+export function jogoNaFaixa(faixa: Faixa | Faixa[], id: Faixa): boolean {
+  return Array.isArray(faixa) ? faixa.includes(id) : faixa === id;
 }
 
 // ─── Jogos PRONTOS ────────────────────────────────────────────────
@@ -146,19 +167,6 @@ const GAMES: GameDefinition[] = [
   { id: 'meninos-e-meninas', title: 'Meninos e Meninas de Deus', subtitle: 'Criação e valor', sinopse: 'Deus criou meninos e meninas à sua imagem — cada um com dons e chamado!', faixa: '5-6', tipo: 'at-nt', status: 'pronto', habilidades: ['identidade', 'valor', 'fé'], icon: CompassIcon, color: 'bg-sky-200 text-sky-900', component: GameMeninosEMeninas },
   { id: 'meu-proposito', title: 'Meu Propósito', subtitle: 'Planos de Deus', sinopse: 'Deus tem propósitos para cada pessoa e para toda a igreja!', faixa: '7-9', tipo: 'at-nt', status: 'pronto', habilidades: ['propósito', 'discipulado', 'conhecimento bíblico'], icon: CrownIcon, color: 'bg-indigo-200 text-indigo-900', component: GameMeuProposito },
 
-  // ─── Fase 18 — A Palavra Certa (plataforma lateral + duelos) ──
-  {
-    id: 'palavra-certa',
-    title: 'A Palavra Certa',
-    subtitle: 'Plataforma + Palavra',
-    sinopse: 'Corra, pule e declare a Palavra certa para passar! 10 fases, 50 encontros e um guardião em cada fase.',
-    faixa: '7-9', tipo: 'at-nt', status: 'pronto', totalLevels: 10,
-    habilidades: ['leitura', 'decisão', 'conhecimento bíblico', 'coordenação motora'],
-    icon: CrownIcon,
-    color: 'bg-emerald-200 text-emerald-900',
-    component: GameAPalavraCerta,
-  },
-
   // ─── Fase 18 — A Grande Jornada (platformer bíblico, ADR-010) ─
   {
     id: 'a-grande-jornada',
@@ -170,6 +178,35 @@ const GAMES: GameDefinition[] = [
     icon: FlagIcon,
     color: 'bg-amber-200 text-amber-900',
     component: GameAGrandeJornada,
+  },
+
+  // ─── Fase 19 — jogos de LEITURA (ADR-012) ───────────────────────
+  // Diferença estrutural: não têm "níveis" e não pontuam por acerto. A unidade
+  // é a leitura (um dia do devocional, uma lição do mês) e o progresso é "x/y
+  // lidos", guardado em `lib/leitura.ts` por id textual estável — o histórico
+  // sobrevive a material novo entrar. Ambos servem às três faixas (têm trilhos
+  // de idade dentro da tela) e carregam sob demanda.
+  {
+    id: 'devocional-da-semana',
+    title: 'Devocional da Semana',
+    subtitle: 'Uma mensagem por dia',
+    sinopse: 'Segunda a sábado, um versículo e uma mensagem para ler com calma. Fica guardado o histórico de todas as semanas.',
+    faixa: ['3-4', '5-6', '7-9'], tipo: 'at-nt', status: 'pronto', progressoLeitura: true,
+    habilidades: ['leitura', 'devocional', 'reflexão'],
+    icon: BookIcon,
+    color: 'bg-amber-100 text-amber-900',
+    lazy: () => import('../components/games/GameDevocionalDaSemana'),
+  },
+  {
+    id: 'estudo-da-semana',
+    title: 'Estudo da Semana',
+    subtitle: 'Uma lição por semana',
+    sinopse: 'A lição da semana do mês, na idade da criança: a história, uma pergunta e o que fazer em casa.',
+    faixa: ['3-4', '5-6', '7-9'], tipo: 'at-nt', status: 'pronto', progressoLeitura: true,
+    habilidades: ['leitura', 'estudo bíblico', 'família'],
+    icon: CandleIcon,
+    color: 'bg-lime-200 text-lime-900',
+    lazy: () => import('../components/games/GameEstudoDaSemana'),
   },
 ];
 
@@ -188,6 +225,15 @@ function CompassIcon({ size = 28 }: { size?: number }) {
 }
 function FlagIcon({ size = 28 }: { size?: number }) {
   return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 21V4"/><path d="M5 4h11l-2 4 2 4H5"/></svg>;
+}
+// Livro aberto (Devocional) e vela acesa (Estudo) — desenhados com a mesma
+// espessura de traço dos ícones ao lado, para o Hub não ficar com dois pesos
+// visuais diferentes.
+function BookIcon({ size = 28 }: { size?: number }) {
+  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 6.5C10.5 5 8.5 4.5 6 4.7A1 1 0 0 0 5 5.7v12a1 1 0 0 0 1 .9c2.4-.2 4.4.3 6 1.6"/><path d="M12 6.5C13.5 5 15.5 4.5 18 4.7a1 1 0 0 1 1 1v12a1 1 0 0 1-1 .9c-2.4-.2-4.4.3-6 1.6"/><path d="M12 6.5v14.7"/></svg>;
+}
+function CandleIcon({ size = 28 }: { size?: number }) {
+  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3c1.6 1.9 2.4 3.2 2.4 4.2a2.4 2.4 0 1 1-4.8 0C9.6 6.2 10.4 4.9 12 3Z"/><path d="M9.5 11h5v10h-5z"/><path d="M7 21h10"/></svg>;
 }
 
 // Backward compat — jogos antigos importam MAX_LEVELS_PER_GAME do aqui

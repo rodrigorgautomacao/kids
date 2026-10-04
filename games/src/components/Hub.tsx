@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { games, FAIXAS, TIPOS, MAX_LEVELS_PER_GAME, type Faixa, type GameDefinition, type Tipo } from '../data/games';
+import { games, jogoNaFaixa, FAIXAS, TIPOS, MAX_LEVELS_PER_GAME, type Faixa, type GameDefinition, type Tipo } from '../data/games';
 import { chapterLevelsDone, chapterStars, loadLevels, totalStars, type ProgressMap } from '../lib/progress';
 import {
   isMusicMuted,
@@ -78,9 +78,18 @@ function GameCard({
               {tipo.emoji} {tipo.nome}
             </span>
           ) : null}
-          <span className="flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-black text-amber-700">
-            <StarItem size={12} /> {stars}/{total * 3}
-          </span>
+          {game.progressoLeitura ? (
+            // Jogo de leitura: estrela não faz sentido (reler não é erro) e o
+            // Hub não pode importar o conteúdo só para contar unidades — o
+            // número mora dentro do jogo, que é quem sabe o que tem.
+            <span className="flex items-center gap-1 rounded-full bg-teal-50 px-2 py-0.5 text-[11px] font-black text-teal-800">
+              📖 Leitura
+            </span>
+          ) : (
+            <span className="flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-black text-amber-700">
+              <StarItem size={12} /> {stars}/{total * 3}
+            </span>
+          )}
         </span>
       </span>
       <span className="ui-press shrink-0 rounded-full bg-indigo-500 px-4 py-2 text-sm font-black text-white shadow-md">
@@ -399,7 +408,7 @@ export default function Hub({ onSelectGame, onLogout }: HubProps) {
             {FAIXAS.filter((faixa) => faixaFiltro === 'todos' || faixa.id === faixaFiltro).map((faixa) => {
               const visiveis = games.filter(
                 (g) =>
-                  g.faixa === faixa.id &&
+                  jogoNaFaixa(g.faixa, faixa.id) &&
                   (tipoFiltro === 'todos' || g.tipo === tipoFiltro),
               );
               const prontos = visiveis.filter((g) => g.status === 'pronto');
@@ -456,7 +465,7 @@ export default function Hub({ onSelectGame, onLogout }: HubProps) {
             {FAIXAS.filter((faixa) => faixaFiltro === 'todos' || faixa.id === faixaFiltro).map((faixa) => {
               const breves = games.filter(
                 (g) =>
-                  g.faixa === faixa.id &&
+                  jogoNaFaixa(g.faixa, faixa.id) &&
                   g.status === 'em-breve' &&
                   (tipoFiltro === 'todos' || g.tipo === tipoFiltro),
               );
