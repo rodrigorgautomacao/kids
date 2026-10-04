@@ -210,12 +210,24 @@ function desesperos(g: Grid, r: () => number, o: OpcoesMapa): void {
   }
 }
 
-/** Cancelinha 'c' — prêmio opcional que só aparece com a luz. */
+/**
+ * Cancelinha 'c' — prêmio opcional que só aparece com a luz.
+ *
+ * 🔒 Fica na **rua**, sobre chão firme. Antes ia a `RUA - 3` (96 px do chão),
+ * acima do ápice medido do pulo (82 px, ver `clearability.test.ts`): o prêmio
+ * existia no mapa e nenhuma criança conseguia chegar nele.
+ */
 function cancelinha(g: Grid, r: () => number, o: OpcoesMapa): void {
   if (!o.cancelinha) return;
   const x = 4 + Math.floor(r() * (MAP_W - 8));
-  const y = RUA - 3;
-  if (g[y][x] === '.' && g[y + 1][x] === '.') emCima(g, x, y, 'c');
+  // Procura um pedaço de chão firme (nunca sobre um vale, nunca sobre o Portão).
+  for (let dx = 0; dx < 16; dx++) {
+    const cx = Math.min(MAP_W - 3, x + dx);
+    if (g[RUA][cx] === '.' && g[CHAO][cx] === '#' && g[RUA + 1][cx] === '#') {
+      emCima(g, cx, RUA, 'c');
+      return;
+    }
+  }
 }
 
 /** Ponto de partida 'g' (o primeiro) — sempre em chão firme no início. */
@@ -274,8 +286,10 @@ export function gerarMapa(o: OpcoesMapa): string[] {
   marcos(g, o);
   muros(g, r, o);
   desesperos(g, r, o);
-  cancelinha(g, r, o);
   sementes(g, r, o);
+  // Depois das sementes: a Cancelinha é o prêmio opcional e não pode ser
+  // sobrescrita por uma semente no mesmo tile.
+  cancelinha(g, r, o);
   partida(g);
   portao(g);
 

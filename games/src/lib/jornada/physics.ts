@@ -19,7 +19,7 @@ import {
   RUN_MAX,
   TILE,
 } from './constants';
-import { rectHitsSolid, tileAt } from './tiles';
+import { parseMap, rectHitsSolid, tileAt } from './tiles';
 import type { InputState, PlayerState } from './types';
 import type { TileMap } from './tiles';
 
@@ -104,13 +104,28 @@ export function stepPlayer(
       p.onGround = false;
     }
   } else if (hitsSolid(map, p.x, p.y)) {
-    // Corner correction: uma quina de até 4 px não rouba o pulo inteiro.
-    const nudged = p.x - CORNER_NUDGE;
-    const nudgedR = p.x + CORNER_NUDGE;
-    if (!hitsSolid(map, nudged, p.y) && Math.abs(p.vx) < 40) {
-      p.x = nudged;
-    } else if (!hitsSolid(map, nudgedR, p.y) && Math.abs(p.vx) < 40) {
-      p.x = nudgedR;
+    // Corner correction: a quina não pode roubar o pulo inteiro. A janela é
+    // varrida (`|vy| × dt` do passo + folga) em vez de fixa, para que a
+    // correção cubra exatamente o quanto o player andou no frame — e não
+    // depende da velocidade horizontal: quem bate a cabeça é por causa do
+    // pulo, não da corrida.
+    const sweep = Math.abs(p.vy) * dt + CORNER_NUDGE;
+    let fixed = false;
+    // Procura a saída mais próxima, preferindo o lado para onde o player
+    // vinha (evita empurrá-lo para trás quando basta um toque curto).
+    const firstLeft = p.vx <= 0;
+    for (let d = 0.5; d <= sweep && !fixed; d += 0.5) {
+      const sides = firstLeft ? [-d, d] : [d, -d];
+      for (const off of sides) {
+        if (!hitsSolid(map, p.x + off, p.y)) {
+          p.x += off;
+          fixed = true;
+          break;
+        }
+      }
+    }
+    if (fixed) {
+      // Vitória da correção: nada de bonk, o pulo continua.
     } else {
       p.y = resolveYUp(map, p.x, p.y);
       p.vy = 0;
@@ -145,9 +160,127 @@ export function stepPlayer(
   return { player: p, headBonk, landed };
 }
 
-/** Pulo de teste: altura máxima em px para um impulso/gravidade. */
+/** Pulo de sanidade: altura máxima em px pela fórmula fechada `v²/2g`.
+ *
+ * ⚠️ NÃO use isto como garantia de que um mapa é jogável. A fórmula ignora
+ * apex hang, aceleração, carga do pulo variável e a colisão real — foi
+ * exatamente por usá-la como "gate" que gaps impossíveis passaram verdes.
+ * Para garantir, use `simulateJump` (roda `stepPlayer`) ou o piloto de
+ * `clearability.test.ts`.
+ */
 export function jumpHeightPx(velocity = JUMP_VELOCITY, gravity = GRAVITY): number {
   return (velocity * velocity) / (2 * gravity);
+}
+
+/** Mapa de ar: 64×16 tiles sem chão nem teto, só para a medição. */
+function emptyMap(): TileMap {
+  return parseMap(Array.from({ length: 16 }, () => '.'.repeat(64)));
+}
+
+/** Uma amostra da trajetória medida (px de mundo, y cresce para baixo). */
+export interface JumpSample {
+  /** px acima do ponto de partida (0 = altura inicial). */
+  rise: number;
+  /** px de deslocamento horizontal em relação à partida. */
+  dx: number;
+  /** segundos desde o salto. */
+  t: number;
+}
+
+/** O que o motor de fato entrega num pulo — medido, não deduzido. */
+export interface JumpEnvelope {
+  /** Altura máxima real (px). */
+  height: number;
+  /** Tempo até o ápice (s). */
+  timeToApex: number;
+  /** Tempo total no ar, de decolagem ao retorno à altura inicial (s). */
+  airTime: number;
+  /** Alcance horizontal total parado, de decolagem ao retorno à altura inicial. */
+  reach: number;
+  /** Alcance horizontal parado medido no ponto mais alto do pulo. */
+  reachAtApex: number;
+  /** Trajetória completa, passo a passo (1/60 s). */
+  samples: JumpSample[];
+}
+
+const SIM_DT = 1 / 60;
+const SIM_FRAMES = 240;
+
+export interface JumpOptions {
+  /** Velocidade horizontal inicial (px/s). `0` = decolagem do repouso. */
+  startVX?: number;
+  /** Teto de velocidade: `RUN_MAX` ou `RUN_MAX_SMALL_KIDS`. */
+  maxSpeed?: number;
+  /** `true` = segura o botão (pulo cheio); `false` = solta (pulo cortado). */
+  holdJump?: boolean;
+  /** `true` = segura a direção durante o voo (a criança está correndo). */
+  run?: boolean;
+}
+
+/**
+ * Mede um pulo **rodando `stepPlayer`** — o mesmo código do jogo, com apex
+ * hang, pulo variável e colisão. É a fonte de verdade para gap/alcance.
+ *
+ * Casos usados pelo gate:
+ *   `{}`                              → pulo parado (pior caso)
+ *   `{ run: true }`                   → partida do repouso segurando a direção
+ *   `{ startVX: RUN_MAX, run: true }` → corrida já em velocidade
+ */
+export function simulateJump(opts: JumpOptions = {}): JumpEnvelope {
+  const { startVX = 0, maxSpeed = RUN_MAX, holdJump = true, run = false } = opts;
+  const map = emptyMap();
+  const startY = TILE * 10;
+  let p = createPlayer(TILE, startY);
+  p.vx = startVX;
+  p.vy = JUMP_VELOCITY; // decolagem imediata, sem coyote nem chão
+  const x0 = p.x;
+  const samples: JumpSample[] = [{ rise: 0, dx: 0, t: 0 }];
+  let height = 0;
+  let apexT = 0;
+  let reachAtApex = 0;
+  let airTime = 0;
+
+  for (let i = 1; i <= SIM_FRAMES; i++) {
+    const res = stepPlayer(
+      map,
+      p,
+      { left: false, right: run, jump: holdJump, jumpPressed: false },
+      SIM_DT,
+      maxSpeed,
+    );
+    p = res.player;
+    const t = i * SIM_DT;
+    const rise = startY - p.y;
+    samples.push({ rise, dx: p.x - x0, t });
+    if (rise > height) {
+      height = rise;
+      apexT = t;
+      reachAtApex = p.x - x0;
+    }
+    // Volta à altura inicial ⇒ fim do tempo no ar.
+    if (rise <= 0) {
+      airTime = t;
+      break;
+    }
+    airTime = t;
+  }
+  return {
+    height,
+    timeToApex: apexT,
+    airTime,
+    reach: samples.length > 1 ? samples[samples.length - 1].dx : 0,
+    reachAtApex,
+    samples,
+  };
+}
+
+/**
+ * Altura máxima alcançável subindo `dy` px a partir da decolagem.
+ * Usado pelo gate para provar que uma plataforma flutuante está abaixo do
+ * ápice — medido com a física real, não com `v²/2g`.
+ */
+export function canReachHeight(dy: number, envelope = simulateJump()): boolean {
+  return dy <= envelope.height;
 }
 
 /* ------------------------------- colisão -------------------------------- */

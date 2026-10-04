@@ -2,8 +2,8 @@
 //
 //   import { JornadaEngine, type PlatformerLevel } from '../lib/jornada';
 //
-// Módulo isolado de `lib/platformer/` (outro jogo, "A Palavra Certa") de
-// propósito: dois motores de plataforma em paralelo não podem se sobrescrever.
+// Módulo isolado de propósito: o motor de plataforma da Jornada não se mistura
+// com `lib/platformer/` nem com nenhum outro motor de jogo.
 
 export {
   COMUNHAO_DRAIN,
@@ -19,7 +19,15 @@ export {
   VIEW_W,
 } from './constants';
 export { JornadaEngine, type EngineOptions } from './engine';
-export { createPlayer, jumpHeightPx, stepPlayer } from './physics';
+export {
+  canReachHeight,
+  createPlayer,
+  jumpHeightPx,
+  simulateJump,
+  stepPlayer,
+  type JumpEnvelope,
+  type JumpSample,
+} from './physics';
 export { isSolid, parseMap, rectHitsSolid, tileAt, type TileMap } from './tiles';
 export type {
   EngineEvent,

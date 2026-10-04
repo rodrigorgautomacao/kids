@@ -7,11 +7,10 @@ import {
   JUMP_VELOCITY,
   PLAYER_H,
   PLAYER_W,
-  RUN_MAX,
-  RUN_MAX_SMALL_KIDS,
   TILE,
 } from './constants';
-import { createPlayer, jumpHeightPx, stepPlayer } from './physics';
+import { CHAO } from './gerar';
+import { createPlayer, simulateJump, stepPlayer } from './physics';
 import { parseMap, rectHitsSolid, tileAt } from './tiles';
 import { JORNADA_LEVELS } from '../../data/jornada';
 
@@ -57,8 +56,11 @@ describe('tiles (parse do mapa)', () => {
 
 describe('physics (pulo e colisão)', () => {
   it('pula cerca de 3,5 tiles e o corte reduz a altura', () => {
-    expect(jumpHeightPx()).toBeGreaterThan(TILE * 3);
-    expect(jumpHeightPx()).toBeLessThan(TILE * 4.5);
+    // Medido com `simulateJump` (roda o motor). A fórmula `v²/2g` ficou só
+    // como sanidade: ela ignora apex hang e pulo variável, e foi exatamente
+    // por usá-la como prova que vão impossível passou verde.
+    expect(simulateJump().height).toBeGreaterThan(TILE * 3);
+    expect(simulateJump().height).toBeLessThan(TILE * 4.5);
   });
 
   it('cai, pousa no chão e marca onGround', () => {
@@ -119,7 +121,7 @@ describe('physics (pulo e colisão)', () => {
 
   it('impulso inicial do pulo é negativo (sobe)', () => {
     expect(JUMP_VELOCITY).toBeLessThan(0);
-    expect(jumpHeightPx(JUMP_VELOCITY)).toBeGreaterThan(0);
+    expect(simulateJump().height).toBeGreaterThan(0);
   });
 });
 
@@ -161,46 +163,29 @@ describe('regressão: o herói nunca nasce caindo (loop de começo)', () => {
 });
 
 describe('regra de ouro do alcance (skill jogos-game-feel §2)', () => {
-  it('todo vão horizontal cabe no alcance do pulo com ≥20% de folga', () => {
-    // Alcance = velocidade máxima × tempo de arco (subida + queda assimétrica).
-    const h = (JUMP_VELOCITY * JUMP_VELOCITY) / (2 * GRAVITY);
-    const up = Math.abs(JUMP_VELOCITY) / GRAVITY;
-    const down = Math.sqrt((2 * h) / FALL_GRAVITY);
-    for (const [speed, label] of [
-      [RUN_MAX, 'normal'],
-      [RUN_MAX_SMALL_KIDS, 'pequeninos'],
-    ] as const) {
-      const reach = speed * (up + down);
-      for (const lv of JORNADA_LEVELS) {
-        const map = parseMap(lv.map);
-        // Linha do chão = a 1ª linha com chão na maior parte do mapa.
-        let groundRow = -1;
-        for (let ty = 0; ty < map.height; ty++) {
-          let solid = 0;
-          for (let tx = 0; tx < map.width; tx++) if (map.grid[ty][tx] === '#') solid++;
-          if (solid > map.width * 0.5) {
-            groundRow = ty;
-            break;
-          }
-        }
-        expect(groundRow, lv.id).toBeGreaterThanOrEqual(0);
-        let cur = 0;
-        let maxGap = 0;
-        for (let tx = 0; tx < map.width; tx++) {
-          const ch = map.grid[groundRow][tx];
-          const solid = ch === '#' || ch === '~' || ch === '=' || ch === 'x' || ch === 'w';
-          if (solid) {
-            maxGap = Math.max(maxGap, cur);
-            cur = 0;
-          } else cur++;
-        }
-        const gapPx = maxGap * TILE;
-        expect(gapPx * 1.2, `${lv.id} (${label}) vão ${maxGap} tiles`).toBeLessThanOrEqual(reach);
+  // A garantia de vão/plataforma é do gate `clearability.test.ts`, que roda o
+  // piloto sobre os mapas de verdade. Aqui fica só a física medida — o alcance
+  // sai de `simulateJump` (mesmo `stepPlayer` do motor), nunca de `v²/2g`.
+  it('o alcance medido sustenta o maior vão com ≥20% de folga', () => {
+    const reach = simulateJump({ run: true }).reach; // pior caso: do repouso
+    let maior = 0;
+    for (const lv of JORNADA_LEVELS) {
+      const map = parseMap(lv.map);
+      let cur = 0;
+      for (let tx = 0; tx < map.width; tx++) {
+        const ch = map.grid[CHAO][tx];
+        const solid = ch === '#' || ch === '~' || ch === '=' || ch === 'x' || ch === 'w';
+        if (solid) {
+          maior = Math.max(maior, cur);
+          cur = 0;
+        } else cur++;
       }
     }
+    // `~` (água) e `=` (plataforma) entram na conta como "não é chão andável".
+    expect(maior * TILE * 1.2, `maior vão ${maior} tiles`).toBeLessThanOrEqual(reach);
   });
 
-  it('queda é mais pesada que a subida (sem pulo flutuante)', () => {
+  it('a queda é mais pesada que a subida (sem pulo flutuante)', () => {
     expect(FALL_GRAVITY).toBeGreaterThan(GRAVITY * 1.5);
   });
 });

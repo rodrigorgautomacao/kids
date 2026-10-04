@@ -3,14 +3,16 @@
 // Mantém o mesmo vocabulário dos jogos existentes: embaralhar sem repetir
 // posição e a regra de estrelas da casa (0 erro = 3 ⭐, até 3 = 2 ⭐, resto = 1 ⭐).
 
-/** Fisher–Yates: devolve uma cópia embaralhada (não mexe no array original). */
-export function shuffle<T>(a: readonly T[]): T[] {
-  const b = [...a];
-  for (let i = b.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [b[i], b[j]] = [b[j], b[i]];
-  }
-  return b;
+import { shuffleCom, type Rng } from './rng';
+
+/**
+ * Fisher–Yates: devolve uma cópia embaralhada (não mexe no array original).
+ *
+ * @param rng injetável para quem precisa de determinismo (conteúdo testável,
+ *            sessão reproduzível). O padrão continua sendo `Math.random`.
+ */
+export function shuffle<T>(a: readonly T[], rng: Rng = Math.random): T[] {
+  return shuffleCom(rng, a);
 }
 
 /** Estrelas por quantidade de erros — nunca reprova a criança (mínimo 1 ⭐). */
