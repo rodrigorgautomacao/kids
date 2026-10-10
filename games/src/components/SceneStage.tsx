@@ -113,7 +113,7 @@ export default function SceneStage({ scene, npcPreset, npcMotif, smallKids, onEx
       }
       sfx.badge();
       sfx.star(3);
-      voice.speak(`${scene.title}. Leia em ${scene.ref}. Você ganhou a figurinha!`);
+      voice.speakQueue([scene.title, 'Leia em', scene.ref, 'Você ganhou a figurinha!']);
       setPhase('won');
       return;
     }

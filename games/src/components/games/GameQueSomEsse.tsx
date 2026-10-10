@@ -75,7 +75,7 @@ export default function GameQueSomEsse({ onExit }: { onExit: () => void }) {
     if (ls.phase !== 'playing' || !round) return;
     const t = window.setTimeout(() => {
       sfx.open();
-      voice.speak(`${round.som} ${round.q}`);
+              voice.speakQueue([round.som, round.q]);
     }, 400);
     return () => window.clearTimeout(t);
   }, [ls.levelIdx, ls.roundIdx, ls.phase]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -172,7 +172,7 @@ export default function GameQueSomEsse({ onExit }: { onExit: () => void }) {
             type="button"
             onClick={() => {
               sfx.open();
-              voice.speak(`${round.som} ${round.q}`);
+      voice.speakQueue([round.som, round.q]);
             }}
             aria-label="Ouvir o som de novo"
             className="ui-press absolute top-1/2 right-3 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-amber-500 text-white shadow"

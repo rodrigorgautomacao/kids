@@ -116,7 +116,7 @@ export default function MemoryGame({ levels, onExit }: Props) {
       flyNumber(stage, x, y, `+${PTS_PAR}`);
       setMatched((m) => new Set([...m, a.key, b.key]));
       setScore((s) => s + PTS_PAR);
-      voice.speak(`É um par! ${a.name}!`);
+      voice.speakQueue(['É um par!', a.name]);
       later(() => setFlipped([]), 480);
     } else {
       sfx.wrong();

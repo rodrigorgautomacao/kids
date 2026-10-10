@@ -248,11 +248,11 @@ export default function GameHeroisDaBiblia({ onExit }: GameProps) {
     }
     markPlayed();
     music.playVictory('game');
-    voice.speak(
-      isLast
-        ? 'Parabéns! Você terminou os Heróis da Bíblia!'
-        : `Trecho ${trecho} concluído! Você ganhou ${stars} ${stars === 1 ? 'estrela' : 'estrelas'}.`,
-    );
+    if (isLast) {
+      voice.speak('Parabéns! Você terminou os Heróis da Bíblia!');
+    } else {
+      voice.speakQueue(['Trecho', String(trecho), 'concluído!', 'Você ganhou', String(stars), stars === 1 ? 'estrela' : 'estrelas']);
+    }
     setWon(true);
   }
 

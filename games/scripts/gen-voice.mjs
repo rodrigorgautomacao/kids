@@ -37,7 +37,7 @@ const CONCURRENCY = Number(process.env.CONCURRENCY ?? 6);
 const LIMIT = process.env.LIMIT ? Number(process.env.LIMIT) : Infinity;
 
 /** Coleta frases de narração: catálogo de cenas + strings do código-fonte. */
-function collect() {
+export function collect() {
   const phrases = new Set();
   const add = (t) => {
     if (typeof t !== 'string') return;
@@ -58,9 +58,16 @@ function collect() {
       const p = join(dir, f.name);
       if (f.isDirectory()) {
         scan(p);
-      } else if (/\.(ts|tsx)$/.test(f.name)) {
+      } else if (/\.(ts|tsx)$/.test(f.name) && !/\.(test|spec)\./.test(f.name)) {
+        // Testes não são narração: descrevem casos, não o que a criança ouve.
         const src = readFileSync(p, 'utf8');
-        for (const re of [/'([^'\\\n]{4,160})'/g, /"([^"\\\n]{4,160})"/g, /`([^`\\\n]{4,160})`/g]) {
+        // Aspas com escape (`\'`) e sem piso de tamanho: um par curto (ex.: id
+        // 'noe') não pode "desalinhar" a extração e pular o rótulo seguinte.
+        for (const re of [
+          /'((?:\\.|[^'\\\n]){1,160})'/g,
+          /"((?:\\.|[^"\\\n]){1,160})"/g,
+          /`((?:\\.|[^`\\\n]){1,160})`/g,
+        ]) {
           for (const m of src.matchAll(re)) {
             const s = m[1].replace(/\\'/g, "'");
             if (looksNarration(s)) add(s);
@@ -71,18 +78,35 @@ function collect() {
   };
   scan(join(appRoot, 'src'));
 
+  // Números aparecem como narração e como opção (contagem, rótulos numéricos).
+  // Não passam no filtro de "frase" (não têm letra), então entram explicitamente
+  // — a voz Piper lê "5" como "cinco".
+  for (let n = 0; n <= 100; n++) phrases.add(String(n));
+
+  EXTRA_PHRASES.forEach(add);
+
   return [...phrases].sort((a, b) => a.localeCompare(b, 'pt-BR'));
 }
 
 /** Heurística: string de uma linha que parece frase falada (não código). */
 function looksNarration(s) {
   if (!/[A-Za-zÀ-ÿ]/.test(s)) return false;
-  if (!s.includes(' ')) return false;
   if (/[{}()\[\]<>=;`$|\\]/.test(s)) return false;
   if (s.includes('://') || s.includes('${')) return false;
-  if (!/^[A-ZÀ-Ý0-9\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}]/u.test(s)) return false;
-  return true;
+  if (s.includes(' ')) {
+    // Frase: começa com maiúscula, dígito ou emoji.
+    return /^[A-ZÀ-Ý0-9\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}]/u.test(s);
+  }
+  // Palavra única: só entra se parecer RÓTULO/NOME — começa com maiúscula e é
+  // só letras (aceita acento, hífen e apóstrofo). Evita chaves e classes
+  // minúsculas do código (`seg`, `rounded-full`, `ui-press`).
+  return /^[A-ZÀ-Ý][A-Za-zÀ-ÿ'’-]*$/.test(s) && s.length >= 3;
 }
+
+// Frases curtas que a heurística não pega (uma palavra com pontuação, ou
+// minúscula), mas que o app monta em `speakQueue` — precisam de áudio próprio
+// para não caírem na voz do aparelho.
+const EXTRA_PHRASES = ['Ache!', 'diz:', 'concluído!', 'estrela', 'estrelas'];
 
 function synth(phrase, file) {
   const wav = join(tmpDir, `${hashText(phrase)}.wav`);
@@ -123,7 +147,22 @@ async function main() {
   mkdirSync(outDir, { recursive: true });
   mkdirSync(tmpDir, { recursive: true });
 
+  // Preserva o acervo já gerado (união): frases que saíram do código por
+  // heurística, mas ainda podem ser faladas a partir de um texto dinâmico,
+  // continuam alcançáveis. Só mantém entradas cujo arquivo existe.
+  const manifestPath = join(outDir, 'manifest.json');
   const manifest = {};
+  if (existsSync(manifestPath)) {
+    try {
+      const prev = JSON.parse(readFileSync(manifestPath, 'utf8'));
+      for (const [k, v] of Object.entries(prev)) {
+        if (typeof v === 'string' && existsSync(join(outDir, v))) manifest[k] = v;
+      }
+    } catch {
+      /* manifesto anterior ilegível: recomeça do zero */
+    }
+  }
+
   let done = 0;
   let failed = 0;
 
@@ -151,7 +190,9 @@ async function main() {
   console.log(`[gen-voice] pronto: ${Object.keys(manifest).length} áudios, ${failed} falhas`);
 }
 
-main().catch((e) => {
-  console.error(e);
-  process.exit(1);
-});
+if (import.meta.main) {
+  main().catch((e) => {
+    console.error(e);
+    process.exit(1);
+  });
+}

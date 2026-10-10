@@ -1052,11 +1052,11 @@ export default function GameAventuraBiblia({ onExit }: GameProps) {
       sfx.withDuck(sfx.chapter, 1.9);
       music.playVictory('game', 8);
     }
-    voice.speak(
-      allDone
-        ? 'Parabéns! Você conheceu todas as histórias e ganhou todos os selos!'
-        : `${s.title}! Leia em ${s.ref}. Você ganhou ${stars} ${stars === 1 ? 'estrela' : 'estrelas'}.`,
-    );
+    if (allDone) {
+      voice.speak('Parabéns! Você conheceu todas as histórias e ganhou todos os selos!');
+    } else {
+      voice.speakQueue([s.title, 'Leia em', s.ref, 'Você ganhou', String(stars), stars === 1 ? 'estrela' : 'estrelas']);
+    }
   }
 
   function answerQuiz(opt: Choice, ev: { currentTarget: HTMLElement }) {

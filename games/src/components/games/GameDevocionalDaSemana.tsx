@@ -375,7 +375,7 @@ export default function GameDevocionalDaSemana({ onExit }: { onExit: () => void 
   useEffect(() => {
     if (tela !== 'dia' || !dia) return;
     const t = window.setTimeout(() => {
-      voice.speak(`${dia.dia}-feira, ${dia.data}. Tema de hoje: ${dia.tema}.`);
+      voice.speakQueue([dia.dia, dia.data, 'Tema de hoje:', dia.tema]);
     }, 400);
     return () => window.clearTimeout(t);
   }, [tela, dia]);

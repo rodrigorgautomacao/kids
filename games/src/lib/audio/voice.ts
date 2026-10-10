@@ -105,12 +105,13 @@ const MALE_NAMES =
   /antonio|antônio|donato|daniel|ricardo|felipe|gustavo|henrique|heitor|jorge|lu[ií]s|luis|marcelo|paulo|pedro|rafael|rodrigo|f[áa]bio|fabio|fernando|jo[ãa]o|joao|joaquim|leonardo|leandro|gabriel|tiago|diego|vitor|v[ií]tor|bruno|carlos|eduardo|felix|felix|m[áa]rcio|marcio|m[úu]rcio|murcio|n[íi]colas|ot[áa]vio|otavio|renato|s[ée]rgio|sergio|thiago|wallace|wagner|arnaldo|c[áa]ssio|cassio|em[íi]lio|emilio/i;
 
 /**
- * Nomes pt-BR feminino conhecidos. Não entram na lista de preferência (o que já
- * bastava), mas ficam aqui para deixar explícito o motivo e para o teste poder
- * garantir que nenhum deles seja escolhido mesmo sendo "neural".
+ * Nomes pt-BR feminino conhecidos (e a voz neutra do Google pt-BR, que também é
+ * feminina). A 1ª passada da escolha usa **só masculina** (decisão do dono); a
+ * feminina só entra na 2ª passada, como último recurso — para nunca deixar a
+ * escolha para a voz padrão do navegador (a "IA mulher" robótica).
  */
 const FEMALE_NAMES =
-  /francisca|thalita|maria|brenda|elza|luciana|fernanda|joana|in[eê]s|ines|ana|clara|luziana|sabrina|patr[íi]cia|patricia|juliana|adriana|let[íi]cia|leticia|vivian|camila|helena|isabel|rosana|denise|marceline|fabiana|jos[ée]|jose/i;
+  /francisca|thalita|maria|brenda|elza|luciana|fernanda|joana|in[eê]s|ines|ana|clara|luziana|sabrina|patr[íi]cia|patricia|juliana|adriana|let[íi]cia|leticia|vivian|camila|helena|isabel|rosana|denise|marceline|fabiana|jos[ée]|jose|google.*(portugu|brasil)/i;
 
 /** Voz que o sistema já traz como "natural" (o tipo de voz que soa boa). */
 const NATURAL = /natural|neural|online|premium|enhanced/i;
@@ -119,9 +120,9 @@ const NATURAL = /natural|neural|online|premium|enhanced/i;
 const MS_PTBR = /microsoft/i;
 
 /**
- * Ordem de preferência. Regra: **só entra voz masculina** (a neutra do Google
- * "português/brasil" costuma ser feminina e foi rebaixada). Dentro disso, as
- * "neurais/naturais" vencem — mesma prioridade de antes, mas entre masculinas.
+ * Ordem de preferência de **qualidade** (sem julgar gênero). As
+ * "neurais/naturais" vencem; depois as Microsoft; a neutra do Google (feminina)
+ * fica fora da 1ª passada pelo filtro de gênero.
  */
 const VOICE_PREFERENCES: { re: RegExp; score: number }[] = [
   { re: /google.*(portugu|brasil)/i, score: 70 },
@@ -131,21 +132,32 @@ const VOICE_PREFERENCES: { re: RegExp; score: number }[] = [
   { re: /^pt/i, score: 20 },
 ];
 
-/**
- * Pontuação de uma voz (0 = não é pt-BR ou é feminina — nunca narrar com voz de
- * mulher neste jogo).
- */
-function scoreVoice(v: SpeechSynthesisVoice): number {
-  if (!/^pt/i.test(v.lang)) return 0;
-  const label = `${v.name} ${v.voiceURI}`;
-  // Voz feminina conhecida: descartada, mesmo que "neural".
-  if (FEMALE_NAMES.test(label)) return 0;
+/** Qualidade da voz, ignorando o gênero. */
+function qualityScore(label: string): number {
   let best = 1;
   for (const p of VOICE_PREFERENCES) {
     if (p.re.test(label)) best = Math.max(best, p.score);
   }
-  // Bônus de naturalidade **só** entre vozes masculinas já aprovadas acima.
+  // Bônus de naturalidade só quando a voz já passou de um piso mínimo.
   if (NATURAL.test(label) && best >= 40) best += 20;
+  return best;
+}
+
+/**
+ * Pontuação de concorrência (0 = não concorre).
+ * - Por padrão **só voz masculina** (decisão do dono, 2026-09-30) — feminina
+ *   conhecida pontua 0.
+ * - Com `includeFemale`, a feminina entra **rebaixada**: serve só de último
+ *   recurso, para o fallback nunca cair na voz padrão arbitrária do navegador.
+ */
+function scoreVoice(v: SpeechSynthesisVoice, includeFemale = false): number {
+  if (!/^pt/i.test(v.lang)) return 0;
+  const label = `${v.name} ${v.voiceURI}`;
+  const female = FEMALE_NAMES.test(label);
+  if (female && !includeFemale) return 0;
+  let best = qualityScore(label);
+  // Masculina leva vantagem, mas a qualidade ainda decide dentro do gênero.
+  if (!female) best += 15;
   return best;
 }
 
@@ -157,11 +169,23 @@ export function refreshVoice(): SpeechSynthesisVoice | null {
     if (!voices.length) return cachedVoice;
     let best: SpeechSynthesisVoice | null = null;
     let bestScore = 0;
+    // 1ª passada: só masculina.
     for (const v of voices) {
       const s = scoreVoice(v);
       if (s > bestScore) {
         bestScore = s;
         best = v;
+      }
+    }
+    // 2ª passada: sem masculina pt-BR, escolhe a MELHOR feminina — nunca deixa
+    // a fala sem voz definida (era aí que entrava a voz padrão ruim).
+    if (!best) {
+      for (const v of voices) {
+        const s = scoreVoice(v, true);
+        if (s > bestScore) {
+          bestScore = s;
+          best = v;
+        }
       }
     }
     if (best) cachedVoice = best;

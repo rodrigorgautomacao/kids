@@ -50,7 +50,7 @@ export default function JornadaEncontro({ encontro, smallKids, onResolver }: Pro
   // nunca tudo em cima).
   useEffect(() => {
     voice.stopSpeaking();
-    const t1 = window.setTimeout(() => voice.speak(`${encontro.npc} diz: ${encontro.fala}`), 350);
+    const t1 = window.setTimeout(() => voice.speakQueue([encontro.npc, 'diz:', encontro.fala]), 350);
     return () => window.clearTimeout(t1);
   }, [encontro.id, encontro.npc, encontro.fala]);
 
@@ -70,7 +70,7 @@ export default function JornadaEncontro({ encontro, smallKids, onResolver }: Pro
     if (op.certa) {
       setAcertou(true);
       sfx.correct();
-      voice.speak(`${encontro.acerto} ${encontro.ref}`);
+      voice.speakQueue([encontro.acerto, encontro.ref]);
       return;
     }
     // Erro sem punição: risca, explica e devolve a escolha.

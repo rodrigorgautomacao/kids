@@ -64,7 +64,7 @@ export default function HiddenGame({
     setFound(false);
     setShaking(null);
     setMsg(null);
-    const t = window.setTimeout(() => voice.speak(`Ache: ${round.find.label}!`), 350);
+    const t = window.setTimeout(() => voice.speakQueue(['Ache!', round.find.label]), 350);
     return () => window.clearTimeout(t);
   }, [ls.levelIdx, ls.roundIdx, ls.phase]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -180,7 +180,7 @@ export default function HiddenGame({
             type="button"
             onClick={() => {
               sfx.pop();
-              voice.speak(`Ache: ${round.find.label}!`);
+              voice.speakQueue(['Ache!', round.find.label]);
             }}
             aria-label="Ouvir de novo"
             className="ui-press absolute top-2 right-3 flex h-10 w-10 items-center justify-center rounded-full bg-orange-500 text-white shadow"

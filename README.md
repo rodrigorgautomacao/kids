@@ -35,7 +35,8 @@ vez. A faixa inicial é a 3–4; trocar o padrão é uma linha em `Hub.tsx`
 A narração usa **vozes pré-geradas** com o **Piper** (TTS offline, gratuito) —
 nada é gravado por você. O app toca `public/voice/<hash>.ogg` quando existe e,
 se não existir, cai automaticamente na melhor voz pt-BR do aparelho
-(`speechSynthesis`). Hoje são **1201 frases** (~15 MB).
+(`speechSynthesis`). Hoje o acervo cobre **2357 frases** (~35 MB, Opus 28 kbps);
+o `manifest.json` tem **3312** áudios (inclui o histórico).
 
 Para regerar (após mudar textos):
 

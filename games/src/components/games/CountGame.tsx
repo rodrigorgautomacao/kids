@@ -114,7 +114,7 @@ export default function CountGame({
       ls.addWrong();
       shake(el);
       setMsg({ text: 'Quase! Conta de novo com calma. ✊', good: false });
-      voice.speak(`${num}. Quase! Conta de novo!`);
+      voice.speakQueue([String(num), 'Quase! Conta de novo!']);
       later(() => setPicked(null), 900);
     }
   }

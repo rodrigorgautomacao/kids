@@ -76,7 +76,7 @@ export default function PuzzleGame({
     setOrder(shuffledOrder(puzzle.rows * puzzle.cols));
     setSelected(null);
     setSwaps(0);
-    const t = window.setTimeout(() => voice.speak(`${puzzle.label}. Monte a cena!`), 350);
+    const t = window.setTimeout(() => voice.speakQueue([puzzle.label, 'Monte a cena!']), 350);
     return () => window.clearTimeout(t);
   }, [ls.levelIdx, ls.roundIdx, ls.phase]); // eslint-disable-line react-hooks/exhaustive-deps
 

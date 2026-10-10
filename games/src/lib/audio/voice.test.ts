@@ -2,8 +2,10 @@
 // Este teste garante que referências NAA e emojis viram algo falável.
 //
 // A segunda parte trava a decisão do dono (2026-09-30): a narração da jornada
-// é SEMPRE masculina. Antes, Francisca/Thalita/Luciana (femininas) ganhavam da
-// voz masculina e a mesma fase falava em duas vozes.
+// é prefere SEMPRE masculina. Antes, Francisca/Thalita/Luciana (femininas)
+// ganhavam da voz masculina e a mesma fase falava em duas vozes. Quando não há
+// nenhuma masculina pt-BR, escolhe-se a MELHOR feminina — nunca a voz padrão
+// arbitrária do navegador (a "IA mulher" robótica que o dono reportou).
 
 import { afterEach, describe, expect, it } from 'vitest';
 import { cleanForSpeech, refreshVoice } from './voice';
@@ -74,5 +76,23 @@ describe('escolha da voz (só masculina)', () => {
   it('ignora voz que não é pt-BR', () => {
     comVozes(['Microsoft Antonio Online (Natural) - Portuguese (Brazil)', 'Daniel']);
     expect(refreshVoice()!.name).not.toMatch(/english/i);
+  });
+
+  it('sem voz masculina, escolhe a MELHOR feminina — nunca deixa a padrão do navegador', () => {
+    // Antes, sem masculina, a escolha ficava em aberto e o navegador tocava a
+    // voz padrão (a "IA mulher" robótica). Agora escolhemos a melhor disponível:
+    // Google pt-BR (70) vence Luciana (1).
+    comVozes(['Luciana', 'Google português do Brasil']);
+    const v = refreshVoice();
+    expect(v).not.toBeNull();
+    expect(v!.name).toMatch(/google/i);
+  });
+
+  it('prefere masculina mesmo quando a feminina é mais "natural"', () => {
+    comVozes([
+      'Microsoft Francisca Online (Natural) - Portuguese (Brazil)',
+      'Rodrigo',
+    ]);
+    expect(refreshVoice()!.name).toMatch(/rodrigo/i);
   });
 });

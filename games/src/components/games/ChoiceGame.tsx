@@ -91,7 +91,13 @@ export default function ChoiceGame({
 
   const narrate = () => {
     if (!round) return;
-    voice.speak(round.speak ?? [round.prompt, round.detail].filter(Boolean).join(' … '));
+    if (round.speak) {
+      voice.speak(round.speak);
+      return;
+    }
+    // Sem fala pronta: narra em fila — cada pedaço tem áudio de estúdio (o texto
+    // montado com `${...}` não existe no acervo Piper e cairia na voz do aparelho).
+    voice.speakQueue([round.prompt, round.detail].filter((t): t is string => Boolean(t)));
   };
 
   useEffect(() => {
@@ -149,7 +155,7 @@ export default function ChoiceGame({
       ls.addWrong();
       shake(el);
       setMsg({ text: 'Quase! Tenta de novo! ✊', good: false });
-      voice.speak(`${opt.label ?? opt.id}. Quase! Tenta de novo!`);
+      voice.speakQueue([opt.label ?? opt.id, 'Quase! Tenta de novo!']);
       later(() => setPicked(null), 900);
     }
   }

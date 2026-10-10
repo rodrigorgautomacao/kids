@@ -75,7 +75,7 @@ export default function GameCacadoresDoVersiculo({ onExit }: { onExit: () => voi
   useEffect(() => {
     if (ls.phase !== 'playing' || !round) return;
     const t = window.setTimeout(
-      () => voice.speak(`${round.antes} … ${round.depois.replace(/^[;,. ]+/, '')}`),
+      () => voice.speakQueue([round.antes, round.depois.replace(/^[;,. ]+/, '')]),
       400,
     );
     return () => window.clearTimeout(t);
@@ -180,7 +180,7 @@ export default function GameCacadoresDoVersiculo({ onExit }: { onExit: () => voi
             type="button"
             onClick={() => {
               sfx.pop();
-              voice.speak(`${round.antes} … ${round.depois.replace(/^[;,. ]+/, '')}`);
+              voice.speakQueue([round.antes, round.depois.replace(/^[;,. ]+/, '')]);
             }}
             aria-label="Ouvir o versículo de novo"
             className="ui-press absolute top-2 right-3 flex h-10 w-10 items-center justify-center rounded-full bg-violet-500 text-white shadow"

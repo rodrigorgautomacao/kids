@@ -75,7 +75,7 @@ export default function ConnectGame({
     setLinked(new Set());
     setSelected(null);
     setMsg(null);
-    const t = window.setTimeout(() => voice.speak(round.pairs.map((p) => p.left.label).join(', ')), 350);
+    const t = window.setTimeout(() => voice.speakQueue(round.pairs.map((p) => p.left.label)), 350);
     return () => window.clearTimeout(t);
   }, [ls.levelIdx, ls.roundIdx, ls.phase]); // eslint-disable-line react-hooks/exhaustive-deps
 
