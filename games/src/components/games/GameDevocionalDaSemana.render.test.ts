@@ -65,14 +65,19 @@ describe('Devocional da Semana — a tela funciona de ponta a ponta', () => {
   it('entra pela biblioteca e abre a capa da semana', () => {
     const { raiz } = montar('devocional-1');
     expect(tela(raiz)).toContain('Esta semana');
-    expect(tela(raiz)).toContain('Gratidão, cuidado e amor');
-    expect(tela(raiz)).toContain('28 de set – 3 de out');
+    expect(tela(raiz)).toContain('Louvor, plano e cuidado');
+    expect(tela(raiz)).toContain('5 de out – 10 de out');
     expect(tela(raiz)).toContain('Começar');
     expect(tela(raiz)).toContain('Por semana');
     expect(tela(raiz)).toContain('Por tema');
+    // a semana anterior continua exibindo o versículo da capa dela no cartão
+    expect(tela(raiz)).toContain('Salmos 119.160');
 
     act(() => porTexto(raiz, 'Começar').click());
-    expect(tela(raiz)).toContain('Salmos 119.160'); // versículo da capa
+    // A capa desta semana não traz versículo no material (CAPA_SEM_VERSICULO):
+    // a tela omite o bloco em vez de renderizar "Abra a Bíblia" sem referência.
+    expect(tela(raiz)).toContain('Devocionais da Semana');
+    expect(tela(raiz)).not.toContain('Abra a Bíblia em casa e leia');
     expect(tela(raiz)).toContain('Os 6 dias da semana');
     expect(tela(raiz)).toContain('Ler segunda-feira');
   });
@@ -81,13 +86,13 @@ describe('Devocional da Semana — a tela funciona de ponta a ponta', () => {
     const { raiz } = montar('devocional-2');
     act(() => porTexto(raiz, 'Começar').click());
     act(() => porTexto(raiz, 'Terça').click());
-    expect(tela(raiz)).toContain('Para que serve isso');
+    expect(tela(raiz)).toContain('Deus tem um plano');
 
     act(() => porTexto(raiz, 'Marcar como lido').click());
     // terça lida → o próximo não lido é quarta (o erro seria voltar para segunda)
-    expect(tela(raiz)).toContain('Deus se importa');
-    expect(tela(raiz)).not.toContain('Gratidão e adoração');
-    expect(localStorage.getItem('kids-leitura-v1')).toContain('2026-09-28/ter');
+    expect(tela(raiz)).toContain('Ajudar os outros');
+    expect(tela(raiz)).not.toContain('O que é louvar');
+    expect(localStorage.getItem('kids-leitura-v1')).toContain('2026-10-05/ter');
   });
 
   it('🔒 o texto bíblico nunca aparece na tela — só a referência', () => {
@@ -127,9 +132,17 @@ describe('Devocional da Semana — a tela funciona de ponta a ponta', () => {
     act(() => porTexto(raiz, 'Terça').click());
     expect(tela(raiz)).not.toContain('PRATICANDO');
     expect(tela(raiz)).not.toContain('Eu pratiquei');
-    // o caixote extra do dia aparece com título, texto e narração
-    expect(tela(raiz)).toContain('Para que serve tudo isso?');
     expect(raiz.querySelectorAll('button[aria-label^="Ouvir"]').length).toBeGreaterThanOrEqual(2);
+
+    // A semana anterior (que tem caixote extra e versículo na capa) continua
+    // renderizando os dois: caixote com título, texto e narração.
+    act(() => porTexto(raiz, 'Capa da semana').click());
+    act(() => porTexto(raiz, 'Voltar à biblioteca').click());
+    act(() => porTexto(raiz, 'Gratidão, cuidado e amor').click());
+    expect(tela(raiz)).toContain('Salmos 119.160'); // versículo da capa, quando existe
+    act(() => porTexto(raiz, 'Terça').click());
+    expect(tela(raiz)).toContain('Para que serve tudo isso?');
+    expect(raiz.querySelectorAll('button[aria-label^="Ouvir"]').length).toBeGreaterThanOrEqual(3);
   });
 
   it('ler os 6 dias volta para a capa com o resumo da semana', () => {
@@ -164,11 +177,11 @@ describe('Devocional da Semana — a tela funciona de ponta a ponta', () => {
     expect(tela(raiz)).toContain('Apagar o que você já leu?');
     act(() => porTexto(raiz, 'Não, quero guardar').click());
     expect(tela(raiz)).not.toContain('Apagar o que você já leu?');
-    expect(localStorage.getItem('kids-leitura-v1')).toContain('2026-09-28/seg');
+    expect(localStorage.getItem('kids-leitura-v1')).toContain('2026-10-05/seg');
 
     act(() => porTexto(raiz, 'Recomeçar').click());
     act(() => porTexto(raiz, 'Sim, apagar').click());
-    expect(localStorage.getItem('kids-leitura-v1')).not.toContain('2026-09-28/seg');
+    expect(localStorage.getItem('kids-leitura-v1')).not.toContain('2026-10-05/seg');
     expect(tela(raiz)).toContain('Começar');
   });
 });

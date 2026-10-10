@@ -1,8 +1,9 @@
 // O Devocional da Semana — curadoria a partir do material do dono.
 //
 // FONTE
-// "Devocionais 28 set a 03 outubro" (PDF do dono, 7 páginas: capa +
-// segunda a sábado). A página traz, por dia: o **versículo do dia** (só a
+// Dois PDFs do dono, 7 páginas cada (capa + segunda a sábado):
+// "Devocionais 28 set a 03 outubro" (semana 40) e "Devocionais 05 a 10
+// outubro" (semana 41). A página traz, por dia: o **versículo do dia** (só a
 // referência), um **parágrafo de mensagem** em caixa-alta (texto do AUTOR, não
 // é citação bíblica), o bloco **PRATICANDO**, as leituras extras da semana e,
 // às vezes, caixotes extras ("Culto da Família", "Manual da vida",
@@ -20,9 +21,12 @@
 //   entregar o texto NAA com a devida permissão da SBB:
 //   `NAA — Nova Almeida Atualizada® © 2017 Sociedade Bíblica do Brasil. Usada
 //   com permissão.`
-//   Única exceção possível e **não usada**: a capa. Ali o versículo (Salmos
-//   119.160) vem citado por extenso, mas numa redação que **não é a da NAA** e
-//   cujo o material não identifica. Na dúvida, cita-se só a `ref`.
+//   Única exceção possível e **não usada**: a capa de 28/09. Ali o versículo
+//   (Salmos 119.160) vem citado por extenso, mas numa redação que **não é a
+//   da NAA** e cujo o material não identifica. Na dúvida, cita-se só a `ref`.
+//   A capa de 05/10, por sua vez, **não traz versículo algum** (conferido na
+//   arte do PDF): `ref` fica vazia de propósito e a tela omite o bloco —
+//   exceção listada no teste (`CAPA_SEM_VERSICULO`), como `praticando`.
 //
 // CURAÇÃO DE LINGUAGEM
 // - O material foi escrito para leitor maduro. `texto` e `praticando` foram
@@ -38,8 +42,8 @@
 // - Terça e Quinta saíram do PDF em outra diagramação e **não têm bloco
 //   PRATICANDO**; onde a fonte é vaga, o campo fica vazio em vez de inventado
 //   (`praticando: ''`).
-// - Os caixotes de Terça saíram só com o TÍTULO (o corpo está na imagem do
-//   PDF). Dois foram resolvidos e um foi descartado:
+// - Os caixotes de Terça **da semana 40** saíram só com o TÍTULO (o corpo está
+//   na imagem do PDF). Dois foram resolvidos e um foi descartado:
 //     · "Manual da vida: para que serve tudo isso?" — a RESPOSTA estava no
 //       caixote ilegível, e o dia é uma pergunta sem resolução (quebra o
 //       contrato da lição: a criança precisa sair sabendo). A resposta foi
@@ -49,8 +53,17 @@
 //     · "Conectando" — era o cabeçalho do próprio texto do dia, já em
 //       `texto`. Duplicaria na tela.
 //     · "Culto da Família" — atividade da igreja, fora do produto (ADR-001).
+// - Semana 41: Terça traz "Culto da Família" (excluído), "SPOILER da vida:
+//   Deus tem um plano para mim?" (virou o `tema` do dia — a resposta está no
+//   próprio `texto`, como o "Conectando" da semana 40 virou cabeçalho) e a
+//   sugestão "Jesus em Tua Presença — Asaph Borba" (ignorada, mesma regra).
+//   Quinta é a página MEMORIZE + OBJETIVO, só material do professor: a
+//   mensagem foi reescrita na linguagem da criança e a referência do MEMORIZE
+//   (Isaías 45.18) virou o `versiculo.ref` — a citação em caixa-alta do
+//   material não é a redação da NAA e não entra no campo `texto`.
 // - As sugestões de música do material (ex.: "Canção ao Cordeiro — Israel
-//   Salazar, Ana Paula Valadão") foram **ignoradas**: o esquema não tem campo
+//   Salazar, Ana Paula Valadão"; "Jesus em Tua Presença — Asaph Borba") foram
+//   **ignoradas**: o esquema não tem campo
 //   de louvor. Se um dia entra, é como `extras`, nunca como marca de igreja.
 //
 // HISTÓRICO
@@ -208,6 +221,103 @@ export const DEVOCIONAIS: SemanaDevocional[] = [
         praticando:
           'Escolha alguém que precisa conhecer o amor de Jesus. Converse com essa pessoa sobre isso, com amor. Peça ajuda ao Espírito Santo, nosso melhor amigo.',
         leituras: ['Apocalipse 3', 'Neemias 4', 'Salmos 98'],
+        extras: [],
+      },
+    ],
+  },
+  {
+    semana: 41,
+    inicio: '2026-10-05',
+    fim: '2026-10-10',
+    id: '2026-10-05',
+    tema: 'Louvor, plano e cuidado',
+    capa: {
+      titulo: 'Devocionais da Semana',
+      // A arte da capa de 05/10 não traz versículo algum (conferido na imagem
+      // do PDF): ref vazia de propósito, bloco omitido pela tela (ver topo).
+      versiculo: { texto: '', ref: '' },
+    },
+    dias: [
+      {
+        id: 'seg',
+        dia: 'Segunda',
+        data: '05 de outubro',
+        tema: 'O que é louvar',
+        versiculo: { texto: '', ref: 'Salmos 95.2' },
+        texto:
+          'Você sabe o que é louvar? É falar palavras bonitas para o nosso Deus sobre o que ele é! Então, faça isso com muita alegria, todas as vezes que puder. Ele se alegra com os nossos louvores feitos com sinceridade e amor.',
+        praticando:
+          'Se você nunca sentiu a presença de Deus, peça ao Senhor que ele se revele a você. Não há nada melhor do que estar na presença do nosso Deus.',
+        leituras: ['Apocalipse 5', 'Neemias 7.4-8.12', 'Salmos 100'],
+        extras: [],
+      },
+      {
+        id: 'ter',
+        dia: 'Terça',
+        data: '06 de outubro',
+        tema: 'Deus tem um plano',
+        versiculo: { texto: '', ref: 'Jeremias 29.11' },
+        texto:
+          'Você já recebeu um spoiler de um filme que queria muito ver? Alguém vai e te conta o final — às vezes é chato. Mas e se o spoiler for: “Não se preocupe, no final o herói vence e tudo fica bem”? Seria um spoiler ótimo, não é? O versículo de hoje é Deus nos dando o melhor spoiler da história: ele tem um plano para a sua vida, e o final é bom!',
+        // Sem PRATICANDO no material (página em outra diagramação).
+        praticando: '',
+        leituras: ['Apocalipse 6', 'Neemias 8.10-9.37', 'Salmos 101'],
+        extras: [],
+      },
+      {
+        id: 'qua',
+        dia: 'Quarta',
+        data: '07 de outubro',
+        tema: 'Ajudar os outros',
+        versiculo: { texto: '', ref: 'Mateus 25.35-36' },
+        texto:
+          'Jesus nos ensina a ajudar aqueles que precisam. Quando ajudamos os outros, é como se estivéssemos ajudando a ele mesmo.',
+        praticando:
+          'Pense em algum amigo ou familiar que você pode ajudar. Pode ser um amigo que está triste, se sentindo sozinho ou que está passando por alguma necessidade.',
+        leituras: ['Apocalipse 7', 'Neemias 9.38-10.39', 'Salmos 102'],
+        extras: [],
+      },
+      {
+        id: 'qui',
+        dia: 'Quinta',
+        data: '08 de outubro',
+        // 'A Terra é perfeita para a gente' é o título da página (quinta).
+        tema: 'A Terra é perfeita',
+        versiculo: { texto: '', ref: 'Isaías 45.18' },
+        // Página MEMORIZE + OBJETIVO: só material do professor. O parágrafo
+        // abaixo é o OBJETIVO reescrito na linguagem da criança — não é a
+        // citação do MEMORIZE, que é redação do material e não da NAA.
+        texto:
+          'A Terra tem tudo o que precisamos porque foi planejada por Deus. Quando a gente compara com outros planetas, vê como isso é real: só a Terra tem ar, água e vida. Deus preparou com carinho o lugar onde a gente vive.',
+        // Sem PRATICANDO no material (página em outra diagramação).
+        praticando: '',
+        leituras: ['Apocalipse 8', 'Neemias 11', 'Salmos 103'],
+        extras: [],
+      },
+      {
+        id: 'sex',
+        dia: 'Sexta',
+        data: '09 de outubro',
+        tema: 'Deus conhece seu coração',
+        versiculo: { texto: '', ref: 'Salmos 142.1-2' },
+        texto:
+          'É maravilhoso saber que Deus já conhece tudo o que pensamos e vamos dizer, antes mesmo de falarmos! Ele conhece o seu coração e seus sentimentos. Então, seja sempre sincero com o Senhor, até nos momentos em que você não está bem.',
+        praticando:
+          'Que tal criar uma lista de coisas que você precisa melhorar? Peça ajuda à sua família.',
+        leituras: ['Apocalipse 9', 'Neemias 12', 'Salmos 104.1-23'],
+        extras: [],
+      },
+      {
+        id: 'sab',
+        dia: 'Sábado',
+        data: '10 de outubro',
+        tema: 'Jesus vai voltar',
+        versiculo: { texto: '', ref: 'Atos 1.11' },
+        texto:
+          'Essa é uma promessa incrível que Deus nos deu! Ele veio ao mundo, morreu na cruz e subiu ao céu. Jesus prometeu que um dia voltará para levar para si todas as pessoas que o reconheceram como o único e suficiente Salvador.',
+        praticando:
+          'Convide Jesus para estar no centro da sua vida e compartilhe essa promessa com sua família.',
+        leituras: ['Apocalipse 10', 'Neemias 13', 'Salmos 104.24-35'],
         extras: [],
       },
     ],

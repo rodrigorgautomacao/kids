@@ -272,7 +272,9 @@ function CartaoSemana({
         </span>
       </span>
       <span className="text-sm font-bold text-slate-600">
-        {formatarIntervalo(semana.inicio, semana.fim)} · 📖 {semana.capa.versiculo.ref}
+        {formatarIntervalo(semana.inicio, semana.fim)}
+        {/* Capa sem versículo no material (CAPA_SEM_VERSICULO): sem "📖" órfão. */}
+        {semana.capa.versiculo.ref ? ` · 📖 ${semana.capa.versiculo.ref}` : ''}
       </span>
       <span className="flex items-center gap-2">
         <Bolinhas lidos={lidos} />
@@ -463,8 +465,9 @@ export default function GameDevocionalDaSemana({ onExit }: { onExit: () => void 
             {semanaAtual.tema}
           </h3>
           <p className="mt-1 text-sm font-bold text-amber-900">
-            {formatarIntervalo(semanaAtual.inicio, semanaAtual.fim)} · 📖{' '}
-            {semanaAtual.capa.versiculo.ref}
+            {formatarIntervalo(semanaAtual.inicio, semanaAtual.fim)}
+            {/* Capa sem versículo no material (CAPA_SEM_VERSICULO): sem "📖" órfão. */}
+            {semanaAtual.capa.versiculo.ref ? ` · 📖 ${semanaAtual.capa.versiculo.ref}` : ''}
           </p>
           <div className="mt-3 flex items-center gap-2">
             <Bolinhas lidos={flagsDaSemana(store, semanaAtual)} />
@@ -650,7 +653,11 @@ export default function GameDevocionalDaSemana({ onExit }: { onExit: () => void 
           <Etiqueta>{semana.tema}</Etiqueta>
         </p>
 
-        <BlocoVersiculo referencia={semana.capa.versiculo.ref} />
+        {/* Capa sem versículo no material (CAPA_SEM_VERSICULO): o bloco some —
+            nunca renderizar "Abra a Bíblia em casa e leia" sem referência. */}
+        {semana.capa.versiculo.ref ? (
+          <BlocoVersiculo referencia={semana.capa.versiculo.ref} />
+        ) : null}
 
         <h4 className="mt-4 text-sm font-black text-slate-700">Os 6 dias da semana</h4>
         <div className="mt-2 grid grid-cols-3 gap-2 sm:grid-cols-6">

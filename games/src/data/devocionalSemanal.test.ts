@@ -129,10 +129,21 @@ describe('Devocional da Semana — estrutura do histórico', () => {
     }
   });
 
-  it('a capa de toda semana tem título e versículo com referência', () => {
+  // 🔒 Capa cujo MATERIAL não traz versículo algum (a arte do PDF não tem —
+  // conferido na imagem). Assim como `praticando`, onde a fonte é vaga o campo
+  // fica vazio em vez de inventado, e a tela omite o bloco. Se o dono entregar
+  // uma capa com versículo, tire a semana daqui.
+  const CAPA_SEM_VERSICULO = ['2026-10-05'];
+
+  it('a capa de toda semana tem título — e versículo em toda capa que o material traz', () => {
     for (const s of DEVOCIONAIS) {
       expect(s.capa.titulo.trim(), s.id).not.toBe('');
-      expect(s.capa.versiculo.ref.trim(), s.id).not.toBe('');
+      if (CAPA_SEM_VERSICULO.includes(s.id)) {
+        expect(s.capa.versiculo.ref.trim(), `${s.id}: capa vazia de propósito`).toBe('');
+        expect(s.capa.versiculo.texto, s.id).toBe('');
+      } else {
+        expect(s.capa.versiculo.ref.trim(), s.id).not.toBe('');
+      }
     }
   });
 });
@@ -158,7 +169,12 @@ describe('Devocional da Semana — campos vazios de propósito', () => {
   // diagramação no PDF). Ao acrescentar, ATUALIZE a lista abaixo — o teste
   // existe para ninguém inventar `praticando` onde a fonte é vaga
   // (jogos-biblicos §2/§5: onde falta material, falta mesmo).
-  const SEM_PRATICANDO = ['2026-09-28/ter', '2026-09-28/qui'];
+  const SEM_PRATICANDO = [
+    '2026-09-28/ter',
+    '2026-09-28/qui',
+    '2026-10-05/ter',
+    '2026-10-05/qui',
+  ];
 
   it('`praticando` só falta exatamente onde é legítimo', () => {
     const sem = DEVOCIONAIS.flatMap((s) =>
