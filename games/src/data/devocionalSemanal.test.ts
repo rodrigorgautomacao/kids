@@ -133,7 +133,7 @@ describe('Devocional da Semana — estrutura do histórico', () => {
   // conferido na imagem). Assim como `praticando`, onde a fonte é vaga o campo
   // fica vazio em vez de inventado, e a tela omite o bloco. Se o dono entregar
   // uma capa com versículo, tire a semana daqui.
-  const CAPA_SEM_VERSICULO = ['2026-10-05'];
+  const CAPA_SEM_VERSICULO = ['2026-10-05', '2026-10-12'];
 
   it('a capa de toda semana tem título — e versículo em toda capa que o material traz', () => {
     for (const s of DEVOCIONAIS) {
@@ -174,6 +174,8 @@ describe('Devocional da Semana — campos vazios de propósito', () => {
     '2026-09-28/qui',
     '2026-10-05/ter',
     '2026-10-05/qui',
+    '2026-10-12/ter',
+    '2026-10-12/qui',
   ];
 
   it('`praticando` só falta exatamente onde é legítimo', () => {

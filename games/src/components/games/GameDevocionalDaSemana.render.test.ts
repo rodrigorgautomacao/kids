@@ -65,8 +65,8 @@ describe('Devocional da Semana — a tela funciona de ponta a ponta', () => {
   it('entra pela biblioteca e abre a capa da semana', () => {
     const { raiz } = montar('devocional-1');
     expect(tela(raiz)).toContain('Esta semana');
-    expect(tela(raiz)).toContain('Louvor, plano e cuidado');
-    expect(tela(raiz)).toContain('5 de out – 10 de out');
+    expect(tela(raiz)).toContain('Criação, amor e oração');
+    expect(tela(raiz)).toContain('12 de out – 17 de out');
     expect(tela(raiz)).toContain('Começar');
     expect(tela(raiz)).toContain('Por semana');
     expect(tela(raiz)).toContain('Por tema');
@@ -86,13 +86,13 @@ describe('Devocional da Semana — a tela funciona de ponta a ponta', () => {
     const { raiz } = montar('devocional-2');
     act(() => porTexto(raiz, 'Começar').click());
     act(() => porTexto(raiz, 'Terça').click());
-    expect(tela(raiz)).toContain('Deus tem um plano');
+    expect(tela(raiz)).toContain('Coragem e fé');
 
     act(() => porTexto(raiz, 'Marcar como lido').click());
     // terça lida → o próximo não lido é quarta (o erro seria voltar para segunda)
-    expect(tela(raiz)).toContain('Ajudar os outros');
-    expect(tela(raiz)).not.toContain('O que é louvar');
-    expect(localStorage.getItem('kids-leitura-v1')).toContain('2026-10-05/ter');
+    expect(tela(raiz)).toContain('Amar como Jesus');
+    expect(tela(raiz)).not.toContain('A criação de Deus');
+    expect(localStorage.getItem('kids-leitura-v1')).toContain('2026-10-12/ter');
   });
 
   it('🔒 o texto bíblico nunca aparece na tela — só a referência', () => {
@@ -177,11 +177,11 @@ describe('Devocional da Semana — a tela funciona de ponta a ponta', () => {
     expect(tela(raiz)).toContain('Apagar o que você já leu?');
     act(() => porTexto(raiz, 'Não, quero guardar').click());
     expect(tela(raiz)).not.toContain('Apagar o que você já leu?');
-    expect(localStorage.getItem('kids-leitura-v1')).toContain('2026-10-05/seg');
+    expect(localStorage.getItem('kids-leitura-v1')).toContain('2026-10-12/seg');
 
     act(() => porTexto(raiz, 'Recomeçar').click());
     act(() => porTexto(raiz, 'Sim, apagar').click());
-    expect(localStorage.getItem('kids-leitura-v1')).not.toContain('2026-10-05/seg');
+    expect(localStorage.getItem('kids-leitura-v1')).not.toContain('2026-10-12/seg');
     expect(tela(raiz)).toContain('Começar');
   });
 });

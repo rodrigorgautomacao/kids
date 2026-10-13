@@ -1,13 +1,16 @@
 // O Devocional da Semana — curadoria a partir do material do dono.
 //
 // FONTE
-// Dois PDFs do dono, 7 páginas cada (capa + segunda a sábado):
-// "Devocionais 28 set a 03 outubro" (semana 40) e "Devocionais 05 a 10
-// outubro" (semana 41). A página traz, por dia: o **versículo do dia** (só a
-// referência), um **parágrafo de mensagem** em caixa-alta (texto do AUTOR, não
-// é citação bíblica), o bloco **PRATICANDO**, as leituras extras da semana e,
-// às vezes, caixotes extras ("Culto da Família", "Manual da vida",
-// "Conectando") e sugestões de música.
+// Duas semanas vieram do dono como PDF de 7 páginas cada (capa + segunda a
+// sábado): "Devocionais 28 set a 03 outubro" (semana 40) e "Devocionais 05 a
+// 10 outubro" (semana 41). A terceira, "devocionais do dia 12 a 17 outubro
+// 2026" (semana 42), veio como **7 PNGs** (capa + 2ª a sábado) — sem PDF, então
+// o texto foi lido por OCR (tesseract por) e conferido linha a linha. A página
+// traz, por dia: o **versículo do dia** (só a referência), um **parágrafo de
+// mensagem** em caixa-alta (texto do AUTOR, não é citação bíblica), o bloco
+// **PRATICANDO**, as leituras extras da semana e, às vezes, caixotes extras
+// ("Culto da Família", "Manual da vida", "Conectando"), **MEMORIZE** e
+// sugestões de música.
 //
 // REGRA DE REFERÊNCIA (a que vale para todo o arquivo)
 // - `versiculo.ref` é a referência tal como no material, normalizada no formato
@@ -27,6 +30,13 @@
 //   A capa de 05/10, por sua vez, **não traz versículo algum** (conferido na
 //   arte do PDF): `ref` fica vazia de propósito e a tela omite o bloco —
 //   exceção listada no teste (`CAPA_SEM_VERSICULO`), como `praticando`.
+//   A capa de 12/10 (PNG) é só arte/script decorativo — o OCR não devolve
+//   nenhum versículo legível, então `ref` também fica vazia de propósito e a
+//   semana entra em `CAPA_SEM_VERSICULO`. Se o dono entregar a capa com o
+//   versículo, é só preencher e tirar da lista.
+//   O rodapé do material ("Todos os seus filhos serão ensinados pelo SENHOR…
+//   Isaías 54:13") se repete em TODAS as artes da semana 42: é elemento
+//   gráfico do template, não o versículo do dia, e por isso é ignorado.
 //
 // CURAÇÃO DE LINGUAGEM
 // - O material foi escrito para leitor maduro. `texto` e `praticando` foram
@@ -61,6 +71,15 @@
 //   mensagem foi reescrita na linguagem da criança e a referência do MEMORIZE
 //   (Isaías 45.18) virou o `versiculo.ref` — a citação em caixa-alta do
 //   material não é a redação da NAA e não entra no campo `texto`.
+// - Semana 42: Terça é a página do caixote **CONECTANDO** (a história da
+//   camisa do time rival) e não traz **PRATICANDO** — o que há embaixo é a
+//   sugestão de música "Não mais escravos (No Longer Slaves) — Fernandinho,
+//   Bethel Music", ignorada (mesma regra). O texto do dia é a própria história
+//   do caixote. Quinta é a página **MEMORIZE + OBJETIVO** (só material do
+//   professor): a mensagem foi reescrita na linguagem da criança a partir do
+//   OBJETIVO e a referência do MEMORIZE (Isaías 45.18) virou o
+//   `versiculo.ref` — a citação em caixa-alta do material não é a redação da
+//   NAA e não entra no campo `texto`; por isso também não há `praticando`.
 // - As sugestões de música do material (ex.: "Canção ao Cordeiro — Israel
 //   Salazar, Ana Paula Valadão"; "Jesus em Tua Presença — Asaph Borba") foram
 //   **ignoradas**: o esquema não tem campo
@@ -318,6 +337,103 @@ export const DEVOCIONAIS: SemanaDevocional[] = [
         praticando:
           'Convide Jesus para estar no centro da sua vida e compartilhe essa promessa com sua família.',
         leituras: ['Apocalipse 10', 'Neemias 13', 'Salmos 104.24-35'],
+        extras: [],
+      },
+    ],
+  },
+  {
+    semana: 42,
+    inicio: '2026-10-12',
+    fim: '2026-10-17',
+    id: '2026-10-12',
+    tema: 'Criação, amor e oração',
+    capa: {
+      titulo: 'Devocionais da Semana',
+      // A capa do PNG é só arte/script decorativo e o OCR não devolve versículo
+      // legível — ref vazia de propósito, bloco omitido pela tela (ver topo).
+      versiculo: { texto: '', ref: '' },
+    },
+    dias: [
+      {
+        id: 'seg',
+        dia: 'Segunda',
+        data: '12 de outubro',
+        tema: 'A criação de Deus',
+        versiculo: { texto: '', ref: 'Salmos 8.1' },
+        texto:
+          'Olhe pela janela e contemple quantas coisas perfeitas o nosso Deus criou: os céus, a terra, os animais, a natureza e tudo o que há nela. Servimos a um Deus tão grande, maravilhoso e glorioso, que fez todas as coisas com a perfeição da sua glória e do seu poder.',
+        praticando:
+          'Pensando nisso, faça uma lista de pelo menos 6 coisas em que você pode ver a grandeza e as bênçãos de Deus!',
+        leituras: ['Apocalipse 12', 'Ester 2', 'Salmos 105.26-45'],
+        extras: [],
+      },
+      {
+        id: 'ter',
+        dia: 'Terça',
+        data: '13 de outubro',
+        tema: 'Coragem e fé',
+        versiculo: { texto: '', ref: 'Josué 1.9' },
+        // Página do caixote CONECTANDO: a história É o texto do dia.
+        texto:
+          'Imagine que você vai a uma festa e o convite diz para ir com a camisa do seu time favorito. Você chega todo animado com a camisa do seu time, mas, quando entra, percebe que todo mundo está com a camisa do time rival. Como você se sentiria? Um pouco sozinho! Com vontade de esconder a sua camisa! Às vezes, ser cristão no meio dos amigos ou na escola pode não fazer você se sentir exatamente assim.',
+        // Sem PRATICANDO: a página traz só a história e a sugestão de música.
+        praticando: '',
+        leituras: ['Apocalipse 13', 'Ester 3-4', 'Salmos 106.1-23'],
+        extras: [],
+      },
+      {
+        id: 'qua',
+        dia: 'Quarta',
+        data: '14 de outubro',
+        tema: 'Amar como Jesus',
+        versiculo: { texto: '', ref: 'João 15.12' },
+        texto:
+          'Pode parecer estranho, mas você sabia que amar é diferente de gostar? Jesus nos ensina a amar todas as pessoas, mesmo aquelas com quem você não se dá tão bem ou com quem não tem tanta afinidade. Amar o próximo é cuidar, respeitar e agir com bondade como ele faz com a gente, mesmo que a pessoa já tenha errado com você.',
+        praticando:
+          'Pense e escreva o nome de duas pessoas que você precisa amar mais, assim como Jesus te ama.',
+        leituras: ['Apocalipse 14', 'Ester 5.1-6.13', 'Salmos 106.24-48'],
+        extras: [],
+      },
+      {
+        id: 'qui',
+        dia: 'Quinta',
+        data: '15 de outubro',
+        tema: 'Fé e ciência',
+        // Página MEMORIZE + OBJETIVO (só material do professor). A referência do
+        // MEMORIZE vira o `ref`; a citação em caixa-alta do material não é a
+        // redação da NAA e não entra no campo `texto`.
+        versiculo: { texto: '', ref: 'Isaías 45.18' },
+        texto:
+          'A fé e a ciência podem caminhar juntas quando Deus está no centro. Elas não são inimigas: a ciência revela a criação e a fé revela o Criador. Quem tem fé não foge da ciência — usa a ciência para glorificar a Deus.',
+        // Sem PRATICANDO: a página é só MEMORIZE + OBJETIVO.
+        praticando: '',
+        leituras: ['Apocalipse 16', 'Ester 6.14-8.17', 'Salmos 107.1-22'],
+        extras: [],
+      },
+      {
+        id: 'sex',
+        dia: 'Sexta',
+        data: '16 de outubro',
+        tema: 'Oração que fortalece',
+        versiculo: { texto: '', ref: 'Lucas 22.46' },
+        texto:
+          'Jesus estava preocupado com os seus discípulos porque, em vez de orarem, eles estavam adormecidos. Era o momento de oração, e não de descansar. Jesus queria que eles orassem porque, por meio da oração, somos fortalecidos.',
+        praticando:
+          'Firme um compromisso com o Senhor e com a sua família sobre qual momento do dia vocês vão parar tudo o que estiverem fazendo para orar.',
+        leituras: ['Apocalipse 16', 'Ester 9-10', 'Salmos 107.23-43'],
+        extras: [],
+      },
+      {
+        id: 'sab',
+        dia: 'Sábado',
+        data: '17 de outubro',
+        tema: 'Compartilhar o amor',
+        versiculo: { texto: '', ref: 'Atos 14.21' },
+        texto:
+          'Paulo e Barnabé pregaram o evangelho e muitos se tornaram discípulos de Jesus. Eles não pararam, mas continuaram a sua missão de espalhar a Palavra de Deus.',
+        praticando:
+          'Podemos compartilhar o amor de Jesus. Escolha uma pessoa que você conhece e escreva uma mensagem contando algo que você aprendeu sobre Jesus e como isso tem feito diferença na sua vida.',
+        leituras: ['Apocalipse 17', 'Isaías 1-2', 'Salmos 108'],
         extras: [],
       },
     ],
