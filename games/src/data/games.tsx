@@ -41,10 +41,19 @@ export const FAIXAS: readonly { id: Faixa; nome: string; idade: string; mascote:
   { id: '7-9', nome: 'Íntimos de Deus', idade: '7 a 9 anos', mascote: '🙏', gradient: 'from-indigo-200 via-violet-50 to-purple-200', text: 'text-indigo-900' },
 ];
 
-export const TIPOS: readonly { id: Tipo; nome: string; emoji: string; badge: string; bg: string; text: string }[] = [
-  { id: 'at',    nome: 'Antigo Testamento',        emoji: '📜', badge: 'bg-amber-100',  bg: 'bg-amber-50',    text: 'text-amber-800'  },
-  { id: 'nt',    nome: 'Novo Testamento',          emoji: '✝️', badge: 'bg-sky-100',    bg: 'bg-sky-50',      text: 'text-sky-800'    },
-  { id: 'at-nt', nome: 'Antigo + Novo Testamento', emoji: '📖', badge: 'bg-emerald-100', bg: 'bg-emerald-50', text: 'text-emerald-800' },
+export const TIPOS: readonly {
+  id: Tipo;
+  nome: string;
+  /** Sigla para o cartucho do Hub (cabe numa linha ao lado das estrelas). */
+  curto: string;
+  emoji: string;
+  badge: string;
+  bg: string;
+  text: string;
+}[] = [
+  { id: 'at',    nome: 'Antigo Testamento',        curto: 'AT',    emoji: '📜', badge: 'bg-amber-100',  bg: 'bg-amber-50',    text: 'text-amber-800'  },
+  { id: 'nt',    nome: 'Novo Testamento',          curto: 'NT',    emoji: '✝️', badge: 'bg-sky-100',    bg: 'bg-sky-50',      text: 'text-sky-800'    },
+  { id: 'at-nt', nome: 'Antigo + Novo Testamento', curto: 'AT+NT', emoji: '📖', badge: 'bg-emerald-100', bg: 'bg-emerald-50', text: 'text-emerald-800' },
 ];
 
 export interface GameDefinition {

@@ -6,6 +6,24 @@ Projeto de **ministério, gratuito e sem conta de criança**.
 
 Publicado em GitHub Pages: `https://rodrigorgautomacao.github.io/kids/`
 
+## 🕹️ Modo Sala de Jogos (fliperama / quiosque)
+
+Para eventos (ex.: **Sala de Jogos do FestKids**), abra
+`https://rodrigorgautomacao.github.io/kids/?arcade=1`. O app vira um fliperama:
+
+- **letreiro de atração** (“TOQUE PARA JOGAR”) e retorno automático ao menu
+  depois de 75 s parado no lobby (4 min dentro de um jogo);
+- **lobby com cartuchos**, filtro por idade, “Jogo surpresa” 🎲 e recorde 🏆;
+- **gabinete** em todos os jogos com `Voltar` / `Pausa` / `Som` no deck;
+- **sem pedido de instalação** do PWA e **tela sempre acesa** (Wake Lock);
+- `?jogo=<id>` abre um jogo direto; `?arcade=0` desliga o modo no aparelho;
+- saída discreta: **3 toques** em “Sala de Jogos · FestKids” no rodapé.
+
+Checklist do evento, link direto por jogo e roteiro de teste:
+[`PLANO_SALA_DE_JOGOS.md`](PLANO_SALA_DE_JOGOS.md). Decisão técnica:
+`brain-jogos/decisions/ADR-013-modo-sala-fliperama-festkids.md`.
+
+
 ## Organização: por faixa etária + tipo bíblico
 
 O catálogo é dividido por **faixa** (Pequeninos 3–4 · Exploradores 5–6 ·

@@ -38,7 +38,7 @@ export default function LevelHUD({
               style={{ width: `${Math.max(pct, 3)}%` }}
             />
           </div>
-          <span className="text-xs font-black text-white drop-shadow-[0_1px_0_rgba(0,0,0,0.6)]">
+          <span className="hud-pill px-3 py-0.5 text-xs font-black text-white">
             {falta === 0
               ? 'Última pergunta! 💪'
               : falta === 1

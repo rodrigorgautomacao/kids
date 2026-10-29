@@ -225,6 +225,26 @@ export function chapter() {
   [72, 76, 79, 84].forEach((midi) => note({ midi, at: 1.0, dur: 0.6, type: 'triangle', vol: 0.06, filter: 3000 }));
 }
 
+/**
+ * Ficha entrando no fliperama (modo Sala de Jogos): "tlim" de duas notas,
+ * cristalino e curtinho. É o som que abre a partida — nunca no meio dela.
+ */
+export function coin() {
+  if (isSfxMuted()) return;
+  note({ midi: 95, dur: 0.07, type: 'sine', vol: 0.07, filter: 6200 });
+  note({ midi: 100, at: 0.07, dur: 0.16, type: 'sine', vol: 0.08, filter: 6800 });
+  note({ midi: 88, at: 0.07, dur: 0.12, type: 'triangle', vol: 0.05, layer: 'octave', filter: 4200 });
+}
+
+/** "Start!" do fliperama: arpejo ascendente de 3 notas, ≤ 0,4 s. */
+export function start() {
+  if (isSfxMuted()) return;
+  const melody = [72, 79, 84];
+  melody.forEach((midi, i) =>
+    note({ midi, at: i * 0.09, dur: 0.14, type: 'triangle', vol: 0.1, layer: 'octave', filter: 4000 }),
+  );
+}
+
 /** Transição de tela ("swoosh"). */
 export function swoosh() {
   if (isSfxMuted()) return;

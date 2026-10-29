@@ -68,8 +68,8 @@ export default function LevelDone({
 
   return (
     <div className="animate-pop flex flex-col items-center gap-4">
-      <span className="hud-pill flex items-center gap-1.5 px-5 py-2">
-        <span className="text-base font-extrabold text-white">
+      <span className="hud-pill flex items-center gap-1.5 border-amber-300/40 px-5 py-2">
+        <span className="text-sm font-black uppercase tracking-wide text-amber-200 sm:text-base">
           {headline ?? (isChapterEnd ? 'Capítulo concluído!' : 'Nível concluído!')}
         </span>
         {[1, 2, 3].map((i) => (

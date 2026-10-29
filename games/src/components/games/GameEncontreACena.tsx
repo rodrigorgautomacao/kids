@@ -200,7 +200,7 @@ export default function GameEncontreACena({ onExit }: { onExit: () => void }) {
           </div>
         </div>
 
-        <div className="relative w-full rounded-3xl bg-white/95 px-6 py-4 text-center shadow-xl">
+        <div className="relative w-full rounded-3xl bg-white/95 px-6 pr-12 py-4 text-center shadow-xl">
           <p className="text-xl font-black text-indigo-900">{round.dica}</p>
           <button
             type="button"
@@ -215,23 +215,23 @@ export default function GameEncontreACena({ onExit }: { onExit: () => void }) {
           </button>
         </div>
 
-        <div ref={stageRef} className="relative grid w-full grid-cols-3 gap-4">
+        <div ref={stageRef} className="relative grid w-full grid-cols-3 gap-2 sm:gap-4">
           {tileOrder.map((tile) => (
             <div key={tile.id} className="relative flex">
               <button
                 type="button"
                 disabled={won}
                 onClick={(ev) => handlePick(tile, ev)}
-                className={`ui-press flex flex-1 flex-col items-center gap-3 rounded-3xl border-4 bg-white px-4 py-6 shadow-lg transition-transform ${
+                className={`ui-press flex flex-1 flex-col items-center gap-3 rounded-3xl border-4 bg-white px-2 py-4 shadow-lg sm:px-4 sm:py-6 transition-transform ${
                   picked === tile.id && tile.id === round.certo
                     ? 'animate-pop border-emerald-400 bg-emerald-50'
                     : 'border-slate-200 hover:scale-105'
                 } ${smallKids ? 'min-h-40' : 'min-h-32'}`}
               >
-                <div className="flex items-center justify-center">
+                <div className="flex w-full items-center justify-center [&>svg]:h-auto [&>svg]:max-w-full">
                   <Motif id={tile.id} size={smallKids ? 110 : 90} />
                 </div>
-                <span className="rounded-full bg-indigo-100 px-3 py-1 text-xs font-black text-indigo-700">{tile.label}</span>
+                <span className="rounded-full bg-indigo-100 px-2 py-1 text-[10px] font-black text-indigo-700 sm:px-3 sm:text-xs">{tile.label}</span>
               </button>
               <SpeakChip text={tile.label} className="absolute right-1.5 top-1.5" />
             </div>

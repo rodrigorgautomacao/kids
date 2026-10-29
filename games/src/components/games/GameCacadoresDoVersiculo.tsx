@@ -171,7 +171,7 @@ export default function GameCacadoresDoVersiculo({ onExit }: { onExit: () => voi
           </div>
         </div>
 
-        <div className="relative w-full rounded-3xl bg-white/95 px-6 py-5 text-center shadow-xl">
+        <div className="relative w-full rounded-3xl bg-white/95 px-6 pr-12 py-5 text-center shadow-xl">
           <p className="text-2xl leading-snug font-black text-indigo-900">
             “{round.antes} <span className={won ? 'text-emerald-600' : 'text-violet-500'}>{filled}</span>
             {round.depois}”

@@ -499,7 +499,7 @@ export default function GameEstradaDaLuz({ onExit }: GameProps) {
         {/* ------- pergunta + respostas ------- */}
         {!won && current ? (
           <div className="relative flex w-full max-w-2xl flex-col items-center gap-4">
-            <div className="relative w-full rounded-3xl bg-white/95 px-6 py-4 shadow-xl">
+            <div className="relative w-full rounded-3xl bg-white/95 px-6 pr-12 py-4 shadow-xl">
               <p className="pr-10 text-center text-xl font-black text-indigo-900">{current.q}</p>
               <button
                 type="button"

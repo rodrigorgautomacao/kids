@@ -263,7 +263,7 @@ export default function ChoiceGame({
           </div>
         </div>
 
-        <div className="relative w-full rounded-3xl bg-white/95 px-6 py-4 text-center shadow-xl">
+        <div className="relative w-full rounded-3xl bg-white/95 px-6 pr-12 py-4 text-center shadow-xl">
           {variant === 'shadow' && round.target?.motif ? (
             <div className="mx-auto mb-2 w-fit rounded-2xl bg-slate-900 p-3">
               <div style={{ filter: 'brightness(0)' }}>

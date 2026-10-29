@@ -56,6 +56,22 @@ export default {
           medio: '#34d399',
           escuro: '#065f46',
         },
+        /**
+         * Fliperama (Festa na Sala de Jogos): o gabinete escuro em volta da
+         * tela. Os matizes são de propósito saturados — no escuro do salão,
+         * a luz do gabinete é o que chama a criança.
+         */
+        arcade: {
+          ink: '#0b0618',
+          noite: '#140a2b',
+          pano: '#1e1038',
+          roxo: '#3b1470',
+          metal: '#241a3d',
+          neon: '#22d3ee',
+          pink: '#f472b6',
+          magenta: '#e879f9',
+          ouro: '#fbbf24',
+        },
       },
       keyframes: {
         float: {
@@ -132,6 +148,8 @@ export default {
         'hand-tap': 'hand-tap 1.1s ease-in-out infinite',
         'hero-bob': 'hero-bob 1.6s ease-in-out infinite',
         'hero-sway': 'hero-sway 0.42s ease-in-out infinite',
+        'arcade-coin': 'arcade-coin 1.9s ease-in-out infinite',
+        'arcade-halo': 'arcade-halo 2.8s ease-in-out infinite',
       },
     },
   },

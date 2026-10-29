@@ -57,6 +57,16 @@ body {
     min-height: 100dvh;
   }
 
+  /**
+   * Altura exata da tela (não "pelo menos"). Usada no gabinete do jogo: o
+   * marquee e o deck ficam sempre visíveis e a área do jogo rola por dentro,
+   * em vez de empurrar os controles para fora no tablet.
+   */
+  .h-screen-safe {
+    height: 100vh;
+    height: 100dvh;
+  }
+
   /** Respeita notch, ilha e home indicator do iPhone (viewport-fit=cover).
    *  Como o padding entra no "containing block" dos filhos absolutos, quem usa
    *  `top-4`/`left-4` já cai automaticamente depois da área segura. */
@@ -125,6 +135,207 @@ body {
   }
   .screen-out {
     animation: mare-screen-out 200ms ease-in;
+  }
+
+  /* ───────────────────────── Fliperama (FestKids) ─────────────────────────
+   *
+   * A sala de jogos tem luz baixa: o gabinete é escuro (quase preto arroxeado)
+   * e quem ilumina é a tela + o marquee. Tudo aqui é CSS puro — sem imagem,
+   * sem blur caro, funciona offline e não pesa no PWA.
+   *
+   * REGRA: nada de `transform`/`filter` persistente no contêiner do jogo, senão
+   * os `position: fixed` internos (confete) passam a se posicionar por ele.
+   */
+
+  /** Fundo do salão: neon difuso + piso de ladrilhos em perspectiva. */
+  .arcade-bg {
+    background-color: #0b0618;
+    background-image:
+      radial-gradient(circle at 18% -10%, rgba(124, 58, 237, 0.42), transparent 48%),
+      radial-gradient(circle at 82% 4%, rgba(34, 211, 238, 0.26), transparent 44%),
+      radial-gradient(circle at 50% 108%, rgba(244, 114, 182, 0.2), transparent 55%),
+      repeating-linear-gradient(0deg, rgba(148, 163, 184, 0.055) 0 1px, transparent 1px 44px),
+      repeating-linear-gradient(90deg, rgba(148, 163, 184, 0.055) 0 1px, transparent 1px 44px);
+  }
+
+  /** Faixa de topo do gabinete: moldura de acrílico com luz por dentro. */
+  .arcade-marquee {
+    background:
+      radial-gradient(120% 140% at 50% -30%, rgba(251, 191, 36, 0.24), transparent 60%),
+      linear-gradient(180deg, #2c1150 0%, #180a30 62%, #0e0620 100%);
+    border: 2px solid rgba(251, 191, 36, 0.32);
+    border-bottom-color: rgba(251, 191, 36, 0.16);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.14),
+      inset 0 -18px 30px rgba(0, 0, 0, 0.45),
+      0 5px 0 rgba(0, 0, 0, 0.65),
+      0 0 38px -8px rgba(168, 85, 247, 0.65);
+  }
+
+  /** Letreiro de neon: âmbar com halo rosa, legível no escuro. */
+  .arcade-neon {
+    color: #fde68a;
+    text-shadow:
+      0 0 6px rgba(251, 191, 36, 0.9),
+      0 0 20px rgba(251, 113, 133, 0.55),
+      0 3px 0 rgba(0, 0, 0, 0.5);
+  }
+
+  /** Fileira de lâmpadas do marquee (cada `.arcade-bulb` pisca em sequência). */
+  .arcade-lights {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 4px;
+    padding: 3px 8px;
+    overflow: hidden;
+  }
+  .arcade-lights--tight {
+    padding: 1px 8px;
+    gap: 6px;
+  }
+  .arcade-lights--tight .arcade-bulb {
+    height: 5px;
+    width: 5px;
+  }
+  .arcade-bulb {
+    display: block;
+    height: 7px;
+    width: 7px;
+    flex: 0 0 auto;
+    border-radius: 9999px;
+    background: radial-gradient(circle at 35% 30%, #fff8dc, #fbbf24 55%, #b45309 100%);
+    box-shadow: 0 0 7px rgba(251, 191, 36, 0.9);
+    animation: arcade-chase 1.4s ease-in-out infinite;
+  }
+
+  /** Moldura preta da tela (o "vidro" fica por conta de `.crt`). */
+  .arcade-screen {
+    border: 6px solid #06030f;
+    border-radius: 16px;
+    box-shadow:
+      inset 0 0 0 2px rgba(255, 255, 255, 0.07),
+      inset 0 0 70px rgba(0, 0, 0, 0.45),
+      0 0 0 2px rgba(255, 255, 255, 0.05),
+      0 12px 30px -12px rgba(0, 0, 0, 0.9);
+  }
+
+  /**
+   * Área útil da tela do jogo: centraliza o conteúdo quando ele é menor que a
+   * tela (evita aquele vazio embaixo) e, com `safe`, volta ao topo quando o
+   * conteúdo é maior — nada de cortar o começo do jogo.
+   */
+  .arcade-content {
+    display: flex;
+    flex-direction: column;
+    justify-content: safe center;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  /** Scanlines + vinheta de CRT. Pseudo-elemento: nunca rouba o toque. */
+  .crt {
+    position: relative;
+  }
+  .crt::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 20;
+    pointer-events: none;
+    border-radius: inherit;
+    background:
+      repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.14) 0 1px, transparent 1px 3px),
+      radial-gradient(ellipse at center, transparent 58%, rgba(0, 0, 0, 0.3) 100%);
+    opacity: 0.55;
+  }
+
+  /** Painel de controles (embaixo): metal com brilho na aresta de cima. */
+  .arcade-deck {
+    background: linear-gradient(180deg, #2b1f4a 0%, #1a1130 70%, #120a22 100%);
+    border-top: 2px solid rgba(255, 255, 255, 0.1);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.12),
+      0 -10px 24px -18px rgba(34, 211, 238, 0.55);
+  }
+
+  /** Botão de fliperama: duro, alto e com curso de 4 px ao apertar. */
+  .arcade-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border-radius: 9999px;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    background: linear-gradient(180deg, #43306b 0%, #291a47 100%);
+    color: #f8fafc;
+    box-shadow:
+      0 4px 0 #0a0514,
+      0 0 0 1px rgba(0, 0, 0, 0.5),
+      inset 0 1px 0 rgba(255, 255, 255, 0.18);
+    transition:
+      transform 110ms cubic-bezier(0.34, 1.56, 0.64, 1),
+      box-shadow 110ms ease,
+      filter 110ms ease;
+  }
+  .arcade-btn:active {
+    transform: translateY(3px);
+    box-shadow:
+      0 1px 0 #0a0514,
+      0 0 0 1px rgba(0, 0, 0, 0.5),
+      inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  }
+  .arcade-btn:hover {
+    filter: brightness(1.12);
+  }
+
+  /** Painel/cartucho do catálogo: escuro, com borda que acende no toque. */
+  .arcade-cart {
+    background: linear-gradient(180deg, rgba(46, 30, 78, 0.96) 0%, rgba(22, 13, 42, 0.98) 100%);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    box-shadow:
+      0 6px 0 rgba(0, 0, 0, 0.45),
+      inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  }
+}
+
+/** Pisca-pisca do marquee (a luz "corre" pela fileira). */
+@keyframes arcade-chase {
+  0%,
+  100% {
+    opacity: 0.32;
+    box-shadow: 0 0 4px rgba(251, 191, 36, 0.5);
+  }
+  50% {
+    opacity: 1;
+    box-shadow: 0 0 12px rgba(251, 191, 36, 1);
+  }
+}
+
+/** Ficha do fliperama: pulinho curto, sem loop (usada no convite "toque"). */
+@keyframes arcade-coin {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-4deg);
+  }
+  40% {
+    transform: translateY(-10px) rotate(4deg);
+  }
+  70% {
+    transform: translateY(-2px) rotate(-2deg);
+  }
+}
+
+/** Halo respirando devagar — chama o olho sem piscar rápido. */
+@keyframes arcade-halo {
+  0%,
+  100% {
+    opacity: 0.55;
+    transform: scale(0.98);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.03);
   }
 }
 

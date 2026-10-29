@@ -165,7 +165,7 @@ export default function GameQueSomEsse({ onExit }: { onExit: () => void }) {
           </div>
         </div>
 
-        <div className="relative w-full rounded-3xl bg-white/95 px-6 py-4 text-center shadow-xl">
+        <div className="relative w-full rounded-3xl bg-white/95 px-6 pr-12 py-4 text-center shadow-xl">
           <p className="text-2xl font-black text-amber-700">🔊 {round.som}</p>
           <p className="mt-1 text-lg font-black text-indigo-900">{round.q}</p>
           <button

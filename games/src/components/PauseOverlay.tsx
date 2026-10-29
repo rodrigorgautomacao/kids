@@ -16,9 +16,9 @@ interface PauseOverlayProps {
 export default function PauseOverlay({ onResume, onExit, onRestart, title }: PauseOverlayProps) {
   return (
     <div className="absolute inset-0 z-[70] flex items-center justify-center bg-black/65 p-4">
-      <div className="animate-pop flex w-full max-w-sm flex-col items-center gap-4 rounded-3xl bg-slate-900/95 p-6 text-center shadow-2xl ring-2 ring-white/15">
+      <div className="animate-pop flex w-full max-w-sm flex-col items-center gap-4 rounded-3xl border-2 border-amber-300/25 bg-arcade-noite/95 p-6 text-center shadow-2xl ring-1 ring-white/10">
         <p className="text-5xl">⏸️</p>
-        <h3 className="text-2xl font-black text-yellow-300">{title ?? 'Pausa'}</h3>
+        <h3 className="arcade-neon text-2xl font-black uppercase tracking-wide">{title ?? 'Pausa'}</h3>
 
         <button
           type="button"

@@ -1,6 +1,14 @@
 import { Suspense, lazy, useCallback, useEffect, useState } from 'react';
 import Hub from './components/Hub';
+import AttractScreen from './components/arcade/AttractScreen';
 import { games } from './data/games';
+import {
+  ARCADE_MODE,
+  ATTRACT_AFTER_MS,
+  RETURN_AFTER_MS,
+  useIdle,
+  useWakeLock,
+} from './lib/arcade';
 import {
   isMusicMuted,
   isVoiceMuted,
@@ -11,8 +19,24 @@ import {
   voice,
 } from './lib/audio';
 
+/** Abre um jogo direto por link (`?jogo=a-grande-jornada`) — útil no evento. */
+function gameFromUrl(): string | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const q = new URLSearchParams(window.location.search);
+    const id = q.get('jogo') ?? q.get('game');
+    return id && games.some((g) => g.id === id && g.status === 'pronto') ? id : null;
+  } catch {
+    return null;
+  }
+}
+
 export default function App() {
-  const [activeGameId, setActiveGameId] = useState<string | null>(null);
+  const [activeGameId, setActiveGameId] = useState<string | null>(() => gameFromUrl());
+  // Modo Sala de Jogos: abre no letreiro de atração e volta para ele sozinho.
+  const [attract, setAttract] = useState(() => ARCADE_MODE && !gameFromUrl());
+  // Quiosque: a tela não apaga no meio da fila do FestKids.
+  useWakeLock(ARCADE_MODE);
 
   // iOS/Safari só libera áudio (e a síntese de voz) dentro de um gesto do
   // usuário. Destravamos no primeiro toque/clique/tecla e revalidamos quando a
@@ -72,7 +96,9 @@ export default function App() {
   }, []);
 
   const openGame = useCallback((id: string) => {
-    sfx.swoosh();
+    // No quiosque, abrir jogo é "inserir a ficha" — o som que o salão conhece.
+    if (ARCADE_MODE) sfx.coin();
+    else sfx.swoosh();
     setActiveGameId(id);
   }, []);
 
@@ -80,6 +106,18 @@ export default function App() {
     voice.stopSpeaking();
     sfx.swoosh();
     setActiveGameId(null);
+  }, []);
+
+  // Quiosque: sem toque por 75 s no menu → letreiro chama de novo.
+  useIdle(ATTRACT_AFTER_MS, () => setAttract(true), ARCADE_MODE && !activeGameId);
+  // Sem toque por 4 min DENTRO do jogo → devolve ao menu (a criança foi embora).
+  useIdle(RETURN_AFTER_MS, closeGame, ARCADE_MODE && Boolean(activeGameId));
+
+  const startPlaying = useCallback(() => {
+    // Primeiro gesto do quiosque: destrava o áudio antes do "start".
+    unlockAudio();
+    sfx.start();
+    setAttract(false);
   }, []);
 
   const activeGame = games.find((g) => g.id === activeGameId);
@@ -108,6 +146,14 @@ export default function App() {
         ) : GameComponent ? (
           <GameComponent onExit={closeGame} />
         ) : null}
+      </div>
+    );
+  }
+
+  if (attract) {
+    return (
+      <div className="screen-in">
+        <AttractScreen onStart={startPlaying} />
       </div>
     );
   }

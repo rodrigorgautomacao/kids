@@ -172,7 +172,7 @@ export default function HiddenGame({
           </div>
         </div>
 
-        <div className="relative w-full rounded-3xl bg-white/95 px-6 py-4 text-center shadow-xl">
+        <div className="relative w-full rounded-3xl bg-white/95 px-6 pr-12 py-4 text-center shadow-xl">
           <p className="text-xl font-black text-indigo-900">
             Ache: {round.find.label} {round.find.emoji}
           </p>
