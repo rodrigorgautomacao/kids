@@ -18,6 +18,20 @@
     U+2212, U+2215, U+FEFF, U+FFFD;
 }
 
+/**
+ * Fonte pixel do fliperama (Press Start 2P, OFL — ver public/fonts/OFL-*.txt).
+ * Só números, siglas e títulos curtos: em blocos longos ela cansa a leitura.
+ */
+@font-face {
+  font-family: 'Press Start 2P';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/kids/fonts/press-start-2p-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+20AC, U+2122, U+2191, U+2193,
+    U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
 @font-face {
   font-family: 'Baloo 2';
   font-style: normal;
@@ -46,6 +60,19 @@ body {
   background-color: #150b2e;
 }
 
+@layer components {
+  /** Respeita notch, ilha e home indicator do iPhone (viewport-fit=cover).
+   *  Como o padding entra no "containing block" dos filhos absolutos, quem usa
+   *  `top-4`/`left-4` já cai automaticamente depois da área segura. */
+  .safe-area-pad {
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-right: env(safe-area-inset-right, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    padding-left: env(safe-area-inset-left, 0px);
+  }
+
+}
+
 @layer utilities {
   /**
    * Altura de tela que funciona no mobile: `100vh` mente no Safari do iOS
@@ -65,16 +92,6 @@ body {
   .h-screen-safe {
     height: 100vh;
     height: 100dvh;
-  }
-
-  /** Respeita notch, ilha e home indicator do iPhone (viewport-fit=cover).
-   *  Como o padding entra no "containing block" dos filhos absolutos, quem usa
-   *  `top-4`/`left-4` já cai automaticamente depois da área segura. */
-  .safe-area-pad {
-    padding-top: env(safe-area-inset-top, 0px);
-    padding-right: env(safe-area-inset-right, 0px);
-    padding-bottom: env(safe-area-inset-bottom, 0px);
-    padding-left: env(safe-area-inset-left, 0px);
   }
 
   /**
@@ -110,6 +127,21 @@ body {
    */
   .stage-shake {
     animation: mare-shake 250ms ease-in-out;
+  }
+
+  /** Letreiro em fonte pixel: alinhado, com halo curto e sombra dura. */
+  .pixel {
+    font-family: 'Press Start 2P', ui-monospace, monospace;
+    letter-spacing: 0;
+    line-height: 1.55;
+    text-shadow:
+      0 0 10px currentColor,
+      0 3px 0 rgba(0, 0, 0, 0.55);
+  }
+  .pixel-sm {
+    font-family: 'Press Start 2P', ui-monospace, monospace;
+    letter-spacing: 0;
+    line-height: 1.7;
   }
 
   /** Sombra de contato: dá "peso" a personagens e objetos, custo quase zero. */
@@ -393,5 +425,15 @@ body {
     animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
     scroll-behavior: auto !important;
+  }
+}
+
+/**
+ * Viewport muito baixa (celular deitado ou 400% de zoom): o preview do cartucho
+ * some e sobra espaço para a grade — o nome do jogo focado aparece numa linha.
+ */
+@media (max-height: 520px) {
+  .hub-preview {
+    display: none;
   }
 }

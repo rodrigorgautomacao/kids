@@ -6,6 +6,7 @@ export default {
       /** Fonte da marca (Baloo 2, self-hosted em public/fonts). */
       fontFamily: {
         sans: ['"Baloo 2"', 'ui-rounded', 'system-ui', 'sans-serif'],
+        pixel: ['"Press Start 2P"', 'ui-monospace', 'monospace'],
       },
       /**
        * Tokens de paleta (skill `jogos-visual` §8): papéis semânticos em vez de

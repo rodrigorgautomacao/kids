@@ -1,7 +1,5 @@
 import { useEffect, useRef } from 'react';
 import ArcadeMarquee from './ArcadeMarquee';
-import FaixaArt from './FaixaArt';
-import { FAIXAS } from '../../data/games';
 import { ARCADE_MODE } from '../../lib/arcade';
 
 interface AttractScreenProps {
@@ -51,14 +49,15 @@ export default function AttractScreen({ onStart }: AttractScreenProps) {
 
           <div className="crt relative mx-2 my-2 overflow-hidden rounded-2xl border-4 border-black/70 bg-gradient-to-b from-indigo-950 via-violet-950 to-fuchsia-950 px-4 py-6 text-center sm:mx-3 sm:py-8">
             <div className="relative z-10">
-              <div className="flex items-end justify-center gap-1.5 sm:gap-4">
-                {FAIXAS.map((faixa, index) => (
+              <div className="flex items-end justify-center gap-4 text-5xl sm:gap-8 sm:text-6xl">
+                {['🌱', '🧭', '📖'].map((icone, index) => (
                   <span
-                    key={faixa.id}
+                    key={icone}
                     className="animate-arcade-coin inline-block"
                     style={{ animationDelay: `${index * 160}ms` }}
+                    aria-hidden
                   >
-                    <FaixaArt faixa={faixa.id} className="h-24 w-auto sm:h-32" />
+                    {icone}
                   </span>
                 ))}
               </div>

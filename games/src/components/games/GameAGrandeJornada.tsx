@@ -389,8 +389,8 @@ export default function GameAGrandeJornada({ onExit }: { onExit: () => void }) {
       <div className="flex w-full flex-col items-center gap-2 px-3 pb-4">
         <LevelHUD level={ls.levelIdx + 1} totalLevels={JORNADA_GAME_LEVELS.length} />
 
-        <div className="game-surface relative w-full max-w-3xl overflow-hidden rounded-3xl border-4 border-white/20 shadow-2xl">
-          <canvas ref={canvasRef} className="block h-[46vh] max-h-[420px] min-h-[240px] w-full" />
+        <div className="game-surface relative w-full max-w-4xl overflow-hidden rounded-3xl border-4 border-white/20 shadow-2xl">
+          <canvas ref={canvasRef} className="block aspect-video max-h-[min(64vh,600px)] w-full" />
 
           {/* Narrativa de entrada: o marco de Bunyan e onde o Peregrino está. */}
           {intro ? (

@@ -178,10 +178,11 @@ export default function App() {
 
   if (GameComponent !== null || LazyComponent !== null) {
     // key força a remontagem do jogo a cada entrada → estado sempre limpo.
-    // O wrapper dá a transição de entrada (sem `fill-mode`, para não virar um
-    // containing block dos elementos `fixed` do jogo).
+    // SEM `screen-in` aqui: qualquer opacity/transform no wrapper da área do
+    // jogo deixa o desenho com cara de baixa resolução e vira containing block
+    // dos `position: fixed` internos (confete). O jogo entra limpo.
     return (
-      <div key={activeGameId} className="screen-in">
+      <div key={activeGameId}>
         {LazyComponent ? (
           <Suspense
             fallback={
