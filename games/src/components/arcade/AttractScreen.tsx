@@ -1,5 +1,8 @@
 import { useEffect, useRef } from 'react';
 import ArcadeMarquee from './ArcadeMarquee';
+import FaixaArt from './FaixaArt';
+import { FAIXAS } from '../../data/games';
+import { ARCADE_MODE } from '../../lib/arcade';
 
 interface AttractScreenProps {
   onStart: () => void;
@@ -43,24 +46,21 @@ export default function AttractScreen({ onStart }: AttractScreenProps) {
             heading="h1"
             title="Jogos Bíblicos"
             subtitle="ARCADE DA FÉ · 3 a 9 anos"
-            badge="Sala de Jogos · FestKids"
+            badge={ARCADE_MODE ? 'Sala de Jogos · FestKids' : undefined}
           />
 
           <div className="crt relative mx-2 my-2 overflow-hidden rounded-2xl border-4 border-black/70 bg-gradient-to-b from-indigo-950 via-violet-950 to-fuchsia-950 px-4 py-6 text-center sm:mx-3 sm:py-8">
             <div className="relative z-10">
-              <div className="flex items-end justify-center gap-3 text-5xl sm:text-6xl">
-                <span className="animate-arcade-coin inline-block" style={{ animationDelay: '0ms' }}>
-                  🌱
-                </span>
-                <span
-                  className="animate-arcade-coin inline-block text-6xl sm:text-7xl"
-                  style={{ animationDelay: '160ms' }}
-                >
-                  🧭
-                </span>
-                <span className="animate-arcade-coin inline-block" style={{ animationDelay: '320ms' }}>
-                  🙏
-                </span>
+              <div className="flex items-end justify-center gap-1.5 sm:gap-4">
+                {FAIXAS.map((faixa, index) => (
+                  <span
+                    key={faixa.id}
+                    className="animate-arcade-coin inline-block"
+                    style={{ animationDelay: `${index * 160}ms` }}
+                  >
+                    <FaixaArt faixa={faixa.id} className="h-24 w-auto sm:h-32" />
+                  </span>
+                ))}
               </div>
 
               <p className="mt-5 text-[11px] font-black tracking-[0.35em] text-cyan-200/80 uppercase">
@@ -83,7 +83,7 @@ export default function AttractScreen({ onStart }: AttractScreenProps) {
           </div>
 
           <div className="flex items-center justify-between gap-2 px-4 pb-4 pt-1 text-[11px] font-black tracking-wide text-white/50 uppercase">
-            <span>🕹️ Sala de Jogos</span>
+            <span>🕹️ {ARCADE_MODE ? 'Sala de Jogos' : 'Arcade da Fé'}</span>
             <span>Grátis · sem cadastro</span>
           </div>
         </div>

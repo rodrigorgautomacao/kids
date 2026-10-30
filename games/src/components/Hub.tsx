@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { games, jogoNaFaixa, FAIXAS, TIPOS, MAX_LEVELS_PER_GAME, type Faixa, type GameDefinition, type Tipo } from '../data/games';
+import { games, jogoNaFaixa, TIPOS, MAX_LEVELS_PER_GAME, type Faixa, type GameDefinition, type Tipo } from '../data/games';
 import { bestScore, chapterLevelsDone, chapterStars, loadLevels, totalStars, type ProgressMap } from '../lib/progress';
 import {
   isMusicMuted,
@@ -15,11 +15,12 @@ import InstallHint from './InstallHint';
 import {
   isSmallKidsMode,
   setSmallKidsMode,
-  loadFaixaFilter,
-  saveFaixaFilter,
   loadTipoFilter,
   saveTipoFilter,
 } from '../lib/prefs';
+import { faixaNumero } from '../lib/faixa';
+import { FAIXA_NEON } from './arcade/faixaNeon';
+import FaixaArt from './arcade/FaixaArt';
 import { StarItem } from './art';
 import { SCENE_COUNT } from '../data/scenes';
 import { loadStickers, subscribeStickers } from '../lib/stickers';
@@ -29,7 +30,11 @@ import ArcadeMarquee from './arcade/ArcadeMarquee';
 import { ARCADE_MODE, enableArcadeMode } from '../lib/arcade';
 
 interface HubProps {
+  /** Faixa escolhida na tela de idade (`#jogos/3-4`). */
+  faixa: Faixa;
   onSelectGame: (id: string) => void;
+  /** Volta para a tela de escolha da idade. */
+  onBack: () => void;
   onLogout?: () => void;
 }
 
@@ -44,31 +49,6 @@ const FILTROS: { id: 'todos' | Tipo; tKey: TKey }[] = [
   { id: 'nt', tKey: 'filtro.nt' },
   { id: 'at-nt', tKey: 'filtro.at-nt' },
 ];
-
-/**
- * Cor de cada faixa no escuro do salão. Mantida local (e não em `FAIXAS`)
- * porque é uma decisão de *fliperama* — o catálogo não precisa saber de neon.
- */
-const FAIXA_NEON: Record<Faixa, { border: string; bar: string; name: string; chip: string }> = {
-  '3-4': {
-    border: 'border-amber-300/35',
-    bar: 'from-amber-300 via-rose-300 to-pink-400',
-    name: 'text-amber-200',
-    chip: 'bg-amber-400/15 text-amber-100',
-  },
-  '5-6': {
-    border: 'border-sky-300/35',
-    bar: 'from-sky-300 via-cyan-300 to-emerald-300',
-    name: 'text-sky-200',
-    chip: 'bg-sky-400/15 text-sky-100',
-  },
-  '7-9': {
-    border: 'border-violet-300/35',
-    bar: 'from-violet-300 via-fuchsia-300 to-indigo-400',
-    name: 'text-violet-200',
-    chip: 'bg-violet-400/15 text-violet-100',
-  },
-};
 
 // ─── Ícones inline (sem lucide, para manter o bundle pequeno) ──────────
 const SoundOnIcon = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>;
@@ -179,18 +159,13 @@ function SoonCard({ game }: { game: GameDefinition }) {
   );
 }
 
-export default function Hub({ onSelectGame, onLogout }: HubProps) {
+export default function Hub({ faixa, onSelectGame, onBack, onLogout }: HubProps) {
   const [sfxOn, setSfxOn] = useState(() => !isSfxMuted());
   const [musicOn, setMusicOn] = useState(() => !isMusicMuted());
   const [smallKids, setSmallKids] = useState(isSmallKidsMode);
   const [tipoFiltro, setTipoFiltro] = useState<'todos' | Tipo>(() => {
     const saved = loadTipoFilter();
     return FILTROS.some((f) => f.id === saved) ? (saved as 'todos' | Tipo) : 'todos';
-  });
-  const [faixaFiltro, setFaixaFiltro] = useState<'todos' | Faixa>(() => {
-    const saved = loadFaixaFilter();
-    if (saved === 'todos') return 'todos';
-    return FAIXAS.some((f) => f.id === saved) ? (saved as Faixa) : '3-4';
   });
   const [gate, setGate] = useState<string | null>(null);
   const [installed, setInstalled] = useState(isStandalone);
@@ -215,8 +190,7 @@ export default function Hub({ onSelectGame, onLogout }: HubProps) {
   // Contador de figurinhas reage quando a Aventura coleciona uma cena.
   useEffect(() => subscribeStickers(() => setStickerCount(loadStickers().size)), []);
 
-  // O filtro sobrevive à ida ao jogo e volta igual (ver lib/prefs).
-  useEffect(() => saveFaixaFilter(faixaFiltro), [faixaFiltro]);
+  // O filtro de testamento sobrevive à ida ao jogo e volta igual (ver lib/prefs).
   useEffect(() => saveTipoFilter(tipoFiltro), [tipoFiltro]);
 
   function toggleLang() {
@@ -242,7 +216,18 @@ export default function Hub({ onSelectGame, onLogout }: HubProps) {
   }, []);
 
   const progress = loadLevels();
+  const neon = FAIXA_NEON[faixa];
   const ready = games.filter((g) => g.status === 'pronto');
+  // O gabinete mostra só a faixa escolhida na tela de idade.
+  const prontos = ready.filter(
+    (g) => jogoNaFaixa(g.faixa, faixa) && (tipoFiltro === 'todos' || g.tipo === tipoFiltro),
+  );
+  const breves = games.filter(
+    (g) =>
+      g.status === 'em-breve' &&
+      jogoNaFaixa(g.faixa, faixa) &&
+      (tipoFiltro === 'todos' || g.tipo === tipoFiltro),
+  );
   const maxLevels = ready.reduce((acc, g) => acc + (g.totalLevels ?? MAX_LEVELS_PER_GAME), 0);
   const doneLevels = ready.reduce(
     (acc, g) => acc + Math.min(chapterLevelsDone(progress, g.id), g.totalLevels ?? MAX_LEVELS_PER_GAME),
@@ -289,12 +274,16 @@ export default function Hub({ onSelectGame, onLogout }: HubProps) {
     setGate(id);
   }
 
-  /** "Jogo surpresa": sorteia um jogo pronto do filtro atual (fila do evento). */
+  /** Volta para a escolha de idade — o "EJECT" da máquina. */
+  function handleBack() {
+    sfx.close();
+    onBack();
+  }
+
+  /** "Jogo surpresa": sorteia um jogo pronto da faixa escolhida (fila do evento). */
   function surprise() {
     const pool = ready.filter(
-      (g) =>
-        (faixaFiltro === 'todos' || jogoNaFaixa(g.faixa, faixaFiltro)) &&
-        (tipoFiltro === 'todos' || g.tipo === tipoFiltro),
+      (g) => jogoNaFaixa(g.faixa, faixa) && (tipoFiltro === 'todos' || g.tipo === tipoFiltro),
     );
     if (pool.length === 0) return;
     const pick = pool[Math.floor(Math.random() * pool.length)];
@@ -442,60 +431,36 @@ export default function Hub({ onSelectGame, onLogout }: HubProps) {
         </div>
 
         <main className="mx-auto w-full max-w-3xl">
-          {/* ─── herói / convite ─── */}
-          <header className="pt-5 text-center">
-            <div className="flex items-center justify-center gap-3 text-4xl sm:text-5xl">
-              <span className="inline-block animate-hero-bob">🌱</span>
-              <span className="inline-block animate-hero-bob" style={{ animationDelay: '180ms' }}>
-                🧭
-              </span>
-              <span className="inline-block animate-hero-bob" style={{ animationDelay: '360ms' }}>
-                🙏
-              </span>
-            </div>
-            <p className="mx-auto mt-2 max-w-md text-sm font-bold text-white/70 sm:text-base">
+          {/* ─── saída da faixa + selo da idade escolhida ─── */}
+          <div className="mt-3 flex items-center justify-between gap-2">
+            <button
+              type="button"
+              onClick={handleBack}
+              className="arcade-btn min-h-14 px-5 text-sm font-black tracking-wide text-amber-200"
+            >
+              ◀ {t('faixa.voltar')}
+            </button>
+            <span
+              className={`flex items-center gap-2 rounded-full border-2 px-4 py-2 text-sm font-black ${neon.border} ${neon.chip}`}
+              aria-label={`${faixaNumero(faixa)} ${t('faixa.anos')}`}
+            >
+              <span className="tabular-nums">{faixaNumero(faixa)}</span>
+              <span className="text-[10px] tracking-[0.2em] opacity-80">{t('faixa.anos')}</span>
+            </span>
+          </div>
+
+          {/* ─── herói / convite: o personagem da faixa recebe a criança ─── */}
+          <header className="flex items-center justify-center gap-3 pt-4 sm:gap-5">
+            <span className="inline-block shrink-0 animate-hero-bob">
+              <FaixaArt faixa={faixa} className="h-20 w-auto sm:h-24" />
+            </span>
+            <p className="max-w-xs text-balance text-left text-sm font-bold text-white/70 sm:max-w-sm sm:text-base">
               Escolha seu jogo e cresça como Jesus: em sabedoria, estatura e graça!
             </p>
           </header>
 
-          {/* ─── filtro por idade ─── */}
-          <div className="mt-5">
-            <p className="mb-2 text-center text-[10px] font-black tracking-[0.25em] text-cyan-200/70 uppercase">
-              {t('filtro.idade')}
-            </p>
-            <div className="flex flex-wrap items-center justify-center gap-2">
-              <button
-                type="button"
-                onClick={() => setFaixaFiltro('todos')}
-                aria-pressed={faixaFiltro === 'todos'}
-                className={`ui-press min-h-11 rounded-full px-4 text-sm font-black ${
-                  faixaFiltro === 'todos'
-                    ? 'bg-cyan-400 text-slate-950 shadow-[0_0_22px_rgba(34,211,238,0.5)]'
-                    : 'border-2 border-white/10 bg-white/5 text-slate-200'
-                }`}
-              >
-                {t('filtro.todos')}
-              </button>
-              {FAIXAS.map((f) => (
-                <button
-                  key={f.id}
-                  type="button"
-                  onClick={() => setFaixaFiltro(f.id)}
-                  aria-pressed={faixaFiltro === f.id}
-                  className={`ui-press min-h-11 rounded-full px-4 text-sm font-black ${
-                    faixaFiltro === f.id
-                      ? 'bg-cyan-400 text-slate-950 shadow-[0_0_22px_rgba(34,211,238,0.5)]'
-                      : 'border-2 border-white/10 bg-white/5 text-slate-200'
-                  }`}
-                >
-                  {f.mascote} {f.nome}
-                </button>
-              ))}
-            </div>
-          </div>
-
           {/* ─── filtro por tipo + surpresa ─── */}
-          <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
+          <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
             {FILTROS.map((f) => (
               <button
                 key={f.id}
@@ -533,92 +498,60 @@ export default function Hub({ onSelectGame, onLogout }: HubProps) {
             </div>
           ) : null}
 
-          {/* ─── seções por faixa (os "gabinetes" do salão) ─── */}
+          {/* ─── gabinete da faixa escolhida ─── */}
           <div className="mt-5 flex flex-col gap-5">
-            {FAIXAS.filter((faixa) => faixaFiltro === 'todos' || faixa.id === faixaFiltro).map((faixa) => {
-              const neon = FAIXA_NEON[faixa.id];
-              const visiveis = games.filter(
-                (g) =>
-                  jogoNaFaixa(g.faixa, faixa.id) &&
-                  (tipoFiltro === 'todos' || g.tipo === tipoFiltro),
-              );
-              const prontos = visiveis.filter((g) => g.status === 'pronto');
-              if (prontos.length === 0) return null;
-              const breves = visiveis.filter((g) => g.status === 'em-breve');
+            {prontos.length > 0 ? (
+              <section
+                className={`relative overflow-hidden rounded-3xl border-2 ${neon.border} bg-black/25 p-3 shadow-[0_16px_40px_-24px_rgba(0,0,0,0.9)] sm:p-4`}
+              >
+                <div aria-hidden className={`absolute inset-x-0 top-0 h-1 bg-gradient-to-r ${neon.bar}`} />
 
-              return (
-                <section
-                  key={faixa.id}
-                  className={`relative overflow-hidden rounded-3xl border-2 ${neon.border} bg-black/25 p-3 shadow-[0_16px_40px_-24px_rgba(0,0,0,0.9)] sm:p-4`}
-                >
-                  <div aria-hidden className={`absolute inset-x-0 top-0 h-1 bg-gradient-to-r ${neon.bar}`} />
-
-                  <div className="flex items-center gap-3 pb-3">
-                    <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border-2 border-white/15 bg-white/10 text-2xl shadow">
-                      {faixa.mascote}
-                    </span>
-                    <div className="min-w-0">
-                      <h2 className={`truncate text-xl font-black ${neon.name} sm:text-2xl`}>
-                        {faixa.nome}
-                      </h2>
-                      <p className="text-[11px] font-bold text-white/50">
-                        {faixa.idade} · {prontos.length} jogos
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="grid gap-2.5 sm:grid-cols-2">
-                    {prontos.map((g) => (
-                      <GameCard
-                        key={g.id}
-                        game={g}
-                        progress={progress}
-                        onPlay={() => handleSelect(g.id)}
-                      />
-                    ))}
-                    {breves.map((g) => (
-                      <SoonCard key={g.id} game={g} />
-                    ))}
-                  </div>
-                </section>
-              );
-            })}
-          </div>
-
-          {/* ─── em breve nas outras faixas (todas, agrupadas) ─── */}
-          {games.some((g) => g.status === 'em-breve') ? (
-          <section className="mt-5 rounded-3xl border-2 border-white/10 bg-black/25 px-4 py-5">
-            <h2 className="text-center text-xl font-black text-slate-200">
-              Em breve nas outras faixas ✨
-            </h2>
-            <p className="mt-1 text-center text-xs font-bold text-white/45">
-              Novas aventuras para cada idade estão a caminho!
-            </p>
-            {FAIXAS.filter((faixa) => faixaFiltro === 'todos' || faixa.id === faixaFiltro).map((faixa) => {
-              const breves = games.filter(
-                (g) =>
-                  jogoNaFaixa(g.faixa, faixa.id) &&
-                  g.status === 'em-breve' &&
-                  (tipoFiltro === 'todos' || g.tipo === tipoFiltro),
-              );
-              if (breves.length === 0) return null;
-              return (
-                <div key={faixa.id} className="mt-4">
-                  <h3
-                    className={`flex items-center gap-2 text-sm font-black uppercase tracking-wide ${FAIXA_NEON[faixa.id].name}`}
-                  >
-                    {faixa.mascote} {faixa.nome} — em breve
-                  </h3>
-                  <div className="mt-2 grid gap-2.5 sm:grid-cols-2">
-                    {breves.map((g) => (
-                      <SoonCard key={g.id} game={g} />
-                    ))}
+                <div className="flex items-center gap-3 pb-3">
+                  <span className="flex h-16 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl border-2 border-white/15 bg-white/5 shadow">
+                    <FaixaArt faixa={faixa} className="h-full w-auto" />
+                  </span>
+                  <div className="min-w-0">
+                    <h2 className={`flex items-baseline gap-2 text-xl font-black sm:text-2xl ${neon.name}`}>
+                      <span className="tabular-nums">{faixaNumero(faixa)}</span>
+                      <span className="text-[10px] font-black tracking-[0.25em] text-white/45">
+                        {t('faixa.anos')}
+                      </span>
+                    </h2>
+                    <p className="text-[11px] font-bold text-white/50">
+                      {prontos.length} {prontos.length === 1 ? 'jogo' : 'jogos'}
+                    </p>
                   </div>
                 </div>
-              );
-            })}
-          </section>
-          ) : null}
+
+                <div className="grid gap-2.5 sm:grid-cols-2">
+                  {prontos.map((g) => (
+                    <GameCard
+                      key={g.id}
+                      game={g}
+                      progress={progress}
+                      onPlay={() => handleSelect(g.id)}
+                    />
+                  ))}
+                </div>
+              </section>
+            ) : null}
+
+            {breves.length > 0 ? (
+              <section className="rounded-3xl border-2 border-white/10 bg-black/25 px-4 py-5">
+                <h2 className="text-center text-lg font-black text-slate-200">
+                  {t('hub.em-breve')} ✨
+                </h2>
+                <p className="mt-1 text-center text-xs font-bold text-white/45">
+                  Novas aventuras estão a caminho!
+                </p>
+                <div className="mt-3 grid gap-2.5 sm:grid-cols-2">
+                  {breves.map((g) => (
+                    <SoonCard key={g.id} game={g} />
+                  ))}
+                </div>
+              </section>
+            ) : null}
+          </div>
 
           <footer className="mt-8 pb-8 text-center text-[11px] font-bold text-white/35">
             Feito com 💛 para crianças brasileiras · v0.1
